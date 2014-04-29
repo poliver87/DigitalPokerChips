@@ -1,0 +1,1081 @@
+package com.bidjee.digitalpokerchips.v;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL11;
+import com.badlogic.gdx.graphics.Pixmap.Format;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.Matrix4;
+import com.bidjee.digitalpokerchips.c.DPCGame;
+import com.bidjee.digitalpokerchips.c.Table;
+import com.bidjee.digitalpokerchips.c.WorldLayer;
+import com.bidjee.digitalpokerchips.m.Card;
+import com.bidjee.digitalpokerchips.m.Chip;
+import com.bidjee.digitalpokerchips.m.ChipCase;
+import com.bidjee.digitalpokerchips.m.ChipStack;
+import com.bidjee.digitalpokerchips.m.ColorPool;
+import com.bidjee.digitalpokerchips.m.GameLogic;
+import com.bidjee.digitalpokerchips.m.Player;
+import com.bidjee.digitalpokerchips.m.Seat;
+import com.bidjee.graphics.ChipBatch;
+
+public class WorldRenderer {
+	
+	// Constants //
+	static final float shadowDownsampleFactor=0.4f;
+	static final int chip_img_height=252;
+	
+	static final Color blackColor=new Color(0,0,0,1);
+	static final Color whiteColor=new Color(1,1,1,1);
+	public static final Color plaqueColor=new Color(0.48f,0.43f,0.34f,1);
+	public static final Color tableNameColor=new Color(0.45f,0.45f,0.06f,1);
+	public static final Color chipValueColor=new Color(0.3f,0.3f,0.3f,1);
+	// State Variables //
+	int[] potChipsRendered=new int[Table.NUM_SEATS];
+	int[] mainStackTop=new int[ChipCase.CHIP_TYPES];
+	// Contained Objects //
+	SpriteBatch batch;
+	ChipBatch chipBatch;
+	FrameBuffer shadowsFBO;
+	TextureRegion shadows;
+	final Matrix4 screenMatrix = new Matrix4();
+	Color alphaShader;
+	public Camera camera;
+	// References //
+	WorldLayer mWL;
+	// Debugging //
+	// Scale & Layout //
+	int screenWidth;
+	public int screenHeight;
+	 // Textures //
+	Texture backgroundTexture;
+	Texture[] backgroundTextures;
+	Texture chipCaseTexture;
+	Texture tableHighlightTexture;
+	Texture dealerButtonTexture;
+	Texture[] chipTextures;
+	Texture shadowTexture;
+	Texture handTexture;
+	Texture menuTableLineTexture;
+	Texture menuTableLineVTexture;
+	Texture hostTexture;
+	Texture playerTexture;
+	Texture arrowTexture;
+	
+	Texture goldSpeechBubbleTexture;
+	
+	Texture joinTokenTexture;
+	Texture arrowWhite;
+	
+	Texture buttonGreen;
+	
+	Texture cursorTexture;
+	
+	Texture connectionBlobTexture;
+	
+	
+	Texture[] suitsTextures;
+	
+	Texture cardTexture;
+	
+	public WorldRenderer(WorldLayer mWL_) {
+		mWL=mWL_;
+		batch=new SpriteBatch();
+		chipBatch=new ChipBatch();
+		camera=new Camera(this);
+		mWL=mWL_;
+		chipTextures=new Texture[ChipCase.CHIP_TYPES*Chip.CHIP_ROTATION_N];
+		backgroundTextures=new Texture[6];
+		suitsTextures=new Texture[4];
+	}
+	
+	public void resize(int width,int height) {
+		Gdx.app.log("DPCLifecycle", "WorldRenderer - resize("+width+","+height+")");
+		screenWidth=width;
+		screenHeight=height;
+		screenMatrix.setToOrtho2D(0,0,screenWidth,screenHeight);
+		batch.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		chipBatch.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		camera.resize(width,height);
+		if (shadowsFBO==null) {
+			shadowsFBO=new FrameBuffer(Format.RGBA8888,screenWidth,screenHeight,false);
+			int screenWidthScaled=(int)(screenWidth*shadowDownsampleFactor);
+			int screenHeightScaled=(int)(screenHeight*shadowDownsampleFactor);
+			shadows=new TextureRegion(shadowsFBO.getColorBufferTexture(),screenWidthScaled,screenHeightScaled);
+			shadows.flip(false,true);
+		}
+	}
+	
+	public float xTouchScreenToWorld(float xScreen_) {
+		return (xScreen_-screenWidth*0.5f)/camera.zoom+camera.x;
+	}
+	
+	public float yTouchScreenToWorld(float yScreen_) {
+		return (screenHeight*0.5f-yScreen_)/camera.zoom+camera.y;
+	}
+	
+	public float xScreenToWorld(float xScreen_) {
+		return (xScreen_-screenWidth*0.5f)/camera.zoom+camera.x;
+	}
+	
+	public float yScreenToWorld(float yScreen_) {
+		return (yScreen_-screenHeight*0.5f)/camera.zoom+camera.y;
+	}
+	
+	public float xWorldToScreen(float xWorld_) {
+		return (xWorld_-camera.x)*camera.zoom+screenWidth*0.5f;
+	}
+	
+	public float yWorldToScreen(float yWorld_) {
+		return screenHeight*0.5f-(camera.y-yWorld_)*camera.zoom;
+	}
+	
+	public void dispose() {
+		Gdx.app.log("DPCLifecycle", "WorldRenderer - dispose()");
+		if (batch!=null)
+			batch.dispose();
+		if (chipBatch!=null)
+			chipBatch.dispose();
+		shadowsFBO.dispose();
+		mWL=null;
+	}
+	
+	public void loadTextures(AssetManager manager_) {
+		Gdx.app.log("DPCLifecycle", "WorldRenderer - loadTextures()");
+		
+		if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_LOW) {
+			backgroundTexture=manager_.get("background_low_res.png",Texture.class);
+		} else if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_MEDIUM||
+				mWL.game.resolutionSetting==DPCGame.RESOLUTION_HIGH) {
+			backgroundTextures[0]=manager_.get("background_lb.png",Texture.class);
+			backgroundTextures[1]=manager_.get("background_lt.png",Texture.class);
+			backgroundTextures[2]=manager_.get("background_mb.png",Texture.class);
+			backgroundTextures[3]=manager_.get("background_mt.png",Texture.class);
+			backgroundTextures[4]=manager_.get("background_rb.png",Texture.class);
+			backgroundTextures[5]=manager_.get("background_rt.png",Texture.class);
+		}
+		
+		chipCaseTexture=manager_.get("chip_case.png", Texture.class);
+		tableHighlightTexture=manager_.get("table_highlight.png",Texture.class);
+		dealerButtonTexture=manager_.get("dealer_chip.png",Texture.class);
+		shadowTexture=manager_.get("shadow.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("red0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("red135.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("red202.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("blue0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("blue135.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("blue202.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("black0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("black135.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("black202.png",Texture.class);
+		
+		handTexture=manager_.get("hand.png",Texture.class);
+		hostTexture=manager_.get("host_button.png",Texture.class);
+		
+		playerTexture=manager_.get("man.png",Texture.class);
+		arrowTexture=manager_.get("arrow.png",Texture.class);
+		
+		goldSpeechBubbleTexture=manager_.get("speech_bubble_gold.png",Texture.class);
+		
+		joinTokenTexture=manager_.get("join_coin.png",Texture.class);
+		arrowWhite=manager_.get("arrow_white.png",Texture.class);
+		
+		buttonGreen=manager_.get("button_green.png",Texture.class);
+		
+		cursorTexture=manager_.get("cursor.png",Texture.class);
+		
+		connectionBlobTexture=manager_.get("connection_blob.png",Texture.class);
+		
+		suitsTextures[Card.CLUBS]=manager_.get("suit_clubs.png",Texture.class);
+		suitsTextures[Card.DIAMONDS]=manager_.get("suit_diamonds.png",Texture.class);
+		suitsTextures[Card.SPADES]=manager_.get("suit_spades.png",Texture.class);
+		suitsTextures[Card.HEARTS]=manager_.get("suit_hearts.png",Texture.class);
+		
+		cardTexture=manager_.get("card_back.png",Texture.class);
+	}
+	
+	public void loadLabels() {
+		Gdx.app.log("DPCLifecycle", "WorldRenderer - loadLabels()");
+		mWL.thisPlayer.nameField.label.bodyColor=plaqueColor;
+		if (!mWL.thisPlayer.nameField.label.getText().equals("")) {
+			mWL.thisPlayer.nameField.label.loadTexture(plaqueColor,blackColor);
+		}
+		if (!mWL.table.tableNameField.label.getText().equals("")) {
+			mWL.table.tableNameField.label.loadTexture(tableNameColor,blackColor);
+		}
+		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
+			mWL.chipCase.valueLabels[i].loadTexture(chipValueColor,blackColor);
+		}
+		if (mWL.thisPlayer.betStack.size()>0) {
+			mWL.thisPlayer.betStack.totalLabel.loadTexture();
+		}
+		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
+			mWL.thisPlayer.mainStacks[i].totalLabel.loadTexture();
+		}
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			if (mWL.table.seats[i].player!=null) {
+				mWL.table.seats[i].player.name.loadTexture();
+				if (mWL.table.seats[i].player.betStack.size()>0) {
+					mWL.table.seats[i].player.betStack.totalLabel.loadTexture();
+				}
+			}
+		}
+		if (mWL.table.pickedUpPlayer!=null) {
+			mWL.table.pickedUpPlayer.name.loadTexture();
+		}
+		for (int i=0;i<mWL.table.pots.size();i++) {
+			mWL.table.pots.get(i).potStack.totalLabel.loadTexture();
+		}
+		mWL.table.seats[0].undoButton.getLabel().loadTexture();
+	}
+	
+	public void render() {
+		renderShadowsToBuffer();
+		
+		Gdx.gl.glClearColor(0, 0, 0, 1);
+		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+		batch.setProjectionMatrix(camera.getViewMatrix());
+		chipBatch.setProjectionMatrix(camera.getViewMatrix());
+		batch.begin();
+		
+		renderBackground();
+		
+		if (!mWL.thisPlayer.nameField.label.getText().equals("")) {
+			batch.draw(mWL.thisPlayer.nameField.label.texture,mWL.thisPlayer.nameField.label.x-mWL.thisPlayer.nameField.label.radiusX,
+					mWL.thisPlayer.nameField.label.y-mWL.thisPlayer.nameField.label.radiusY,
+					mWL.thisPlayer.nameField.label.radiusX*2,mWL.thisPlayer.nameField.label.radiusY*2,0,0,
+					mWL.thisPlayer.nameField.label.radiusX*2,mWL.thisPlayer.nameField.label.radiusY*2,false,false);	
+		}
+		
+		renderLobby();
+		
+		renderEnterTableName();
+	
+		renderShadows();
+		
+		renderSelectionHighlights();
+		
+		renderDealerButton();
+		
+		renderConnectionStuff();
+		
+		renderPlayerChips();
+		
+		renderWinStacks();
+		
+		if (mWL.table.pots.size()>0) {
+			renderPot();
+		}
+		
+		renderBetStacks();
+		
+		renderBettingStacks();
+		
+		batch.end();
+	}
+	
+	private void renderPlayerChips() {
+		
+		// TODO don't render half chips if fading opacity
+		
+		ArrayList<Chip> chips=new ArrayList<Chip>();
+		chips.addAll(mWL.thisPlayer.betStack.stack.subList(0,mWL.thisPlayer.betStack.renderSize()));
+		chips.addAll(mWL.thisPlayer.bettingStack.stack);
+		chips.addAll(mWL.thisPlayer.cancellingStack.stack);
+		
+		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
+			chips.addAll(mWL.thisPlayer.mainStacks[i].stack.subList(0,mWL.thisPlayer.mainStacks[i].renderSize()));
+		}
+		chips.addAll(mWL.thisPlayer.cancelStack.stack);
+		if (mWL.thisPlayer.pickedUpChip!=null) {
+			chips.add(mWL.thisPlayer.pickedUpChip);
+		}
+		Collections.sort(chips);
+		
+		int betStackTopZ=mWL.thisPlayer.betStack.renderSize()-1;
+		for (int mainStack=0;mainStack<ChipCase.CHIP_TYPES;mainStack++) {
+			mainStackTop[mainStack]=mWL.thisPlayer.mainStacks[mainStack].pastMax()?
+					mWL.thisPlayer.mainStacks[mainStack].renderSize()-1:-1;
+		}
+		
+		for (int i=0;i<chips.size();i++) {
+			Chip chip=chips.get(i);
+			boolean halfChip=false;
+			float radiusXChip=Chip.radiusX*(1+chip.z*Chip.perspectiveGradient);
+			float radiusYChip=Chip.radiusY*(1+chip.z*Chip.perspectiveGradient);
+			float radiusYMult=2f;
+			if (halfChip) {
+				radiusYMult=1f;
+			}
+			float zyOffset=Chip.Z_Y_OFFSET_RATIO*Chip.radiusY*chip.z*
+					(1+0.5f*Chip.perspectiveGradient*(chip.z-1));
+			int srcYOffset=halfChip?chip_img_height/2:0;
+			int srcHeight=halfChip?chip_img_height/2:chip_img_height;
+			
+			batch.draw(chipTextures[chip.chipType*Chip.CHIP_ROTATION_N+chip.imgRotation],
+					chip.x-radiusXChip,chip.y-radiusYChip+zyOffset,
+					radiusXChip*2,radiusYChip*radiusYMult,
+					0,srcYOffset,256,srcHeight,false,false);
+			boolean renderTotals=false;
+			if (i+1<chips.size()) {
+				if (chips.get(i+1).z>chips.get(i).z) {
+					renderTotals=true;
+				}
+			} else {
+				renderTotals=true;
+			}
+			if (renderTotals) {
+				if (chips.get(i).z==betStackTopZ) {
+					batch.draw(mWL.thisPlayer.betStack.totalLabel.texture,
+							mWL.thisPlayer.betStack.totalLabel.x-mWL.thisPlayer.betStack.totalLabel.radiusX,
+							mWL.thisPlayer.betStack.totalLabel.y-mWL.thisPlayer.betStack.totalLabel.radiusY,
+							mWL.thisPlayer.betStack.totalLabel.radiusX*2,
+							mWL.thisPlayer.betStack.totalLabel.radiusY*2,
+							0,0,mWL.thisPlayer.betStack.totalLabel.radiusX*2,
+							mWL.thisPlayer.betStack.totalLabel.radiusY*2,false,false);
+				}
+				for (int mainStack=0;mainStack<ChipCase.CHIP_TYPES;mainStack++) {
+					if (chips.get(i).z==mainStackTop[mainStack]) {
+						batch.draw(mWL.thisPlayer.mainStacks[mainStack].totalLabel.texture,
+								mWL.thisPlayer.mainStacks[mainStack].totalLabel.x-mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusX,
+								mWL.thisPlayer.mainStacks[mainStack].totalLabel.y-mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusY,
+								mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusX*2,
+								mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusY*2,
+								0,0,mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusX*2,
+								mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusY*2,false,false);
+					}
+				}
+			}
+		}
+		
+	}
+
+	private void renderConnectionStuff() {
+		alphaShader=batch.getColor();
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mWL.thisPlayer.joinToken.opacity);
+		batch.draw(joinTokenTexture, mWL.thisPlayer.joinToken.x-mWL.thisPlayer.joinToken.radiusX,
+				mWL.thisPlayer.joinToken.y-mWL.thisPlayer.joinToken.radiusY,
+				mWL.thisPlayer.joinToken.radiusX*2,mWL.thisPlayer.joinToken.radiusY*2,
+				0,0,309,311,false,false);
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		
+		alphaShader=batch.getColor();
+		batch.setColor(ColorPool.colors[mWL.thisPlayer.color].r,ColorPool.colors[mWL.thisPlayer.color].g,
+        		ColorPool.colors[mWL.thisPlayer.color].b,mWL.thisPlayer.connectionBlob.opacity);
+		batch.draw(connectionBlobTexture, mWL.thisPlayer.connectionBlob.x-mWL.thisPlayer.connectionBlob.radiusX,
+				mWL.thisPlayer.connectionBlob.y-mWL.thisPlayer.connectionBlob.radiusY,
+				mWL.thisPlayer.connectionBlob.radiusX*2,mWL.thisPlayer.connectionBlob.radiusY*2,
+				0,0,312,192,false,false);
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+	}
+
+	private void renderBackground () {
+		alphaShader=batch.getColor();
+		
+		if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_LOW) {
+			batch.draw(backgroundTexture,0,0,mWL.worldWidth,mWL.worldHeight);
+		} else if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_MEDIUM||
+				mWL.game.resolutionSetting==DPCGame.RESOLUTION_HIGH) {
+			int backgroundTileWidth=(int) (mWL.worldWidth/3);
+			if (backgroundTileWidth*3<mWL.worldWidth) {
+				backgroundTileWidth++;
+			}
+			int backgroundTileHeight=(int) (mWL.worldHeight/2);
+			if (backgroundTileHeight*2<mWL.worldHeight) {
+				backgroundTileHeight++;
+			}
+			for (int i=0;i<3;i++) {
+				batch.draw(backgroundTextures[2*i],backgroundTileWidth*i,0,backgroundTileWidth,backgroundTileHeight);
+				batch.draw(backgroundTextures[2*i+1],backgroundTileWidth*i,backgroundTileHeight,backgroundTileWidth,backgroundTileHeight);
+			}
+		}
+		
+		batch.draw(chipCaseTexture,
+				mWL.chipCase.x-mWL.chipCase.radiusX,
+				mWL.chipCase.y-mWL.chipCase.radiusY,
+				mWL.chipCase.radiusX*2,mWL.chipCase.radiusY*2,
+				0,0,412,390, false,false);
+		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {			
+			batch.draw(mWL.chipCase.valueLabels[i].texture,
+					mWL.chipCase.valueLabels[i].x-mWL.chipCase.valueLabels[i].radiusX,
+					mWL.chipCase.valueLabels[i].y-mWL.chipCase.valueLabels[i].radiusY,
+					mWL.chipCase.valueLabels[i].radiusX*2,mWL.chipCase.valueLabels[i].radiusY*2,
+					0,0,mWL.chipCase.valueLabels[i].radiusX*2,mWL.chipCase.valueLabels[i].radiusY*2,false,false);
+		}
+		
+		// draw check highlight
+		if (mWL.thisPlayer.checkButton.opacity!=0) {
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mWL.thisPlayer.checkButton.opacity);
+			batch.draw(tableHighlightTexture,
+					mWL.thisPlayer.checkButton.x-mWL.thisPlayer.checkButton.radiusX,
+					mWL.thisPlayer.checkButton.y-mWL.thisPlayer.checkButton.radiusY,
+					mWL.thisPlayer.checkButton.radiusX*2,mWL.thisPlayer.checkButton.radiusY*2,
+					0,0,200,200,false,false);
+	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+		
+		if (mWL.game.wifiEnabled) {
+			/*
+			batch.draw(helpTexture,
+					mWL.thisPlayer.helpButton.x-mWL.thisPlayer.helpButton.radiusX,
+					mWL.thisPlayer.helpButton.y-mWL.thisPlayer.helpButton.radiusY,
+					mWL.thisPlayer.helpButton.radiusX*2,mWL.thisPlayer.helpButton.radiusY*2,
+					0,0,128,128, false,false);
+			batch.draw(hostTexture,
+					mWL.thisPlayer.hostButton.x-mWL.thisPlayer.hostButton.radiusX,
+					mWL.thisPlayer.hostButton.y-mWL.thisPlayer.hostButton.radiusY,
+					mWL.thisPlayer.hostButton.radiusX*2,mWL.thisPlayer.hostButton.radiusY*2,
+					0,0,256,256, false,false);
+			batch.end();
+			DPCGame.textRenderer.renderButtonLabels(batch.getProjectionMatrix().getValues());
+			batch.begin();
+			*/
+		} else {
+			/*
+			batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mWL.thisPlayer.wifiButton.opacity);
+			batch.draw(wifiTexture,
+					mWL.thisPlayer.wifiButton.x-mWL.thisPlayer.wifiButton.radiusX,
+					mWL.thisPlayer.wifiButton.y-mWL.thisPlayer.wifiButton.radiusY,
+					mWL.thisPlayer.wifiButton.radiusX*2,mWL.thisPlayer.wifiButton.radiusY*2,
+					0,0,128,128, false,false);
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+	        */
+		}
+		
+		
+	}
+	
+	private void renderLobby() {
+		
+		Player thisPlayer_;
+		
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			thisPlayer_=mWL.table.seats[i].player;
+			if (thisPlayer_!=null) {
+				renderPlayerInLobby(thisPlayer_);
+				alphaShader=batch.getColor();
+				batch.setColor(alphaShader.r,alphaShader.g,
+						alphaShader.b,thisPlayer_.name.opacity);
+				batch.draw(thisPlayer_.name.texture,thisPlayer_.name.x-thisPlayer_.name.radiusX,
+						thisPlayer_.name.y-thisPlayer_.name.radiusY,
+						thisPlayer_.name.radiusX,thisPlayer_.name.radiusY,
+						thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,
+						1,1,thisPlayer_.getRotation(),
+						0,0,thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,false,false);
+				batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+			} else {
+				if (mWL.table.pickedUpPlayer==null||i!=mWL.table.closestSeatToPickedUp) {
+					renderFreeSeat(i);
+				}
+			}
+		}
+		
+		thisPlayer_=mWL.table.pickedUpPlayer;
+		if (thisPlayer_!=null) {
+			renderPlayerInLobby(thisPlayer_);
+			alphaShader=batch.getColor();
+			batch.setColor(alphaShader.r,alphaShader.g,
+					alphaShader.b,thisPlayer_.name.opacity);
+			batch.draw(thisPlayer_.name.texture,thisPlayer_.name.x-thisPlayer_.name.radiusX,
+					thisPlayer_.name.y-thisPlayer_.name.radiusY,
+					thisPlayer_.name.radiusX,thisPlayer_.name.radiusY,
+					thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,
+					1,1,thisPlayer_.getRotation(),
+					0,0,thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,false,false);
+			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+		
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			thisPlayer_=mWL.table.seats[i].player;
+			if (thisPlayer_!=null) {
+				if (thisPlayer_.joinToken.opacity!=0) {
+					batch.draw(joinTokenTexture,
+							thisPlayer_.joinToken.x-thisPlayer_.joinToken.radiusX,
+							thisPlayer_.joinToken.y-thisPlayer_.joinToken.radiusY,
+							thisPlayer_.joinToken.radiusX,thisPlayer_.joinToken.radiusY,
+							thisPlayer_.joinToken.radiusX*2,thisPlayer_.joinToken.radiusY*2,
+							1,1,thisPlayer_.getRotation(),
+							0,0,309,311,false,false);
+				}
+			}
+			Seat thisSeat=mWL.table.seats[i];
+			if (thisSeat.undoButton.opacity!=0) {
+				alphaShader=batch.getColor();
+				batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,thisSeat.undoButton.opacity);
+				batch.draw(buttonGreen,
+						thisSeat.undoButton.x-thisSeat.undoButton.radiusX,
+						thisSeat.undoButton.y-thisSeat.undoButton.radiusY,
+						thisSeat.undoButton.radiusX,thisSeat.undoButton.radiusY,
+						thisSeat.undoButton.radiusX*2,thisSeat.undoButton.radiusY*2,
+						1,1,thisSeat.undoButton.rotation,
+						0,0,152,37,false,false);
+				batch.draw(mWL.table.seats[0].undoButton.getLabel().texture,
+						thisSeat.undoButton.getLabel().x-thisSeat.undoButton.getLabel().radiusX,
+						thisSeat.undoButton.getLabel().y-thisSeat.undoButton.getLabel().radiusY,
+						thisSeat.undoButton.getLabel().radiusX,thisSeat.undoButton.getLabel().radiusY,
+						thisSeat.undoButton.getLabel().radiusX*2,thisSeat.undoButton.getLabel().radiusY*2,
+						1,1,thisSeat.undoButton.getLabel().rotation,
+						0,0,thisSeat.undoButton.getLabel().radiusX*2,thisSeat.undoButton.getLabel().radiusY*2,false,false);
+				batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,thisSeat.undoButton.opacity);
+			}
+		}
+	}
+	
+	private void renderPlayerInLobby(Player thisPlayer_) {
+
+        if (thisPlayer_.connectionBlob.opacity!=0) {
+			alphaShader=batch.getColor();
+			batch.setColor(ColorPool.colors[thisPlayer_.color].r,ColorPool.colors[thisPlayer_.color].g,
+	        		ColorPool.colors[thisPlayer_.color].b,thisPlayer_.connectionBlob.opacity);
+			batch.draw(connectionBlobTexture,
+					thisPlayer_.connectionBlob.x-thisPlayer_.connectionBlob.radiusX,
+					thisPlayer_.connectionBlob.y-thisPlayer_.connectionBlob.radiusY,
+					thisPlayer_.connectionBlob.radiusX,thisPlayer_.connectionBlob.radiusY,
+					thisPlayer_.connectionBlob.radiusX*2,thisPlayer_.connectionBlob.radiusY*2,
+					1,1,thisPlayer_.getRotation(),
+					0,0,312,192,false,false);
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,1);
+					
+		}
+        
+        if (thisPlayer_.getCard()!=null&&thisPlayer_.getCard().opacity!=0) {
+			alphaShader=batch.getColor();
+			batch.setColor(alphaShader.r,alphaShader.g,
+					alphaShader.b,thisPlayer_.getCard().opacity);
+			batch.draw(cardTexture,
+					thisPlayer_.getCard().x-Table.radiusXSuit*3f,
+					thisPlayer_.getCard().y-Table.radiusYSuit*2f,
+					Table.radiusXSuit*3f,Table.radiusYSuit*2f,
+					Table.radiusXSuit*6f,Table.radiusYSuit*4f,
+					1,1,thisPlayer_.getRotation(),
+					0,0,224,124,false,false);
+			batch.draw(suitsTextures[thisPlayer_.getCard().suit],
+					thisPlayer_.getCard().x-Table.radiusXSuit-thisPlayer_.yCoeff*Table.radiusXSuit*0.8f,
+					thisPlayer_.getCard().y-Table.radiusYSuit+thisPlayer_.xCoeff*Table.radiusXSuit*0.8f,
+					Table.radiusXSuit,Table.radiusYSuit,
+					Table.radiusXSuit*2,Table.radiusYSuit*2,
+					1,1,thisPlayer_.getRotation(),
+					0,0,190,190,false,false);
+			if (thisPlayer_.getCard().suit==Card.DIAMONDS||thisPlayer_.getCard().suit==Card.HEARTS) {
+				batch.setColor(1,0,0,thisPlayer_.getCard().opacity);
+			} else {
+				batch.setColor(0,0,0,thisPlayer_.getCard().opacity);
+			}
+			batch.draw(thisPlayer_.getCard().faceLabel.texture,
+					thisPlayer_.getCard().x-Table.radiusXSuit+thisPlayer_.yCoeff*Table.radiusXSuit*0.8f,
+					thisPlayer_.getCard().y-Table.radiusYSuit-thisPlayer_.xCoeff*Table.radiusXSuit*0.8f,
+					Table.radiusXSuit,Table.radiusYSuit,
+					Table.radiusXSuit*2,Table.radiusYSuit*2,
+					1,1,thisPlayer_.getRotation(),
+					0,0,Table.radiusXSuit*2,Table.radiusYSuit*2,false,false);
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,1);
+		}
+	}
+	
+	private void renderFreeSeat(int seat) {
+		Seat thisSeat=mWL.table.seats[seat];
+		if (thisSeat.playerSlot.opacity!=0) {
+			alphaShader=batch.getColor();
+			batch.setColor(alphaShader.r,alphaShader.g,
+					alphaShader.b,thisSeat.playerSlot.opacity);
+			batch.draw(connectionBlobTexture,
+					thisSeat.playerSlot.x-thisSeat.playerSlot.radiusX,
+					thisSeat.playerSlot.y-thisSeat.playerSlot.radiusY,
+					thisSeat.playerSlot.radiusX,thisSeat.playerSlot.radiusY,
+					thisSeat.playerSlot.radiusX*2,thisSeat.playerSlot.radiusY*2,
+					1,1,thisSeat.rotation,
+					0,0,312,192,false,false);
+			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+	}
+
+	private void renderShadowsToBuffer() {
+		batch.setBlendFunction(GL11.GL_ONE,GL11.GL_ONE);
+		batch.setProjectionMatrix(screenMatrix);
+		shadowsFBO.begin();
+		batch.begin();
+		Gdx.gl.glClearColor(0f,0f,0f,0f);
+		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		
+		int radiusX0_=(int) (Chip.radiusX*shadowDownsampleFactor*1.1f);
+		int radiusY0_=(int) (Chip.radiusY*shadowDownsampleFactor*1.1f);
+		float zxOffset_=Chip.Z_X_OFFSET_RATIO*radiusX0_;
+		float zyOffset_=Chip.Z_Y_OFFSET_RATIO*radiusY0_;
+		ChipStack stack_;
+		float yStack_;
+		float xStack_;
+		int numStack_;
+		// chip stacks
+		for (int chip_=0;chip_<ChipCase.CHIP_TYPES;chip_++) {
+			stack_=mWL.thisPlayer.mainStacks[chip_];
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,stack_.getOpacity());
+			yStack_=(stack_.getY()-(mWL.camPosPlayer.getY()-screenHeight*0.5f))*shadowDownsampleFactor;
+			xStack_=(stack_.getX()-(mWL.camPosPlayer.getX()-screenWidth*0.5f))*shadowDownsampleFactor;
+			numStack_=stack_.renderSize();
+			int N=0;
+			for (;N<numStack_;N++) {
+				batch.draw(shadowTexture,
+						xStack_-radiusX0_+zxOffset_*(N+1),
+						yStack_-radiusY0_+zyOffset_*(N+1),
+						radiusX0_*2,radiusY0_*2,
+						0,0,32,32,false,false);
+			}
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,1);
+		}
+		// picked up chip
+		if (mWL.thisPlayer.pickedUpChip!=null) {
+			Chip PUC_=mWL.thisPlayer.pickedUpChip;
+			batch.draw(shadowTexture,
+					(PUC_.x-(mWL.camPosPlayer.getX()-screenWidth*0.5f))*shadowDownsampleFactor-radiusX0_+zxOffset_*(PUC_.z+1),
+					(PUC_.y-(mWL.camPosPlayer.getY()-screenHeight*0.5f))*shadowDownsampleFactor-radiusY0_+zyOffset_*(PUC_.z+1),
+					radiusX0_*2,radiusY0_*2,
+					0,0,32,32,false,false);
+		}
+		// betting stack
+		stack_=mWL.thisPlayer.bettingStack;
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,stack_.getOpacity());
+		numStack_=stack_.size();
+		for (int N=0;N<numStack_;N++) {
+			Chip thisChip_=stack_.get(N);
+			batch.draw(shadowTexture,
+					(thisChip_.x-(mWL.camPosPlayer.getX()-screenWidth*0.5f))*shadowDownsampleFactor-radiusX0_+zxOffset_*(thisChip_.z+1),
+					(thisChip_.y-(mWL.camPosPlayer.getY()-screenHeight*0.5f))*shadowDownsampleFactor-radiusY0_+zyOffset_*(thisChip_.z+1),
+					radiusX0_*2,radiusY0_*2,
+					0,0,32,32,false,false);
+		}
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		// bet stack
+		stack_=mWL.thisPlayer.betStack;
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,stack_.getOpacity());
+		yStack_=(stack_.getY()-(mWL.camPosPlayer.getY()-screenHeight*0.5f))*shadowDownsampleFactor;
+		xStack_=(stack_.getX()-(mWL.camPosPlayer.getX()-screenWidth*0.5f))*shadowDownsampleFactor;
+		numStack_=stack_.renderSize();
+		for (int N=0;N<numStack_;N++) {
+			batch.draw(shadowTexture,
+					xStack_-radiusX0_+zxOffset_*(N+1),
+					yStack_-radiusY0_+zyOffset_*(N+1),
+					radiusX0_*2,radiusY0_*2,
+					0,0,32,32,false,false);
+		}
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		// cancelling stack
+		stack_=mWL.thisPlayer.cancellingStack;
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,stack_.getOpacity());
+		numStack_=stack_.size();
+		int numA_=0;
+		int numB_=0;
+		int numC_=0;
+		int maxA_=mWL.thisPlayer.mainStacks[ChipCase.CHIP_A].maxRenderNum;
+		int maxB_=mWL.thisPlayer.mainStacks[ChipCase.CHIP_B].maxRenderNum;
+		int maxC_=mWL.thisPlayer.mainStacks[ChipCase.CHIP_C].maxRenderNum;
+		for (int N=0;N<numStack_;N++) {
+			Chip thisChip_=stack_.get(N);
+			int chipType_=thisChip_.chipType;
+			boolean render_=true;
+			if (chipType_==ChipCase.CHIP_A) {
+				numA_++;
+				if (numA_>maxA_)
+					render_=false;
+			} else if (chipType_==ChipCase.CHIP_B) {
+				numB_++;
+				if (numB_>maxB_)
+					render_=false;
+			} else if (chipType_==ChipCase.CHIP_C) {
+				numC_++;
+				if (numC_>maxC_)
+					render_=false;
+			}
+			if (render_) {
+				batch.draw(shadowTexture,
+						(thisChip_.x-(mWL.camPosPlayer.getX()-screenWidth*0.5f))*shadowDownsampleFactor-radiusX0_+zxOffset_*(thisChip_.z+1),
+						(thisChip_.y-(mWL.camPosPlayer.getY()-screenHeight*0.5f))*shadowDownsampleFactor-radiusY0_+zyOffset_*(thisChip_.z+1),
+						radiusX0_*2,radiusY0_*2,
+						0,0,32,32,false,false);
+			}
+		}
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		// cancel stack
+		numA_=0;
+		numB_=0;
+		numC_=0;
+		stack_=mWL.thisPlayer.cancelStack;
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,stack_.getOpacity());
+		numStack_=stack_.size();
+		for (int N=0;N<numStack_;N++) {
+			Chip thisChip_=stack_.get(N);
+			int chipType_=thisChip_.chipType;
+			boolean render_=true;
+			if (chipType_==ChipCase.CHIP_A) {
+				numA_++;
+				if (numA_>maxA_)
+					render_=false;
+			} else if (chipType_==ChipCase.CHIP_B) {
+				numB_++;
+				if (numB_>maxB_)
+					render_=false;
+			} else if (chipType_==ChipCase.CHIP_C) {
+				numC_++;
+				if (numC_>maxC_)
+					render_=false;
+			}
+			if (render_) {
+				batch.draw(shadowTexture,
+						(thisChip_.x-(mWL.camPosPlayer.getX()-screenWidth*0.5f))*shadowDownsampleFactor-radiusX0_+zxOffset_*(thisChip_.z+1),
+						(thisChip_.y-(mWL.camPosPlayer.getY()-screenHeight*0.5f))*shadowDownsampleFactor-radiusY0_+zyOffset_*(thisChip_.z+1),
+						radiusX0_*2,radiusY0_*2,
+						0,0,32,32,false,false);
+			}
+		}
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		
+		batch.end();
+		shadowsFBO.end();
+		batch.setBlendFunction(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+		batch.setProjectionMatrix(camera.getViewMatrix());
+	}
+	
+	public void renderEnterTableName() {
+		if (!mWL.table.tableNameField.label.equals("")) {
+			batch.draw(mWL.table.tableNameField.label.texture,mWL.table.tableNameField.label.x-mWL.table.tableNameField.label.radiusX,
+					mWL.table.tableNameField.label.y-mWL.table.tableNameField.label.radiusY,
+					mWL.table.tableNameField.label.radiusX*2,mWL.table.tableNameField.label.radiusY*2,0,0,
+					mWL.table.tableNameField.label.radiusX*2,mWL.table.tableNameField.label.radiusY*2,false,false);	
+		}
+		if (mWL.table.tableNameField.cursor.opacity!=0) {
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mWL.table.tableNameField.cursor.opacity);
+			batch.draw(cursorTexture,
+					mWL.table.tableNameField.cursor.x-mWL.table.tableNameField.cursor.radiusX,
+					mWL.table.tableNameField.cursor.y-mWL.table.tableNameField.cursor.radiusY,
+					mWL.table.tableNameField.cursor.radiusX*2,mWL.table.tableNameField.cursor.radiusY*2,
+					0,0,32,128,false,false);
+			alphaShader=batch.getColor();
+			batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,1);
+		}
+		
+	}
+	
+	public void renderShadows() {
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,0.23f);
+		batch.draw(shadows,mWL.camPosPlayer.getX()-screenWidth*0.5f,mWL.camPosPlayer.getY()-screenHeight*0.5f,screenWidth,screenHeight);
+		alphaShader=batch.getColor();
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+	}
+	
+	private void renderSelectionHighlights() {
+		alphaShader=batch.getColor();
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			Player thisPlayer=mWL.table.seats[i].player;
+			if (thisPlayer!=null&&thisPlayer.selectionHighlight.opacity!=0) {
+				batch.setColor(alphaShader.r,alphaShader.g,
+		        		alphaShader.b,thisPlayer.selectionHighlight.opacity);
+				batch.draw(tableHighlightTexture,
+						thisPlayer.selectionHighlight.x-thisPlayer.selectionHighlight.radiusX,
+						thisPlayer.selectionHighlight.y-thisPlayer.selectionHighlight.radiusY,
+						thisPlayer.selectionHighlight.radiusX,thisPlayer.selectionHighlight.radiusY,
+						thisPlayer.selectionHighlight.radiusX*2,thisPlayer.selectionHighlight.radiusY*2,
+						1,1,thisPlayer.rotation,
+						0,0,200,200,false,false);
+			}
+		}
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+	}
+	
+	private void renderDealerButton() {
+		alphaShader=batch.getColor();
+		if (mWL.table.dealerButton.opacity!=0) {
+			batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mWL.table.dealerButton.opacity);
+			batch.draw(dealerButtonTexture,
+					mWL.table.dealerButton.x-mWL.table.dealerButton.radiusX,
+					mWL.table.dealerButton.y-mWL.table.dealerButton.radiusY,
+					mWL.table.dealerButton.radiusX,mWL.table.dealerButton.radiusY,
+					mWL.table.dealerButton.radiusX*2,mWL.table.dealerButton.radiusY*2,
+					1,1,mWL.table.dealerButton.rotation,
+					0,0,256,256,false,false);
+		} else if (mWL.thisPlayer.dealerButton.opacity!=0) {
+			batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mWL.thisPlayer.dealerButton.opacity);
+			batch.draw(dealerButtonTexture,
+					mWL.thisPlayer.dealerButton.x-mWL.thisPlayer.dealerButton.radiusX,
+					mWL.thisPlayer.dealerButton.y-mWL.thisPlayer.dealerButton.radiusY,
+					mWL.thisPlayer.dealerButton.radiusX,mWL.thisPlayer.dealerButton.radiusY,
+					mWL.thisPlayer.dealerButton.radiusX*2,mWL.thisPlayer.dealerButton.radiusY*2,
+					1,1,mWL.thisPlayer.dealerButton.rotation,
+					0,0,256,256,false,false);
+		}
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+	}
+
+	
+	private void renderWinStacks() {
+		for (int seat=0;seat<Table.NUM_SEATS;seat++) {
+			Player thisPlayer_=mWL.table.seats[seat].player;
+			if (thisPlayer_!=null) {
+				ChipStack stack_=thisPlayer_.winStack;
+				float rotation_=stack_.getRotation();
+				int xCoeff_=0;
+				int yCoeff_=0;
+				if (rotation_==0||rotation_==360) {
+					yCoeff_=1;
+				} else if (rotation_==-90||rotation_==270) {
+					xCoeff_=1;
+				} else if (rotation_==180||rotation_==-180) {
+					yCoeff_=-1;
+				} else if (rotation_==90||rotation_==-270) {
+					xCoeff_=-1;
+				}
+				alphaShader=batch.getColor();
+				batch.setColor(alphaShader.r,alphaShader.g,
+		        		alphaShader.b,stack_.getOpacity());
+				for (int i=0;i<stack_.renderSize();i++) {
+					Chip chip_=stack_.get(i);
+					float radiusXChip_=Chip.radiusX*(1+chip_.z*Chip.perspectiveGradient);
+					float radiusYChip_=Chip.radiusY*(1+chip_.z*Chip.perspectiveGradient);
+					float zyOffset_=Chip.Z_Y_OFFSET_RATIO*Chip.radiusY*chip_.z*
+							(1+0.5f*Chip.perspectiveGradient*(chip_.z-1));
+					batch.draw(chipTextures[chip_.chipType*Chip.CHIP_ROTATION_N+chip_.imgRotation],
+							chip_.x-radiusXChip_+xCoeff_*zyOffset_,
+							chip_.y-radiusYChip_+yCoeff_*zyOffset_,
+							radiusXChip_,radiusYChip_,
+							radiusXChip_*2,radiusYChip_*2,
+							1,1,rotation_,
+							0,0,256,chip_img_height,false,false);
+				}
+				alphaShader=batch.getColor();
+				batch.setColor(alphaShader.r,alphaShader.g,
+		        		alphaShader.b,1);
+			}
+		}
+	}
+	
+	private void renderPot() {
+		int chipIndex_=0;
+		ChipStack stack_=mWL.table.pots.get(mWL.table.displayedPotIndex).potStack;
+		float rotation_=stack_.getRotation();
+		int xCoeff_=0;
+		int yCoeff_=0;
+		if (rotation_==0||rotation_==360) {
+			yCoeff_=1;
+		} else if (rotation_==-90||rotation_==270) {
+			xCoeff_=1;
+		} else if (rotation_==180||rotation_==-180) {
+			yCoeff_=-1;
+		} else if (rotation_==90||rotation_==-270) {
+			xCoeff_=-1;
+		}
+		alphaShader=batch.getColor();
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,stack_.getOpacity());
+		if (mWL.table.animationState==Table.ANIM_SPLITTING_POTS&&stack_.pastMax()) {
+			// because chips stay in pot until they reach the seat hence win stacks won't be drawn if above max render num of pot
+			int maxNum=stack_.maxRenderNum;
+			int[] chipsRendered=new int[Table.NUM_SEATS];
+			for (chipIndex_=0;chipIndex_<stack_.size();chipIndex_++) {
+				Chip chip_=stack_.get(chipIndex_);
+				float radiusXChip_=Chip.radiusX*(1+chip_.z*Chip.perspectiveGradient);
+				float radiusYChip_=Chip.radiusY*(1+chip_.z*Chip.perspectiveGradient);
+				float zyOffset_=Chip.Z_Y_OFFSET_RATIO*Chip.radiusY*chip_.z*
+						(1+0.5f*Chip.perspectiveGradient*(chip_.z-1));
+				if (chipsRendered[chip_.destSeat.position]<maxNum) {
+					batch.draw(chipTextures[chip_.chipType*Chip.CHIP_ROTATION_N+chip_.imgRotation],
+							chip_.x-radiusXChip_+xCoeff_*zyOffset_,
+							chip_.y-radiusYChip_+yCoeff_*zyOffset_,
+							radiusXChip_,radiusYChip_,
+							radiusXChip_*2,radiusYChip_*2,
+							1,1,rotation_,
+							0,0,256,chip_img_height,false,false);
+					chipsRendered[chip_.destSeat.position]++;
+				}
+			}
+		} else {
+			
+			for (chipIndex_=0;chipIndex_<stack_.renderSize();chipIndex_++) {
+				Chip chip_=stack_.get(chipIndex_);
+				float radiusXChip_=Chip.radiusX*(1+chip_.z*Chip.perspectiveGradient);
+				float radiusYChip_=Chip.radiusY*(1+chip_.z*Chip.perspectiveGradient);
+				float zyOffset_=Chip.Z_Y_OFFSET_RATIO*Chip.radiusY*chip_.z*
+						(1+0.5f*Chip.perspectiveGradient*(chip_.z-1));
+				batch.draw(chipTextures[chip_.chipType*Chip.CHIP_ROTATION_N+chip_.imgRotation],
+						chip_.x-radiusXChip_+xCoeff_*zyOffset_,
+						chip_.y-radiusYChip_+yCoeff_*zyOffset_,
+						radiusXChip_,radiusYChip_,
+						radiusXChip_*2,radiusYChip_*2,
+						1,1,rotation_,
+						0,0,256,chip_img_height,false,false);
+			}
+			if (stack_.totalLabel.texture!=null&&stack_.totalLabel.opacity!=0) {
+				batch.draw(stack_.totalLabel.texture,
+						stack_.getTopX()-stack_.totalLabel.radiusX,
+						stack_.getTopY()-stack_.totalLabel.radiusY,
+						stack_.totalLabel.radiusX,stack_.totalLabel.radiusY,
+						stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,
+						1,1,rotation_,
+						0,0,stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,false,false);
+			}
+		}
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+	}
+	
+	private void renderBetStacks() {
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			int seat=Seat.zOrder[i];
+			if (mWL.table.seats[seat].player!=null) {
+				ChipStack stack_=mWL.table.seats[seat].player.betStack;
+				int maxRenNum=mWL.table.seats[seat].player.betStack.maxRenderNum;
+				int numStack=stack_.renderSize();
+				int numPooling=0;
+				int chipIndex_=0;
+				int topChip_=-1;
+				for (int j=numStack-1;j>=0;j--) {
+					if (!mWL.table.seats[seat].player.betStack.get(j).pooling) {
+						topChip_=j;
+						break;
+					}
+				}
+				alphaShader=batch.getColor();
+		       batch.setColor(alphaShader.r,alphaShader.g,
+		        		alphaShader.b,stack_.getOpacity());
+				for (;chipIndex_<numStack;chipIndex_++) {
+					Chip chip_=stack_.get(chipIndex_);
+					float radiusXChip_=Chip.radiusX*(1+chip_.z*Chip.perspectiveGradient);
+					float radiusYChip_=Chip.radiusY*(1+chip_.z*Chip.perspectiveGradient);
+					float zyOffset_=Chip.Z_Y_OFFSET_RATIO*Chip.radiusY*chip_.z*
+							(1+0.5f*Chip.perspectiveGradient*(chip_.z-1));
+					float rotation_=chip_.rotation;
+					int xCoeff_=0;
+					int yCoeff_=0;
+					if (rotation_==0||rotation_==360) {
+						yCoeff_=1;
+					} else if (rotation_==-90||rotation_==270) {
+						xCoeff_=1;
+					} else if (rotation_==180||rotation_==-180) {
+						yCoeff_=-1;
+					} else if (rotation_==90||rotation_==-270) {
+						xCoeff_=-1;
+					}
+					batch.draw(chipTextures[chip_.chipType*Chip.CHIP_ROTATION_N+chip_.imgRotation],
+							chip_.x-radiusXChip_+xCoeff_*zyOffset_,
+							chip_.y-radiusYChip_+yCoeff_*zyOffset_,
+							radiusXChip_,radiusYChip_,
+							radiusXChip_*2,radiusYChip_*2,
+							1,1,rotation_,
+							0,0,256,chip_img_height,false,false);
+					if (chip_.pooling)
+						numPooling++;
+					if (chipIndex_==topChip_) {
+						batch.draw(stack_.totalLabel.texture,
+								stack_.getTopX()-stack_.totalLabel.radiusX,
+								stack_.getTopY()-stack_.totalLabel.radiusY,
+								stack_.totalLabel.radiusX,stack_.totalLabel.radiusY,
+								stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,
+								1,1,rotation_,
+								0,0,stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,false,false);
+					}
+				}
+				// make sure max render num of chips in the pool stack are drawn
+				if (mWL.table.gameLogic.state==GameLogic.STATE_WAIT_POOL_STACKS) {
+					for (;chipIndex_<stack_.size()&&numPooling<maxRenNum;chipIndex_++) {
+						Chip chip_=stack_.get(chipIndex_);
+						if (chip_.pooling) {
+							float radiusXChip_=Chip.radiusX*(1+chip_.z*Chip.perspectiveGradient);
+							float radiusYChip_=Chip.radiusY*(1+chip_.z*Chip.perspectiveGradient);
+							float zyOffset_=Chip.Z_Y_OFFSET_RATIO*Chip.radiusY*chip_.z*
+									(1+0.5f*Chip.perspectiveGradient*(chip_.z-1));
+							batch.draw(chipTextures[chip_.chipType*Chip.CHIP_ROTATION_N+chip_.imgRotation],
+									chip_.x-radiusXChip_,
+									chip_.y-radiusYChip_+zyOffset_,
+									radiusXChip_*2,radiusYChip_*2,
+									0,0,256,chip_img_height,false,false);
+							numPooling++;
+						}
+					}
+				}
+			}
+		}
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+	}
+	
+	private void renderBettingStacks() {
+		for (int seat=0;seat<Table.NUM_SEATS;seat++) {
+			if (mWL.table.seats[seat].player!=null) {
+				ChipStack stack_=mWL.table.seats[seat].player.bettingStack;
+				float rotation_=stack_.getRotation();
+				int xCoeff_=0;
+				int yCoeff_=0;
+				if (rotation_==0||rotation_==360) {
+					yCoeff_=1;
+				} else if (rotation_==-90||rotation_==270) {
+					xCoeff_=1;
+				} else if (rotation_==180||rotation_==-180) {
+					yCoeff_=-1;
+				} else if (rotation_==90||rotation_==-270) {
+					xCoeff_=-1;
+				}
+				alphaShader=batch.getColor();
+		        batch.setColor(alphaShader.r,alphaShader.g,
+		        		alphaShader.b,stack_.getOpacity());
+				for (int chipIndex=0;chipIndex<stack_.renderSize();chipIndex++) {
+					Chip chip_=stack_.get(chipIndex);
+					float radiusXChip_=Chip.radiusX*(1+chip_.z*Chip.perspectiveGradient);
+					float radiusYChip_=Chip.radiusY*(1+chip_.z*Chip.perspectiveGradient);
+					float zyOffset_=Chip.Z_Y_OFFSET_RATIO*Chip.radiusY*chip_.z*
+							(1+0.5f*Chip.perspectiveGradient*(chip_.z-1));
+					batch.draw(chipTextures[chip_.chipType*Chip.CHIP_ROTATION_N+chip_.imgRotation],
+							chip_.x-radiusXChip_+xCoeff_*zyOffset_,
+							chip_.y-radiusYChip_+yCoeff_*zyOffset_,
+							radiusXChip_,radiusYChip_,
+							radiusXChip_*2,radiusYChip_*2,
+							1,1,rotation_,
+							0,0,256,chip_img_height,false,false);
+				}
+			}
+		}
+		alphaShader=batch.getColor();
+       batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+	}
+	
+
+}

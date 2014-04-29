@@ -1,0 +1,54 @@
+8
+
+dir
+3
+https://subversion.assembla.com/svn/bidjee/trunk/DigitalPokerChips/libs
+https://subversion.assembla.com/svn/bidjee
+
+
+
+2014-01-31T12:50:17.006715Z
+3
+Bidjee
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+f5a3c992-0ef8-4dbd-ba0d-0aceef4dc7b6
+
+gdx-sources.jar
+file
+
+
+
+
+2014-01-07T08:08:22.000000Z
+1217131fc1b6f4eec32299df8647d3b5
+2014-01-31T12:50:17.006715Z
+3
+Bidjee
+has-props
+
+gdx.jar
+file
+
+
+
+
+2014-01-07T08:07:59.000000Z
+9c09121de2592c478378db381bb1ca88
+2014-01-31T12:50:17.006715Z
+3
+Bidjee
+has-props
+

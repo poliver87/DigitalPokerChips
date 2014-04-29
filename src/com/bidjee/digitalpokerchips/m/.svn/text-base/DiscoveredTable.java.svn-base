@@ -1,0 +1,94 @@
+package com.bidjee.digitalpokerchips.m;
+
+import com.bidjee.digitalpokerchips.c.WorldLayer;
+
+public class DiscoveredTable {
+
+	public static final int TIMEOUT_DURATION = 5000;
+	
+	public static final int COIN_NONE = 0;
+	public static final int COIN_ARRIVING = 1;
+	public static final int COIN_SENDING = 2;
+	public static final int COIN_RETRACTING = 3;
+	
+	private int coinState;
+	
+    private byte[] hostBytes;
+    long lastTime;
+    private String name;
+    public TextLabel nameLabel;
+    public DPCSprite coin=new DPCSprite();
+    
+    public int[] vals;
+    
+    public DiscoveredTable(byte[] hostBytes_,String tableName_,int[] vals) {
+    	hostBytes=hostBytes_;
+    	name=tableName_;
+    	lastTime = System.currentTimeMillis();
+    	nameLabel=new TextLabel(tableName_,0,true,0,false);
+    	this.vals=vals;
+    }
+    
+    public void tableFound(byte[] hostBytes_,String tableName_) {
+    	hostBytes=hostBytes_;
+    	name=tableName_;
+    	coin.opacity=1;
+    	nameLabel.setText(tableName_);
+		nameLabel.opacity=1;
+		coinState=COIN_ARRIVING;
+    }
+    
+    public int getCoinState() {
+    	return coinState;
+    }
+    
+    public void setCoinState(int state_) {
+    	coinState=state_;
+    }
+    
+	public void sendJoinCoin() {
+		coinState=COIN_SENDING;
+		coin.setIsTouched(false);
+	}
+	
+	public void retractJoinCoin() {
+		coinState=COIN_RETRACTING;
+		coin.setIsTouched(false);
+	}
+    
+    public byte[] getHostBytes() {
+    	return hostBytes;
+    }
+    
+    public String getName() {
+    	return name;
+    }
+    
+    public void setDimensions(int radiusX_,int radiusY_) {
+    	coin.setDimensions(radiusX_,radiusY_);
+    	nameLabel.setMaxDimensions((int)(radiusX_*1f),(int)(radiusY_*1f));
+    	nameLabel.setTextSizeToMax(WorldLayer.NAME_MEASURE);
+    }
+    
+    public void setPosition(float x_,float y_) {
+    	coin.setPosition(x_,y_);
+    	nameLabel.setPosition(x_,y_);
+    }
+    
+    public void scalePosition(float scaleX_,float scaleY_) {
+    	coin.scalePosition(scaleX_,scaleY_);
+    	nameLabel.scalePosition(scaleX_,scaleY_);
+    }
+
+	public void reset() {
+		coinState=COIN_NONE;
+		hostBytes=null;
+		name=null;
+		coin.opacity=0;
+		nameLabel.setText("");
+		nameLabel.opacity=0;
+	}
+
+
+    
+}

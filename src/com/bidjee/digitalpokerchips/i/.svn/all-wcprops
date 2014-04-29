@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/bidjee/!svn/ver/10/trunk/DigitalPokerChips/src/com/bidjee/digitalpokerchips/i
+END
+IPlayerNetwork.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/bidjee/!svn/ver/59/trunk/DigitalPokerChips/src/com/bidjee/digitalpokerchips/i/IPlayerNetwork.java
+END
+IPersistScreen.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/bidjee/!svn/ver/3/trunk/DigitalPokerChips/src/com/bidjee/digitalpokerchips/i/IPersistScreen.java
+END
+IActivity.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/bidjee/!svn/ver/53/trunk/DigitalPokerChips/src/com/bidjee/digitalpokerchips/i/IActivity.java
+END
+ITextFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/bidjee/!svn/ver/48/trunk/DigitalPokerChips/src/com/bidjee/digitalpokerchips/i/ITextFactory.java
+END
+ITableStore.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/bidjee/!svn/ver/53/trunk/DigitalPokerChips/src/com/bidjee/digitalpokerchips/i/ITableStore.java
+END
+IHostNetwork.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/bidjee/!svn/ver/59/trunk/DigitalPokerChips/src/com/bidjee/digitalpokerchips/i/IHostNetwork.java
+END
