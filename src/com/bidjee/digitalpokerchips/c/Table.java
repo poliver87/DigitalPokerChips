@@ -19,6 +19,7 @@ import com.bidjee.digitalpokerchips.m.Pot;
 import com.bidjee.digitalpokerchips.m.Seat;
 import com.bidjee.digitalpokerchips.m.TextField;
 import com.bidjee.digitalpokerchips.m.TextLabel;
+import com.bidjee.util.Logger;
 
 public class Table {
 	
@@ -1180,7 +1181,7 @@ public class Table {
 			}
 		}
 		// divide pot between winners
-		Gdx.app.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Splitting pot worth "+currPot.potStack.value()+" between "+N);
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Splitting pot worth "+currPot.potStack.value()+" between "+N);
 		//appendLog("Splitting pot worth "+currPot.potStack.value()+" between "+N);
 		currPot.formSplitPots(seats,N);
 		// initiate animation
@@ -1394,6 +1395,7 @@ public class Table {
 		networkInterface.removePlayer(seats[player].player.hostName);
 		ColorPool.unassignColor(seats[player].player.color);
 		seats[player].player=null;
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[player].player.name.getText()+" booted by table");
 	}
 	
 	public void clearExitPendingPlayers() {
@@ -1443,7 +1445,7 @@ public class Table {
 		} else {
 			networkInterface.removePlayer(hostName);
 		}
-		Gdx.app.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+playerName+" connected");
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+playerName+" connected");
 	}
 	
 	public void doPlayerBuyin(Player player) {
@@ -1482,6 +1484,9 @@ public class Table {
 			seats[nextFree].player.color=ColorPool.assignColor();
 			seats[nextFree].player.name.loadTexture();
 			seats[nextFree].player.setTouchable(true);
+			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,player.name.getText()+" bought in");
+		} else {
+			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,player.name.getText()+" couldn't buy in: no seats");
 		}
 	}
 	
@@ -1493,11 +1498,13 @@ public class Table {
 		setConnectionShowing(seats[seat].player,true);
 		seats[seat].player.isFolded=true;
 		seats[seat].player.setTouchable(true);
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[seat].player.name.getText()+" rejoined the loaded game");
 	}
 	
 	public void doPlayerBuyinNextHand(Player player) {
 		networkInterface.promptWaitNextHand(player.hostName);
 		playersPendingBuyin.add(player);
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,player.name.getText()+" added to players pending buyin");
 	}
 	
 	public void notifyPlayerReconnected(String hostName) {
@@ -1512,11 +1519,14 @@ public class Table {
 			if (seats[seat].player.connectionShowing) {
 				setConnectionShowing(seats[seat].player,true);
 			}
+			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[seat].player.name.getText()+" reconnected");
 		} else if (pickedUpPlayer!=null&&pickedUpPlayer.hostName.equals(hostName)) {
 			setConnectionShowing(pickedUpPlayer,true);
+			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,pickedUpPlayer.name.getText()+" reconnected as PUC");
 		} else {
 			// TODO maybe deal with case where buyins are pending?
 			networkInterface.removePlayer(hostName);
+			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,"Player reconnected but couldn't be found so removed");
 		}
 	}
 	
@@ -1539,7 +1549,7 @@ public class Table {
 		networkInterface.removePlayer(hostName);
 		int seat=getIndexFromHostName(hostName);
 		if (seat>=0&&seat<NUM_SEATS) {
-			Gdx.app.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[seat].player.name.getText()+" requested exit");
+			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[seat].player.name.getText()+" requested exit");
 			if (gameState==STATE_LOBBY) {
 				bootPlayerFromTable(seat);
 			} else if (gameState==STATE_LOBBY_LOADED) {
@@ -1567,6 +1577,7 @@ public class Table {
 		if (countPlayers()==1) {
 			mWL.game.mFL.notifyGameCantStart();
 		}
+		
 		// TODO remove player from buyin pending players if necessary
 	}
 	
@@ -1585,7 +1596,7 @@ public class Table {
 		}
 		gameLogic.moveRxd(moveRxdPlayer,move);
 		syncAllTableStatusMenu();
-		Gdx.app.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[moveRxdPlayer].player.name.getText()+" move Rxd");
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[moveRxdPlayer].player.name.getText()+" move Rxd");
 	}
 	
 	public void setupACKEd(final String hostName) {
@@ -1602,13 +1613,13 @@ public class Table {
 		} else if (gameState==STATE_GAME) {
 			processBuyins();
 		}
-		Gdx.app.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[position].player.name.getText()+" setup ACKed");
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[position].player.name.getText()+" setup ACKed");
 	}
 	
 	public void chipsACKed(String hostName) {
 		int player=getIndexFromHostName(hostName);
 		seats[player].player.waitingWinningsACK=false;
-		Gdx.app.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[player].player.name.getText()+" chips ACKed");
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[player].player.name.getText()+" chips ACKed");
 	}
     
 	public void bellRxd(String destHostName) {

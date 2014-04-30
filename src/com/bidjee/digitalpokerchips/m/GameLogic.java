@@ -6,9 +6,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import com.badlogic.gdx.Gdx;
 import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.Table;
+import com.bidjee.util.Logger;
 
 public class GameLogic {
 	
@@ -98,15 +98,15 @@ public class GameLogic {
 	
 	private void setGameState(String state) {
 		this.state=state;
-		Gdx.app.log(DPCGame.DEBUG_LOG_GAME_STATE_TAG,"State: "+state);
+		Logger.log(DPCGame.DEBUG_LOG_GAME_STATE_TAG,"State: "+state);
 	}
 	
 	public void updateLogic() {
 		if (state.equals(STATE_START_HAND)) {
-			Gdx.app.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Start Hand*");
-			appendLog("*Start Hand*");
-			Gdx.app.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Dealer is Player "+dealer+" "+table.seats[dealer].player.name.getText());
-			appendLog("Dealer is Player "+dealer+" "+table.seats[dealer].player.name.getText());
+			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Start Hand*");
+			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Start Hand*");
+			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Dealer is Player "+dealer+" "+table.seats[dealer].player.name.getText());
+			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Dealer is Player "+dealer+" "+table.seats[dealer].player.name.getText());
 			resetGame();
 			table.sendDealerButton(dealer);
 			setGameState(STATE_NEXT_BET);
@@ -157,20 +157,20 @@ public class GameLogic {
 				case DEAL_PRE_FLOP :
 		    		dealStage=DEAL_FLOP;
 		    		dealerMessage+=FLOP_STRING;
-		    		Gdx.app.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Flop*");
-		    		appendLog("*Flop*");
+		    		Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Flop*");
+		    		Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Flop*");
 					break;
 				case DEAL_FLOP:
 					dealStage=DEAL_TURN;
 					dealerMessage+=TURN_STRING;
-					Gdx.app.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Turn*");
-					appendLog("*Turn*");
+					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Turn*");
+					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Turn*");
 					break;
 				case DEAL_TURN:
 					dealStage=DEAL_RIVER;
 					dealerMessage+=RIVER_STRING;
-					Gdx.app.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*River*");
-					appendLog("*River*");
+					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*River*");
+					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*River*");
 					break;
 				default:
 					break;
@@ -215,10 +215,10 @@ public class GameLogic {
 				if (table.seats[i].player!=null&&table.seats[i].player.winStack.size()>0) {
 					table.sendWinnings(i,table.seats[i].player.winStack);
 					
-					Gdx.app.log("DPC","Player "+i+" "+
+					Logger.log("DPC","Player "+i+" "+
 							table.seats[i].player.name.getText()+" wins "+
 							table.seats[i].player.winStack.value());
-					appendLog("Player "+i+" "+
+					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Player "+i+" "+
 							table.seats[i].player.name.getText()+" wins "+
 							table.seats[i].player.winStack.value());
 					
@@ -654,6 +654,7 @@ public class GameLogic {
 			//table.enableUndo(seatIndex);
 			waitingForBet=false;
 			table.seats[seatIndex].player.hasBet=true;
+			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" Checks");
 		} else if (move==MOVE_FOLD) {
 			waitingForBet=false;
 			table.seats[seatIndex].player.isFolded=true;
@@ -664,10 +665,11 @@ public class GameLogic {
 						(table.pots.get(i).playersEntitled.indexOf(seatIndex));
 				}
         	}
+			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" Folds");
 		} else if (move==MOVE_BET||move==MOVE_ALL_IN) {
 			// set current stake if this is a raise
-			int newTotal_=table.seats[seatIndex].player.bettingStack.value()+
-					table.seats[seatIndex].player.betStack.value();
+			int betValue=table.seats[seatIndex].player.bettingStack.value();
+			int newTotal_=betValue+table.seats[seatIndex].player.betStack.value();
 			if (newTotal_>currStake) {
 				currStake=newTotal_;
 			}
@@ -676,6 +678,9 @@ public class GameLogic {
 			// set all in if this player just went all in
 			if (move==MOVE_ALL_IN) {
 				table.seats[seatIndex].player.isAllIn=true;
+				Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" goes all in for "+betValue);
+			} else {
+				Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" Bets "+betValue);
 			}
 		}
 		table.mWL.game.mFL.flopLabel.fadeOut();
@@ -713,34 +718,6 @@ public class GameLogic {
 		} else {
 			return false;
 		}
-	}
-	
-	public static void appendLog(String text)
-	{       
-	   File logFile = new File("sdcard/log.txt");
-	   if (!logFile.exists())
-	   {
-	      try
-	      {
-	         logFile.createNewFile();
-	      } 
-	      catch (IOException e)
-	      {
-	         e.printStackTrace();
-	      }
-	   }
-	   try
-	   {
-	      //BufferedWriter for performance, true to set append to file flag
-	      BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true)); 
-	      buf.append(text);
-	      buf.newLine();
-	      buf.close();
-	   }
-	   catch (IOException e)
-	   {
-	      e.printStackTrace();
-	   }
 	}
 
 }

@@ -15,6 +15,7 @@ import com.bidjee.digitalpokerchips.m.GameLogic;
 import com.bidjee.digitalpokerchips.m.PlayerEntry;
 import com.bidjee.digitalpokerchips.m.TextField;
 import com.bidjee.digitalpokerchips.m.TextLabel;
+import com.bidjee.util.Logger;
 
 public class ThisPlayer {
 	//////////////////// Constants ////////////////////
@@ -478,7 +479,7 @@ public class ThisPlayer {
 		// TODO if table status menu open will hold touch focus!
 		mWL.game.mFL.tableStatusMenu.remove();
 		mWL.game.mFL.stopWaitNextHand();
-		Gdx.app.log("A", "notifyGameDisconnected");
+		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"notifyTableDisconnected");
 	}
 	
 	private void cancelMoveState() {
@@ -829,6 +830,7 @@ public class ThisPlayer {
 			joinToken.setPosition(joinTokenStart);
 			mWL.game.mFL.startBuyin(table.getName(),loadedGame);
 		}
+		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Table Found: "+table.getName());
 	}
 	
 	public void notifyConnectResult(boolean result,String tableName) {
@@ -836,24 +838,26 @@ public class ThisPlayer {
 			connectivityStatus=CONN_CONNECTED;
 			this.tableName=tableName;
 			plaque.setTouchable(false);
+			Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Connection Successful");
 		} else {
 			// TODO notify player
 			connectivityStatus=CONN_IDLE;
 			searchHoldoff();
 			mWL.game.mFL.stopBuyin();
+			Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Connection Failed");
 		}
 		connectingTable=null;
 	}
 	
 	public void notifyConnectionLost() {
-		Gdx.app.log("DPCLifecycle", "ThisPlayer - notifyConnectionLost()");
+		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Connection Dropped");
 		waitingOnHost=true;
 		cancelMoveState();
 		mWL.game.mFL.startReconnect();
 	}
 	
 	public void notifyReconnected() {
-		Gdx.app.log("DPCLifecycle", "ThisPlayer - notifyReconnected()");
+		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Reconnected");
 		waitingOnHost=false;
 		mWL.game.mFL.stopReconnect();
 	}
@@ -863,6 +867,7 @@ public class ThisPlayer {
 	}
 	
 	public void setupChips(ChipStack setupStack,int color) {
+		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Setup Chips");
 		clearAllStacks();
 		mainStacks[ChipCase.CHIP_A].setOpacity(1);
 		mainStacks[ChipCase.CHIP_B].setOpacity(1);
@@ -952,6 +957,7 @@ public class ThisPlayer {
 	}
 	
 	public void notifyBootedByHost() {
+		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Booted by Table");
 		if (connectivityStatus==CONN_CONNECTED) {
 			connectivityStatus=CONN_IDLE;
 			notifyTableDisconnected();

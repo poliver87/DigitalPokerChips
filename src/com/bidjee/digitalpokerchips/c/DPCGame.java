@@ -23,6 +23,7 @@ public class DPCGame extends Game {
 	
 	public static final String DEBUG_LOG_LIFECYCLE_TAG = "DPCLifecycle";
 	public static final String DEBUG_LOG_NETWORK_TAG = "DPCNetwork";
+	public static final String DEBUG_LOG_PLAYER_TAG = "DPCPlayer";
 	public static final String DEBUG_LOG_TABLE_TAG = "DPCTable";
 	public static final String DEBUG_LOG_GAME_STATE_TAG = "DPCGameState";
 	public static final String DEBUG_LOG_WORLD_NAVIGATION_TAG = "DPCWorldNavigation";
