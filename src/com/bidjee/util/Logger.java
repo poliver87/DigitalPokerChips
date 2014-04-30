@@ -1,4 +1,4 @@
-package con.bidjee.util;
+package com.bidjee.util;
 
 public class Logger {
 
