@@ -458,8 +458,7 @@ public class Table {
 							thisPlayer.sentStartStack();
 							syncAllTableStatusMenu();
 							if (gameState==STATE_LOBBY) {
-								networkInterface.showConnection(thisPlayer.hostName);
-								thisPlayer.connectionBlob.fadeIn();
+								setConnectionShowing(thisPlayer,true);
 								thisPlayer.name.fadeIn();
 								if (mWL.game.runTutorialArrangement&&countPlayersLobby()==1) {
 									mWL.game.runTutorialArrangement=false;
@@ -552,8 +551,7 @@ public class Table {
 					for (int i=0;i<NUM_SEATS;i++) {
 						if (seats[i].player!=null) {
 							seats[i].player.name.fadeOut();
-							seats[i].player.connectionBlob.fadeOut();
-							networkInterface.hideConnection(seats[i].player.hostName);
+							setConnectionShowing(seats[i].player,false);
 						}
 					}
 				}
@@ -573,8 +571,7 @@ public class Table {
 						for (int i=0;i<NUM_SEATS;i++) {
 							if (seats[i].player!=null) {
 								seats[i].player.name.fadeOut();
-								seats[i].player.connectionBlob.fadeOut();
-								networkInterface.hideConnection(seats[i].player.hostName);
+								setConnectionShowing(seats[i].player,false);
 							}
 						}
 					}
@@ -617,7 +614,7 @@ public class Table {
 			for (int i=0;i<NUM_SEATS;i++) {
 				seats[i].notifyAtLobby();
 				if (seats[i].player!=null) {
-					seats[i].player.connectionBlob.fadeIn();
+					setConnectionShowing(seats[i].player,true);
 					seats[i].player.name.fadeIn();
 				}
 			}
@@ -647,9 +644,8 @@ public class Table {
 			gameLogic.start();
 			for (int i=0;i<NUM_SEATS;i++) {
 				if (seats[i].player!=null) {
-					seats[i].player.connectionBlob.fadeOut();
+					setConnectionShowing(seats[i].player,false);
 					seats[i].player.name.fadeOut();
-					networkInterface.hideConnection(seats[i].player.hostName);
 				}
 			}
 			mWL.game.mFL.notifyGameStarting();
@@ -1107,7 +1103,7 @@ public class Table {
 		cancelMove(bootDialogPlayer);
 		gameLogic.sitPlayerOut(bootDialogPlayer);
 		seats[bootDialogPlayer].player.name.fadeOut();
-		seats[bootDialogPlayer].player.connectionBlob.fadeOut();
+		setConnectionShowing(seats[bootDialogPlayer].player,false);
 		closeBootDialog();
 	}
 	
@@ -1317,8 +1313,7 @@ public class Table {
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
 				seats[i].player.name.fadeIn();
-				seats[i].player.connectionBlob.fadeIn();
-				networkInterface.showConnection(seats[i].player.hostName);
+				setConnectionShowing(seats[i].player,true);
 			}
 		}
 	}
@@ -1327,8 +1322,7 @@ public class Table {
 		animationState=ANIM_WINNER_BY_DEFAULT;
 		this.winner=winner;
 		seats[winner].player.name.fadeIn();
-		seats[winner].player.connectionBlob.fadeIn();
-		networkInterface.showConnection(seats[winner].player.hostName);
+		setConnectionShowing(seats[winner].player,true);
 		pots.get(displayedPotIndex).potStack.setRotation(seats[winner].rotation);
 	}
 	
@@ -1369,7 +1363,7 @@ public class Table {
 	public void promptMove(int currBetter,int stake,boolean foldEnabled,String message,String messageStateChange) {
 		networkInterface.promptMove(seats[currBetter].player.hostName,currBetter,stake,foldEnabled,message,messageStateChange);
 		seats[currBetter].player.name.fadeIn();
-		seats[currBetter].player.connectionBlob.fadeIn();
+		setConnectionShowing(seats[currBetter].player,true);
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&i!=currBetter) {
 				networkInterface.enableNudge(seats[i].player.hostName,seats[currBetter].player.hostName);
@@ -1419,6 +1413,16 @@ public class Table {
 			}
 		}
 		networkInterface.syncAllTableStatusMenu(players);
+	}
+	
+	private void setConnectionShowing(Player player,boolean showing) {
+		if (showing) {
+			player.setConnectionShowing(true);
+			networkInterface.showConnection(player.hostName);
+		} else {
+			player.setConnectionShowing(false);
+			networkInterface.hideConnection(player.hostName);
+		}
 	}
 	
 	//////////////////// Player to Table Messages ////////////////////
@@ -1486,7 +1490,7 @@ public class Table {
 		seats[seat].player.hostName=player.hostName;
 		seats[seat].player.doRxJoinCoin();
 		seats[seat].player.isConnected=true;
-		seats[seat].player.connectionBlob.fadeIn();
+		setConnectionShowing(seats[seat].player,true);
 		seats[seat].player.isFolded=true;
 		seats[seat].player.setTouchable(true);
 	}
@@ -1505,8 +1509,11 @@ public class Table {
 			} else {
 				networkInterface.recallDealerChip(hostName);
 			}
+			if (seats[seat].player.connectionShowing) {
+				setConnectionShowing(seats[seat].player,true);
+			}
 		} else if (pickedUpPlayer!=null&&pickedUpPlayer.hostName.equals(hostName)) {
-			//
+			setConnectionShowing(pickedUpPlayer,true);
 		} else {
 			// TODO maybe deal with case where buyins are pending?
 			networkInterface.removePlayer(hostName);
@@ -1543,7 +1550,7 @@ public class Table {
 			} else if (gameState==STATE_GAME) {
 				gameLogic.exitFromGame(seat);
 				seats[seat].player.name.fadeOut();
-				seats[seat].player.connectionBlob.fadeOut();
+				setConnectionShowing(seats[seat].player,false);
 				if (seats[seat].player.selected) {
 					seats[seat].player.setSelected(false);
 					updateSplitButtons();
@@ -1567,7 +1574,7 @@ public class Table {
 		networkInterface.disableNudge();
 		int moveRxdPlayer=getIndexFromHostName(hostName);
 		seats[moveRxdPlayer].player.name.fadeOut();
-		seats[moveRxdPlayer].player.connectionBlob.fadeOut();
+		setConnectionShowing(seats[moveRxdPlayer].player,false);
 		closeBootDialog();
 		if (!chipString.equals("")) {
 			seats[moveRxdPlayer].player.setBettingStack(ChipStack.parseStack(chipString));

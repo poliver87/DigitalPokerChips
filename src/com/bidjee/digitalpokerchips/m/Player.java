@@ -34,6 +34,7 @@ public class Player extends DPCSprite {
 	public boolean isConnected;
 	private int[] buyinBuild;
 	public int azimuth;
+	public boolean connectionShowing;
 	// Objects //
 	public DPCSprite joinToken=new DPCSprite();
 	public DPCSprite connectionBlob;
@@ -346,6 +347,15 @@ public class Player extends DPCSprite {
 			selectionHighlight.fadeIn();
 		} else {
 			selectionHighlight.fadeOut();
+		}
+	}
+
+	public void setConnectionShowing(boolean showing) {
+		connectionShowing=showing;
+		if (showing) {
+			connectionBlob.fadeIn();
+		} else {
+			connectionBlob.fadeOut();
 		}
 	}
 	
