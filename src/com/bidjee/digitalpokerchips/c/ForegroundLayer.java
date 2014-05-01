@@ -958,14 +958,6 @@ public class ForegroundLayer {
 		input.pushTouchFocus(ForegroundInput.TOUCH_LOBBY_LOADED);
 	}
 	
-	public void stopLobbyLoaded() {
-		lobbyStatusLabel.fadeOut();
-		stopWifiPrompt();
-		gotoGameButton.fadeOut();
-		gotoGameButton.setTouchable(false);
-		input.popTouchFocus(ForegroundInput.TOUCH_LOBBY_LOADED);
-	}
-	
 	public void notifyGameStarting() {
 		input.pushTouchFocus(ForegroundInput.TOUCH_TABLE_GAMEPLAY);
 	}

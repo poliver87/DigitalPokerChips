@@ -213,15 +213,10 @@ public class GameLogic {
 		} else if (state.equals(STATE_SEND_WINNINGS)) {
 			for (int i=0;i<Table.NUM_SEATS;i++) {
 				if (table.seats[i].player!=null&&table.seats[i].player.winStack.size()>0) {
-					table.sendWinnings(i,table.seats[i].player.winStack);
-					
-					Logger.log("DPC","Player "+i+" "+
-							table.seats[i].player.name.getText()+" wins "+
-							table.seats[i].player.winStack.value());
 					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Player "+i+" "+
 							table.seats[i].player.name.getText()+" wins "+
 							table.seats[i].player.winStack.value());
-					
+					table.sendWinnings(i,table.seats[i].player.winStack);					
 					table.seats[i].player.isAllIn=false;
 					table.seats[i].player.waitingWinningsACK=true;
 				}

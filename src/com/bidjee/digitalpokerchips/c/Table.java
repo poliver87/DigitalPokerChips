@@ -291,7 +291,7 @@ public class Table {
 				} else if (winLabelTimer<DURATION_WIN_LABEL) {
 					winLabelTimer+=delta*1000;
 				} else {
-					gameState=STATE_SENDING_DEALER_BUTTON;
+					setGameState(STATE_SENDING_DEALER_BUTTON);
 				}
 			}
 		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
@@ -667,7 +667,6 @@ public class Table {
 				seats[i].playerSlot.opacity=0;
 			}
 			mWL.game.mFL.stopLobby();
-			networkInterface.stopLobby();
 		} else if (gameState==STATE_SELECTING_DEALER) {
 			mWL.game.mFL.stopDealerSelect();
 			for (int i=0;i<NUM_SEATS;i++) {
@@ -781,6 +780,12 @@ public class Table {
 		gameLogic.destroyTable();
 	}
 	
+	private void startLoadedGame() {
+		networkInterface.stopLobby();
+		networkInterface.startLobby(false,null);
+		setGameState(STATE_SENDING_DEALER_BUTTON);
+	}
+	
 	public void rotateAndProjectPlayer(Player player) {
 		// check the screen edges and rotate player if necessary
 		player.setRotation(seats[calculateClosestSeatToPlayer(player)].rotation);
@@ -852,8 +857,10 @@ public class Table {
 	
     public int getPosition(final String hostName_) {
 		for (int i=0;i<Table.NUM_SEATS;i++) {
-			if (seats[i].player!=null&&seats[i].player.hostName.equals(hostName_)) {
-				return i;
+			if (seats[i].player!=null&&seats[i].player.hostName!=null) {
+				if (seats[i].player.hostName.equals(hostName_)) {
+					return i;
+				}
 			}
 		}
 		return -1;
@@ -1392,10 +1399,10 @@ public class Table {
 	}
 	
 	public void bootPlayerFromTable(int player) {
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[player].player.name.getText()+" booted by table");
 		networkInterface.removePlayer(seats[player].player.hostName);
 		ColorPool.unassignColor(seats[player].player.color);
 		seats[player].player=null;
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[player].player.name.getText()+" booted by table");
 	}
 	
 	public void clearExitPendingPlayers() {
@@ -1445,7 +1452,7 @@ public class Table {
 		} else {
 			networkInterface.removePlayer(hostName);
 		}
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+playerName+" connected");
+		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+playerName+" connected"+" hostName: "+hostName+" azimuth: "+azimuth);
 	}
 	
 	public void doPlayerBuyin(Player player) {
@@ -1608,7 +1615,7 @@ public class Table {
 			}
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			if (allPlayersSetup()) {
-				setGameState(STATE_SENDING_DEALER_BUTTON);
+				startLoadedGame();
 			}
 		} else if (gameState==STATE_GAME) {
 			processBuyins();
