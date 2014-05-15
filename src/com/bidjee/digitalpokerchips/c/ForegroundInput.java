@@ -6,8 +6,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
 import com.bidjee.digitalpokerchips.m.ChipCase;
+import com.bidjee.util.Logger;
 
 public class ForegroundInput implements InputProcessor {
+	
+	public static final String LOG_TAG = "DPCInput";
 	
 	public static final String TOUCH_NOTHING = "TOUCH_NOTHING";
 	public static final String TOUCH_HOME = "TOUCH_HOME";
@@ -75,6 +78,7 @@ public class ForegroundInput implements InputProcessor {
 	
 	public void backPressed() {
 		if (touchFocus.size()>0) {
+			Logger.log(LOG_TAG,"backPressed() - touchFocus = "+getLastTouchFocus());
 			if (getLastTouchFocus().equals(TOUCH_PLAYERS_NAME)) {
 				mFL.game.mWL.thisPlayer.nameDone();
 			} else if (getLastTouchFocus().equals(TOUCH_BUYIN)) {
@@ -113,6 +117,7 @@ public class ForegroundInput implements InputProcessor {
 				mFL.game.mWL.navigateBack();
 			}
 		} else {
+			Logger.log(LOG_TAG,"backPressed() - no touch focus");
 			mFL.game.mWL.navigateBack();
 		}
 	}
@@ -128,6 +133,7 @@ public class ForegroundInput implements InputProcessor {
 		float touchX=screenX;
 		float touchY=mFL.foregroundRenderer.yViewToWorld(screenY);
 		if (pointer==0&&touchFocus.size()>0) {
+			Logger.log(LOG_TAG,"touchDown("+touchX+","+touchY+") touchFocus = "+getLastTouchFocus());
 			if (getLastTouchFocus().equals(TOUCH_TUTORIAL_TABLE_NAME)) {
 				handled_=true;
 			} else if (getLastTouchFocus().equals(TOUCH_HOME)) {
@@ -883,13 +889,13 @@ public class ForegroundInput implements InputProcessor {
 		if (!this.getLastTouchFocus().equals(touchFocus)) {
 			this.touchFocus.push(touchFocus);
 		}
-		Gdx.app.log(DPCGame.DEBUG_LOG_TOUCH_FOCUS_TAG,"Pushed touch focus "+touchFocus);
+		Logger.log(LOG_TAG,"Pushed touch focus "+touchFocus);
 	}
 	
 	public void popTouchFocus(String touchFocus) {
-		Gdx.app.log(DPCGame.DEBUG_LOG_TOUCH_FOCUS_TAG,"Popped touch focus "+getLastTouchFocus());
 		if (this.getLastTouchFocus().equals(touchFocus)) {
 			this.touchFocus.pop();
+			Logger.log(LOG_TAG,"Popped touch focus "+touchFocus);
 		}
 	}
 

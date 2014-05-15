@@ -11,8 +11,11 @@ import com.bidjee.digitalpokerchips.m.Chip;
 import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.digitalpokerchips.s.SoundFX;
 import com.bidjee.digitalpokerchips.v.WorldRenderer;
+import com.bidjee.util.Logger;
 
 public class WorldLayer implements Screen {
+	
+	public static final String LOG_TAG = "DPCWorldLayer";
 	
 	//////////////////// Constants ////////////////////
 	public static final String NAME_MEASURE = "AAbJakyQl";
@@ -52,7 +55,6 @@ public class WorldLayer implements Screen {
 	public DPCGame game;
 	
 	public WorldLayer(DPCGame game,IPlayerNetwork playerNetworkInterface,IHostNetwork hostNetworkInterface,ITableStore tableStore) {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "WorldLayer - constructor()");
 		screenLaidOut=false;
 		this.game=game;
 		if (DPCGame.runAllTutorials) {
@@ -103,7 +105,6 @@ public class WorldLayer implements Screen {
 	
 	@Override
 	public void resize(int width,int height) {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "WorldLayer - resize("+width+","+height+")");
 		int worldWidth=WORLD_TO_SCREEN_RATIO*width;
 		int worldHeight=WORLD_TO_SCREEN_RATIO*height;
 		worldRenderer.resize(width,height);
@@ -124,7 +125,6 @@ public class WorldLayer implements Screen {
 	
 	@Override
 	public void resume() {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "WorldLayer - resume()");
 		worldRenderer.loadTextures(game.manager);
 		soundFX.loadSounds(game.manager);
 		game.unfreezeAnimation();
@@ -132,7 +132,6 @@ public class WorldLayer implements Screen {
 	}
 	
 	public void start() {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "WorldLayer - start()");
 		sendCameraTo(camPosHome);
 		worldRenderer.camera.setTo(cameraDestination);
 	}
@@ -146,7 +145,6 @@ public class WorldLayer implements Screen {
 	
 	@Override
 	public void dispose () {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "WorldLayer - dispose()");
 		if (soundFX!=null) {
 			soundFX.dispose();
 		}
@@ -201,9 +199,9 @@ public class WorldLayer implements Screen {
 		} else if (cameraDestination==camPosChipCase) {
 			;
 		} else {
-			Gdx.app.log(DPCGame.DEBUG_LOG_WORLD_NAVIGATION_TAG, "Camera sent to invalid position");
+			//
 		}
-		Gdx.app.log(DPCGame.DEBUG_LOG_WORLD_NAVIGATION_TAG, "Camera sent to "+cameraDestination.toString());
+		Logger.log(LOG_TAG,"sendCameraTo("+camPos.toString()+")");
 	}
 	
 	private void cameraLeftPosition(CameraPosition camPos) {
@@ -227,10 +225,8 @@ public class WorldLayer implements Screen {
 			table.notifyLeftTablePosition();
 			validPosition=true;
 		}
-		if (validPosition) {
-			Gdx.app.log(DPCGame.DEBUG_LOG_WORLD_NAVIGATION_TAG, "Camera left "+cameraDestination.toString());
-		} else {
-			Gdx.app.log(DPCGame.DEBUG_LOG_WORLD_NAVIGATION_TAG, "Camera left an invalid position");
+		if (camPos!=null) {
+			Logger.log(LOG_TAG,"sendCameraTo("+camPos.toString()+")");
 		}
 		
 	}
@@ -249,9 +245,9 @@ public class WorldLayer implements Screen {
 		} else if (cameraDestination==camPosChipCase) {
 			table.notifyAtChipCasePosition();
 		} else {
-			Gdx.app.log(DPCGame.DEBUG_LOG_WORLD_NAVIGATION_TAG, "Camera at invalid position");
+			//
 		}
-		Gdx.app.log(DPCGame.DEBUG_LOG_WORLD_NAVIGATION_TAG, "Camera at "+cameraDestination.toString());
+		Logger.log(LOG_TAG,"sendCameraTo("+cameraDestination.toString()+")");
 	}
 	
 	public void navigateBack() {
@@ -270,8 +266,9 @@ public class WorldLayer implements Screen {
 		} else if (cameraDestination==camPosTable) {
 			table.backPressed();
 		} else {
-			Gdx.app.log(DPCGame.DEBUG_LOG_WORLD_NAVIGATION_TAG, "Back pressed for invalid camera position");
+			//
 		}
+		Logger.log(LOG_TAG,"navigateBack() cameraDestination: "+cameraDestination.toString());
 	}
 
 	public void wifiOn(String ipAddressStr) {

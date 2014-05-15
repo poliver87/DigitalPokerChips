@@ -23,6 +23,8 @@ import com.bidjee.util.Logger;
 
 public class Table {
 	
+	public static final String LOG_TAG = "DPCTable";
+	
 	//////////////////// Constants ////////////////////
 	public static final int STATE_NONE = 0;
 	public static final int STATE_LOBBY = 1;
@@ -600,6 +602,7 @@ public class Table {
 	//////////////////// State Changers ////////////////////
 	private void setGameState(int gameState) {
 		leftGameState(this.gameState);
+		Logger.log(LOG_TAG,"setGameState("+gameState+")");
 		this.gameState=gameState;
 		if (gameState==STATE_NONE) {
 			//
@@ -654,6 +657,7 @@ public class Table {
 	}
 	
 	private void leftGameState(int gameState) {
+		Logger.log(LOG_TAG,"leftGameState("+gameState+")");
 		if (gameState==STATE_LOBBY) {
 			for (int i=0;i<NUM_SEATS;i++) {
 				seats[i].playerSlot.fadeOut();
@@ -693,6 +697,7 @@ public class Table {
 	 * @return return true if world can back out of this area
 	 */
 	public void backPressed() {
+		Logger.log(LOG_TAG,"backPressed()");
 		if (gameState==STATE_NONE) {
 			
 		} else if (gameState==STATE_LOBBY) {
@@ -714,6 +719,7 @@ public class Table {
 	}
 	
 	public void notifyAtTablePosition() {
+		Logger.log(LOG_TAG,"notifyAtTablePosition()");
 		networkInterface.createTable(tableNameField.getText());
 		if (!loadedGame) {
 			setGameState(STATE_LOBBY);
@@ -723,10 +729,12 @@ public class Table {
 	}
 	
 	public void notifyLeftTablePosition() {
+		Logger.log(LOG_TAG,"notifyLeftTablePosition()");
 		mWL.game.mFL.stopWifiPrompt();
 	}
 	
 	public void notifyAtTableNamePosition() {
+		Logger.log(LOG_TAG,"notifyAtTableNamePosition()");
 		mWL.game.mFL.startEnterTableName();
 		tableNameField.setFocus(true);
 		Gdx.input.setOnscreenKeyboardVisible(true);
@@ -734,6 +742,7 @@ public class Table {
 	}
 	
 	public void notifyLeftTableNamePosition() {
+		Logger.log(LOG_TAG,"notifyLeftTableNamePosition()");
 		mWL.game.mFL.stopEnterTableName();
 		tableNameField.setFocus(false);
 		mWL.input.setTypingFocus(WorldInput.TYPING_NOTHING);
@@ -741,14 +750,17 @@ public class Table {
 	}
 	
 	public void notifyAtChipCasePosition() {
+		Logger.log(LOG_TAG,"notifyAtChipCasePosition()");
 		mWL.game.mFL.startSetValues();
 	}
 	
 	public void notifyLeftChipCasePosition() {
+		Logger.log(LOG_TAG,"notifyLeftChipCasePosition()");
 		mWL.game.mFL.stopSetValues();
 	}
 	
 	public void wifiOn(String ipAddressStr) {
+		Logger.log(LOG_TAG,"wifiOn("+ipAddressStr+")");
 		wifiEnabled=true;
 		mWL.game.mFL.setIpAddress(ipAddressStr);
 		if (gameState==STATE_LOBBY) {
@@ -761,6 +773,7 @@ public class Table {
 	}
 	
 	public void wifiOff() {
+		Logger.log(LOG_TAG,"wifiOff()");
 		wifiEnabled=false;
 		if (gameState==STATE_LOBBY) {
 			mWL.game.mFL.pauseLobby();
@@ -772,6 +785,7 @@ public class Table {
 	
 	//////////////////// Internal Methods ////////////////////
 	private void destroyTable() {
+		Logger.log(LOG_TAG,"destroyTable()");
 		networkInterface.destroyTable();
 		ColorPool.unassignAll();
 		for (int i=0;i<Table.NUM_SEATS;i++) {
@@ -781,6 +795,7 @@ public class Table {
 	}
 	
 	private void startLoadedGame() {
+		Logger.log(LOG_TAG,"startLoadedGame()");
 		networkInterface.stopLobby();
 		networkInterface.startLobby(false,null);
 		setGameState(STATE_SENDING_DEALER_BUTTON);
@@ -840,6 +855,7 @@ public class Table {
 				}
 			}
 		}
+		Logger.log(LOG_TAG,"allPlayersSetup = "+allPlayersSetup);
 		return allPlayersSetup;
 	}
 	
@@ -852,21 +868,26 @@ public class Table {
 		}
 		if (pickedUpPlayer!=null&&!pickedUpPlayer.waitingSetupACK)
 			count_++;
+		Logger.log(LOG_TAG,"countPlayers() = "+count_);
 		return count_;
 	}
 	
     public int getPosition(final String hostName_) {
+    	int position=-1;
 		for (int i=0;i<Table.NUM_SEATS;i++) {
 			if (seats[i].player!=null&&seats[i].player.hostName!=null) {
 				if (seats[i].player.hostName.equals(hostName_)) {
-					return i;
+					position=i;
+					break;
 				}
 			}
 		}
-		return -1;
+		Logger.log(LOG_TAG,"getPosition("+hostName_+") = "+position);
+		return position;
 	}
     
 	public void setDealer(int dealer) {
+		Logger.log(LOG_TAG,"setDealer("+dealer+")");
 		gameLogic.setDealer(dealer);
 		if (dealer==GameLogic.NO_DEALER) {
 			dealerButton.rotation=seats[0].rotation;
@@ -877,6 +898,7 @@ public class Table {
 	}
 	
 	private void dealCards() {
+		Logger.log(LOG_TAG,"dealCards()");
 		deck.shuffle();
 		for (int seat=0;seat<NUM_SEATS;seat++) {
 			if (seats[seat].player!=null) {
@@ -898,6 +920,7 @@ public class Table {
 				}
 			}
 		}
+		Logger.log(LOG_TAG,"calculateDealer() = "+highestPlayer);
 		return highestPlayer;
 	}
 	
@@ -906,6 +929,17 @@ public class Table {
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&seats[i].player.hostName.equals(hostName))
 				index_=i;
+		}
+		if (index_>=0) {
+			Logger.log(LOG_TAG,"getIndexFromHostName("+hostName+") = "+index_);
+		} else {
+			String logMsg="getIndexFromHostName("+hostName+") index not found from host names:";
+			for (int i=0;i<NUM_SEATS;i++) {
+				if (seats[i].player!=null) {
+					logMsg=logMsg+" <"+i+": "+seats[i].player.hostName+">";
+				}
+			}
+			Logger.log(LOG_TAG,logMsg);
 		}
 		return index_;
 	}
@@ -918,6 +952,7 @@ public class Table {
 				break;
 			}
 		}
+		Logger.log(LOG_TAG,"getIndexFromPlayerName("+playerName+") = "+index);
 		return index;
 	}
 	
@@ -985,17 +1020,20 @@ public class Table {
 	}
 	
 	public void cancelMove(int seat) {
+		Logger.log(LOG_TAG,"cancelMove("+seat+")");
 		networkInterface.cancelMove(seats[seat].player.hostName);
 	}
 	
 	//////////////////// Input to Table Messages ////////////////////
 	public void createTable() {
+		Logger.log(LOG_TAG,"createTable()");
 		inSetupFlow=true;
 		mWL.sendCameraTo(mWL.camPosTableName);
 		saveSlot=SAVE_SLOT_NONE;
 	}
 	
 	public void tableNameDone() {
+		Logger.log(LOG_TAG,"tableNameDone()");
 		if (tableNameField.getText().equals("")) {
 			tableNameField.setText(TABLE_NAME_DEFAULT);
 		}
@@ -1003,6 +1041,7 @@ public class Table {
 	}
 	
 	public void setValuesDone() {
+		Logger.log(LOG_TAG,"setValuesDone()");
 		if (ChipCase.checkValuesDivisibility()) {
 			mWL.sendCameraTo(mWL.camPosTable);
 		} else {
@@ -1188,7 +1227,7 @@ public class Table {
 			}
 		}
 		// divide pot between winners
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Splitting pot worth "+currPot.potStack.value()+" between "+N);
+		Logger.log(LOG_TAG,"* Splitting pot worth "+currPot.potStack.value()+" between "+N+" *");
 		//appendLog("Splitting pot worth "+currPot.potStack.value()+" between "+N);
 		currPot.formSplitPots(seats,N);
 		// initiate animation
@@ -1270,16 +1309,19 @@ public class Table {
 	
 	//////////////////// GameLogic to Table Messages ////////////////////
 	public void formPots() {
+		Logger.log(LOG_TAG,"formPots()");
 		displayedPotIndex=pots.size()-1;
 		animationState=ANIM_FORM_POTS;
 	}
 	
 	public void clearPots() {
+		Logger.log(LOG_TAG,"clearPots()");
 		displayedPotIndex=0;
 		pots.clear();
 	}
 	
 	public void makeNewPot(ArrayList<Integer> playersEntitled) {
+		Logger.log(LOG_TAG,"makeNewPot()");
 		pots.add(new Pot());
 		pots.get(pots.size()-1).playersEntitled=playersEntitled;
 		pots.get(pots.size()-1).potStack.setX(Pot.originX);
@@ -1335,6 +1377,7 @@ public class Table {
 	}
 	
 	public void processBuyins() {
+		Logger.log(LOG_TAG,"processBuyins()");
 		if (playersPendingBuyin.size()>0) {
 			doPlayerBuyin(playersPendingBuyin.get(0));
 			playersPendingBuyin.remove(0);
@@ -1345,6 +1388,7 @@ public class Table {
 	}
 	
 	public void saveTable() {
+		Logger.log(LOG_TAG,"saveTable()");
 		if (saveSlot==SAVE_SLOT_NONE) {
 			saveSlotSelected(SAVE_SLOT_1);
 			mWL.game.mFL.startAutosaveDialog(saveSlot,tableStore.getTableNames(SAVE_NUM_SLOTS));
@@ -1355,6 +1399,7 @@ public class Table {
 	}
 	
 	public void loadTable(int loadSlot) {
+		Logger.log(LOG_TAG,"loadTable("+loadSlot+")");
 		saveSlot=loadSlot;
 		String tableName=tableStore.getTableName(loadSlot);
 		String tableStateString=tableStore.getTableState(loadSlot);
@@ -1369,6 +1414,7 @@ public class Table {
 	//////////////////// Table to Player Messages ////////////////////
 	
 	public void promptMove(int currBetter,int stake,boolean foldEnabled,String message,String messageStateChange) {
+		Logger.log(LOG_TAG,"promptMove("+currBetter+","+stake+","+foldEnabled+","+message+","+messageStateChange+")");
 		networkInterface.promptMove(seats[currBetter].player.hostName,currBetter,stake,foldEnabled,message,messageStateChange);
 		seats[currBetter].player.name.fadeIn();
 		setConnectionShowing(seats[currBetter].player,true);
@@ -1380,10 +1426,12 @@ public class Table {
 	}
 	
 	public void promptDealer(int dealer,String dealerMessage) {
+		Logger.log(LOG_TAG,"promptDealer("+dealer+","+dealerMessage+")");
 		networkInterface.sendTextMessage(seats[dealer].player.hostName,dealerMessage);
 	}
 	
 	public void sendWinnings(int player,ChipStack winStack) {
+		Logger.log(LOG_TAG,"sendWinnings("+player+","+winStack.value());
 		networkInterface.sendChips(seats[player].player.hostName,player,winStack.toString());
 		seats[player].player.chipAmount+=seats[player].player.winStack.value();
 		seats[player].player.resetWinStack();
@@ -1391,21 +1439,24 @@ public class Table {
 	}
 	
 	public void sendDealerButton(int dealer) {
+		Logger.log(LOG_TAG,"sendDealerButton("+dealer+")");
 		networkInterface.sendDealerChip(seats[dealer].player.hostName);
 	}
 	
 	public void recallDealerButton(int dealer) {
+		Logger.log(LOG_TAG,"recallDealerButton("+dealer+")");
 		networkInterface.recallDealerChip(seats[dealer].player.hostName);
 	}
 	
 	public void bootPlayerFromTable(int player) {
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[player].player.name.getText()+" booted by table");
+		Logger.log(LOG_TAG,"bootPlayerFromTable("+player+")");
 		networkInterface.removePlayer(seats[player].player.hostName);
 		ColorPool.unassignColor(seats[player].player.color);
 		seats[player].player=null;
 	}
 	
 	public void clearExitPendingPlayers() {
+		Logger.log(LOG_TAG,"clearExitPendingPlayers()");
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&seats[i].player.exitPending) {
 				ColorPool.unassignColor(seats[i].player.color);
@@ -1415,6 +1466,7 @@ public class Table {
 	}
 	
 	private void syncAllTableStatusMenu() {
+		Logger.log(LOG_TAG,"syncAllTableStatusMenu()");
 		ArrayList<Player> players=new ArrayList<Player>();
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null) {
@@ -1425,6 +1477,7 @@ public class Table {
 	}
 	
 	private void setConnectionShowing(Player player,boolean showing) {
+		Logger.log(LOG_TAG,"setConnectionShowing()");
 		if (showing) {
 			player.setConnectionShowing(true);
 			networkInterface.showConnection(player.hostName);
@@ -1440,6 +1493,7 @@ public class Table {
 	}
 	
 	public void notifyPlayerConnected(String hostName,String playerName,int azimuth,int[] chipNumbers) {
+		Logger.log(LOG_TAG,"notifyPlayerConnected("+hostName+","+playerName+","+azimuth+")");
 		Player connectedPlayer=new Player(playerName,hostName,null);
 		connectedPlayer.setBuyinBuild(chipNumbers);
 		connectedPlayer.azimuth=azimuth;
@@ -1452,7 +1506,6 @@ public class Table {
 		} else {
 			networkInterface.removePlayer(hostName);
 		}
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+playerName+" connected"+" hostName: "+hostName+" azimuth: "+azimuth);
 	}
 	
 	public void doPlayerBuyin(Player player) {
@@ -1491,10 +1544,9 @@ public class Table {
 			seats[nextFree].player.color=ColorPool.assignColor();
 			seats[nextFree].player.name.loadTexture();
 			seats[nextFree].player.setTouchable(true);
-			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,player.name.getText()+" bought in");
-		} else {
-			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,player.name.getText()+" couldn't buy in: no seats");
+			
 		}
+		Logger.log(LOG_TAG,"doPlayerBuyin("+player.name.getText()+") nextFree = "+nextFree);
 	}
 	
 	public void doPlayerBuyinLoaded(Player player) {
@@ -1505,13 +1557,13 @@ public class Table {
 		setConnectionShowing(seats[seat].player,true);
 		seats[seat].player.isFolded=true;
 		seats[seat].player.setTouchable(true);
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[seat].player.name.getText()+" rejoined the loaded game");
+		Logger.log(LOG_TAG,"doPlayerBuyinLoaded("+player.name.getText()+")");
 	}
 	
 	public void doPlayerBuyinNextHand(Player player) {
 		networkInterface.promptWaitNextHand(player.hostName);
 		playersPendingBuyin.add(player);
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,player.name.getText()+" added to players pending buyin");
+		Logger.log(LOG_TAG,"doPlayerBuyinNextHand("+player.name.getText()+")");
 	}
 	
 	public void notifyPlayerReconnected(String hostName) {
@@ -1526,18 +1578,19 @@ public class Table {
 			if (seats[seat].player.connectionShowing) {
 				setConnectionShowing(seats[seat].player,true);
 			}
-			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,seats[seat].player.name.getText()+" reconnected");
+			Logger.log(LOG_TAG,"notifyPlayerReconnected("+hostName+") "+seats[seat].player.name.getText()+ "reconnected");
 		} else if (pickedUpPlayer!=null&&pickedUpPlayer.hostName.equals(hostName)) {
 			setConnectionShowing(pickedUpPlayer,true);
-			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,pickedUpPlayer.name.getText()+" reconnected as PUC");
+			Logger.log(LOG_TAG,"notifyPlayerReconnected("+hostName+") "+pickedUpPlayer.name.getText()+ "reconnected as PUC");
 		} else {
 			// TODO maybe deal with case where buyins are pending?
+			Logger.log(LOG_TAG,"notifyPlayerReconnected("+hostName+") "+"player not found so removed");
 			networkInterface.removePlayer(hostName);
-			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG,"Player reconnected but couldn't be found so removed");
 		}
 	}
 	
 	public void setPlayerName(final String hostName_,final String name_) {
+		Logger.log(LOG_TAG,"setPlayerName("+hostName_+","+name_+")");
 		for (int i=0;i<Table.NUM_SEATS;i++) {
 			if (seats[i].player!=null&&seats[i].player.hostName.equals(hostName_)) {
 				seats[i].player.setName(name_);
@@ -1556,7 +1609,7 @@ public class Table {
 		networkInterface.removePlayer(hostName);
 		int seat=getIndexFromHostName(hostName);
 		if (seat>=0&&seat<NUM_SEATS) {
-			Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[seat].player.name.getText()+" requested exit");
+			Logger.log(LOG_TAG,"exitFromTable("+hostName+") seat: "+seat);
 			if (gameState==STATE_LOBBY) {
 				bootPlayerFromTable(seat);
 			} else if (gameState==STATE_LOBBY_LOADED) {
@@ -1574,8 +1627,11 @@ public class Table {
 				}
 				closeBootDialog();
 			}
+		} else {
+			Logger.log(LOG_TAG,"exitFromTable("+hostName+") seat not found");
 		}
 		if (pickedUpPlayer!=null&&pickedUpPlayer.hostName.equals(hostName)) {
+			Logger.log(LOG_TAG,"exitFromTable("+hostName+") PUC");
 			ColorPool.unassignColor(pickedUpPlayer.color);
 			pickedUpPlayer.name.dispose();
 			pickedUpPlayer=null;
@@ -1603,7 +1659,7 @@ public class Table {
 		}
 		gameLogic.moveRxd(moveRxdPlayer,move);
 		syncAllTableStatusMenu();
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[moveRxdPlayer].player.name.getText()+" move Rxd");
+		Logger.log(LOG_TAG,"moveRxd("+hostName+","+move+","+chipString+")"+seats[moveRxdPlayer].player.name.getText());
 	}
 	
 	public void setupACKEd(final String hostName) {
@@ -1620,13 +1676,13 @@ public class Table {
 		} else if (gameState==STATE_GAME) {
 			processBuyins();
 		}
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[position].player.name.getText()+" setup ACKed");
+		Logger.log(LOG_TAG,"setupACKEd("+hostName+")");
 	}
 	
 	public void chipsACKed(String hostName) {
 		int player=getIndexFromHostName(hostName);
 		seats[player].player.waitingWinningsACK=false;
-		Logger.log(DPCGame.DEBUG_LOG_TABLE_TAG, "Player: "+seats[player].player.name.getText()+" chips ACKed");
+		Logger.log(LOG_TAG,"chipsACKed("+hostName+")");
 	}
     
 	public void bellRxd(String destHostName) {

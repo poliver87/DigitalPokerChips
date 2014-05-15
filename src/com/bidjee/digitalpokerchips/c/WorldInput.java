@@ -6,8 +6,11 @@ import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.digitalpokerchips.m.Player;
 import com.bidjee.digitalpokerchips.m.ScreenState;
+import com.bidjee.util.Logger;
 
 public class WorldInput implements InputProcessor {
+	
+	public static final String LOG_TAG = "DPCInput";
 	
 	static final int TYPING_NOTHING = 0;
 	static final int TYPING_PLAYER_NAME = 1;
@@ -54,6 +57,7 @@ public class WorldInput implements InputProcessor {
 		if (pointer==0&&mWL.game.screenState==ScreenState.GAMEPLAY) {
 			float touchX=mWL.worldRenderer.xTouchScreenToWorld(screenX);
 			float touchY=mWL.worldRenderer.yTouchScreenToWorld(screenY);
+			Logger.log(LOG_TAG,"touchDown("+touchX+","+touchY+")");
 			lastTouch.set(touchX,touchY);
 			if (mWL.cameraDestination==mWL.camPosHome) {
 				;
@@ -252,6 +256,7 @@ public class WorldInput implements InputProcessor {
 	}
 
 	public void setTypingFocus(int typingFocus) {
+		Logger.log(LOG_TAG,"setTypingFocus("+typingFocus+")");
 		this.typingFocus=typingFocus;
 	}
 

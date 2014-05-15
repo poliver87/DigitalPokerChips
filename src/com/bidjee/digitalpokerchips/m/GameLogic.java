@@ -12,6 +12,8 @@ import com.bidjee.util.Logger;
 
 public class GameLogic {
 	
+	public static final String LOG_TAG = "DPCGameLogic";
+	
 	public static final String PROMPT_MEASURE = "Open River Betting";
 	
 	public static final String FLOP_STRING = "Flop";
@@ -98,15 +100,11 @@ public class GameLogic {
 	
 	private void setGameState(String state) {
 		this.state=state;
-		Logger.log(DPCGame.DEBUG_LOG_GAME_STATE_TAG,"State: "+state);
+		Logger.log(LOG_TAG,"setGameState("+state+")");
 	}
 	
 	public void updateLogic() {
 		if (state.equals(STATE_START_HAND)) {
-			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Start Hand*");
-			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Start Hand*");
-			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Dealer is Player "+dealer+" "+table.seats[dealer].player.name.getText());
-			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Dealer is Player "+dealer+" "+table.seats[dealer].player.name.getText());
 			resetGame();
 			table.sendDealerButton(dealer);
 			setGameState(STATE_NEXT_BET);
@@ -157,20 +155,17 @@ public class GameLogic {
 				case DEAL_PRE_FLOP :
 		    		dealStage=DEAL_FLOP;
 		    		dealerMessage+=FLOP_STRING;
-		    		Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Flop*");
-		    		Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Flop*");
+		    		Logger.log(LOG_TAG,"*** FLOP ***");
 					break;
 				case DEAL_FLOP:
 					dealStage=DEAL_TURN;
 					dealerMessage+=TURN_STRING;
-					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Turn*");
-					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*Turn*");
+					Logger.log(LOG_TAG,"*** TURN ***");
 					break;
 				case DEAL_TURN:
 					dealStage=DEAL_RIVER;
 					dealerMessage+=RIVER_STRING;
-					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*River*");
-					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"*River*");
+					Logger.log(LOG_TAG,"*** RIVER ***");
 					break;
 				default:
 					break;
@@ -213,8 +208,7 @@ public class GameLogic {
 		} else if (state.equals(STATE_SEND_WINNINGS)) {
 			for (int i=0;i<Table.NUM_SEATS;i++) {
 				if (table.seats[i].player!=null&&table.seats[i].player.winStack.size()>0) {
-					Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,"Player "+i+" "+
-							table.seats[i].player.name.getText()+" wins "+
+					Logger.log(LOG_TAG,table.seats[i].player.name.getText()+" wins "+
 							table.seats[i].player.winStack.value());
 					table.sendWinnings(i,table.seats[i].player.winStack);					
 					table.seats[i].player.isAllIn=false;
@@ -275,6 +269,7 @@ public class GameLogic {
 	}
 	
 	public void resetTable() {
+		Logger.log(LOG_TAG,"resetTable()");
 		for (int i=0;i<Table.NUM_SEATS;i++) {
 			if (table.seats[i].player!=null) {
 				table.seats[i].player.reset();
@@ -296,6 +291,7 @@ public class GameLogic {
 	
 	///////////////////////// Private Helper Methods //////////////////////////
 	private void resetGame() {
+		Logger.log(LOG_TAG,"resetGame()");
 		currBetter=dealer;
 		currStake=0;
 		dealStage=DEAL_PRE_FLOP;
@@ -323,6 +319,7 @@ public class GameLogic {
 				dealer_=0;
 			}
 		}
+		Logger.log(LOG_TAG,"findNextDealer("+dealer+")"+" = "+dealer_);
 		return dealer_;
 	}
 	
@@ -359,6 +356,7 @@ public class GameLogic {
 			if (table.seats[i].player!=null&&!table.seats[i].player.isFolded&&table.seats[i].player.betStack.value()>0)
 				moreBets=true;
     	}
+		Logger.log(LOG_TAG,"formPotNeeded() = "+moreBets);
 		return moreBets;
 	}
 	
@@ -374,6 +372,7 @@ public class GameLogic {
 				entitled_=entitled_+" "+i;
 			}
 		}
+		Logger.log(LOG_TAG,"makeNewPot()");
 		table.makeNewPot(playersEntitled_);
 	}
 	
@@ -383,6 +382,7 @@ public class GameLogic {
 	
 	private void doNextBet() {
 		// open the betting to the next non-folded non-all in player
+		Logger.log(LOG_TAG,"doNextBet()");
 		currBetter=getNextBetter(currBetter);
 		if (!smallBlindsIn) {
 			table.promptMove(currBetter,1,false,"Small Blinds","");
@@ -418,20 +418,21 @@ public class GameLogic {
 		waitingForBet=true;
 	}
 	
-	private int getNextBetter(int currBetter_) {
-		currBetter_++;
-		if (currBetter_>=Table.NUM_SEATS) {
-			currBetter_=0;
+	private int getNextBetter(int currBetter) {
+		int nextBetter=currBetter+1;
+		if (nextBetter>=Table.NUM_SEATS) {
+			nextBetter=0;
 		}
-		while (table.seats[currBetter_].player==null||
-				table.seats[currBetter_].player.isFolded||
-				table.seats[currBetter_].player.isAllIn) {
-			currBetter_++;
-			if (currBetter_>=Table.NUM_SEATS) {
-				currBetter_=0;
+		while (table.seats[nextBetter].player==null||
+				table.seats[nextBetter].player.isFolded||
+				table.seats[nextBetter].player.isAllIn) {
+			nextBetter++;
+			if (nextBetter>=Table.NUM_SEATS) {
+				nextBetter=0;
 			}
 		}
-		return currBetter_;
+		Logger.log(LOG_TAG,"getNextBetter("+currBetter+") = "+nextBetter);
+		return nextBetter;
 	}
 	
 	private boolean checkRoundComplete() {
@@ -451,6 +452,7 @@ public class GameLogic {
    				}
    			}
    		}
+    	Logger.log(LOG_TAG,"checkRoundComplete() = "+roundComplete);
     	return roundComplete;    	
     } // end checkRoundComplete()
 	
@@ -462,10 +464,12 @@ public class GameLogic {
 		} else if (dealStage==DEAL_RIVER) {
 			complete=true;
 		}
+		Logger.log(LOG_TAG,"checkHandComplete() = "+complete);
 		return complete;
 	}
 	
     public boolean formPoolStacks() {
+    	Logger.log(LOG_TAG,"formPoolStacks()");
     	boolean sidePotNeeded_=false;
     	int minBetAmount_=0;
     	int numPlayersBet_=0;
@@ -541,6 +545,7 @@ public class GameLogic {
     }
     
     private void buildPoolStack(Player player_,int amount_) {
+    	Logger.log(LOG_TAG,"buildPoolStack("+player_.name.getText()+","+amount_);
     	int[] chipRequirement_=ChipCase.calculateSimplestBuild(amount_);
     	int[] canTake_=new int[ChipCase.CHIP_TYPES];
     	int[] numChip_=new int[ChipCase.CHIP_TYPES];
@@ -581,6 +586,7 @@ public class GameLogic {
 	}
 	
 	public void destroyTable() {
+		Logger.log(LOG_TAG,"destroyTable()");
 		setDealer(NO_DEALER);
 	}
 	
@@ -593,10 +599,12 @@ public class GameLogic {
 				}
 			}
 		}
+		Logger.log(LOG_TAG,"requestGamePermission("+playerName_+") = "+permissionGranted_);
 		return permissionGranted_;
 	}
 	
 	public void exitFromGame(int seat) {
+		Logger.log(LOG_TAG,"exitFromGame("+seat+")");
 		table.seats[seat].player.exitPending=true;
 		table.seats[seat].player.isFolded=true;
 		for (int i=0;i<table.pots.size();i++) {
@@ -611,6 +619,7 @@ public class GameLogic {
 	public void sitPlayerOut(int seat) {
 		//table.seats[seat].player.sittingOut=true;
 		// TODO remove this if not needed
+		Logger.log(LOG_TAG,"sitPlayerOut("+seat+")");
 		table.seats[seat].player.isFolded=true;
 		for (int i=0;i<table.pots.size();i++) {
 			if (table.pots.get(i).playersEntitled.contains(seat)) {
@@ -622,6 +631,7 @@ public class GameLogic {
 	}
 	
 	private void skipPlayer(int seat) {
+		Logger.log(LOG_TAG,"skipPlayer("+seat+")");
 		if (waitingForBet&&currBetter==seat) {
 			waitingForBet=false;
 			if (!smallBlindsIn) {
@@ -649,7 +659,7 @@ public class GameLogic {
 			//table.enableUndo(seatIndex);
 			waitingForBet=false;
 			table.seats[seatIndex].player.hasBet=true;
-			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" Checks");
+			Logger.log(LOG_TAG,"moveRxd - "+table.seats[seatIndex].player.name.getText()+" - CHECK");
 		} else if (move==MOVE_FOLD) {
 			waitingForBet=false;
 			table.seats[seatIndex].player.isFolded=true;
@@ -660,7 +670,7 @@ public class GameLogic {
 						(table.pots.get(i).playersEntitled.indexOf(seatIndex));
 				}
         	}
-			Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" Folds");
+			Logger.log(LOG_TAG,"moveRxd - "+table.seats[seatIndex].player.name.getText()+" - FOLD");
 		} else if (move==MOVE_BET||move==MOVE_ALL_IN) {
 			// set current stake if this is a raise
 			int betValue=table.seats[seatIndex].player.bettingStack.value();
@@ -673,9 +683,9 @@ public class GameLogic {
 			// set all in if this player just went all in
 			if (move==MOVE_ALL_IN) {
 				table.seats[seatIndex].player.isAllIn=true;
-				Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" goes all in for "+betValue);
+				Logger.log(LOG_TAG,"moveRxd - "+table.seats[seatIndex].player.name.getText()+" - ALL IN - "+betValue);
 			} else {
-				Logger.log(DPCGame.DEBUG_LOG_GAME_MOVES_TAG,table.seats[seatIndex].player.name.getText()+" Bets "+betValue);
+				Logger.log(LOG_TAG,"moveRxd - "+table.seats[seatIndex].player.name.getText()+" - BET - "+betValue);
 			}
 		}
 		table.mWL.game.mFL.flopLabel.fadeOut();

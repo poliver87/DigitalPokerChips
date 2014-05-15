@@ -1,6 +1,5 @@
 package com.bidjee.digitalpokerchips.c;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.m.AutosaveDialog;
@@ -19,8 +18,11 @@ import com.bidjee.digitalpokerchips.m.SearchingAnimation;
 import com.bidjee.digitalpokerchips.m.TableStatusMenu;
 import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.digitalpokerchips.v.ForegroundRenderer;
+import com.bidjee.util.Logger;
 
 public class ForegroundLayer {
+	
+	public static final String LOG_TAG = "DPCUILayer";
 	
 	//////////////////// Constants ////////////////////
 	static final String WIN_TEXT = " Wins Dealer!";
@@ -121,9 +123,7 @@ public class ForegroundLayer {
 	public TextLabel azimuthLabel;
 	int secondTimer=0;
 	
-	public ForegroundLayer(DPCGame game) {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "ForegroundLayer - constructor");
-		
+	public ForegroundLayer(DPCGame game) {		
 		this.game=game;
 		foregroundRenderer=new ForegroundRenderer(this);
 		
@@ -259,13 +259,11 @@ public class ForegroundLayer {
 	}
 	
 	public void dispose() {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "ForegroundLayer - dispose()");
 		foregroundRenderer.dispose();
 		game=null;
 	}
 	
 	public void resize(int screenWidth,int screenHeight) {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "ForegroundLayer - resize("+screenWidth+","+screenHeight+")");
 		foregroundRenderer.resize(screenWidth,screenHeight);
 		if ((screenWidth!=this.screenWidth||screenHeight!=this.screenHeight)&&
 				(screenWidth>screenHeight)) {
@@ -506,7 +504,6 @@ public class ForegroundLayer {
 	}
 	
 	public void resume() {
-		Gdx.app.log(DPCGame.DEBUG_LOG_LIFECYCLE_TAG, "ForegroundLayer - resume()");
 		foregroundRenderer.loadTextures(game.manager);
 	}
 	
@@ -621,6 +618,7 @@ public class ForegroundLayer {
 
 	//////////////////// Instructions from World ////////////////////
 	public void startHome() {
+		Logger.log(LOG_TAG,"startHome()");
 		if (!helpOpen) {
 			input.pushTouchFocus(ForegroundInput.TOUCH_HOME);
 			boolean savedTablesPresent=false;
@@ -636,12 +634,14 @@ public class ForegroundLayer {
 	}
 	
 	public void stopHome() {
+		Logger.log(LOG_TAG,"stopHome()");
 		input.popTouchFocus(ForegroundInput.TOUCH_HOME);
 		homeMenu.close();
 	}
 	
 	//////////////////// Instructions from Foreground ////////////////////
 	public void openHelp() {
+		Logger.log(LOG_TAG,"openHelp()");
 		helpOpen=true;
 		dialogWindow.opacity=1;
 		helpDialogSmall.setPosition(homeMenu.howButton.x-homeMenu.howButton.radiusX,homeMenu.howButton.y);
@@ -652,6 +652,7 @@ public class ForegroundLayer {
 	}
 
 	public void closeHelp() {
+		Logger.log(LOG_TAG,"closeHelp()");
 		helpOpen=false;
 		dialogWindow.sendTo(helpDialogSmall);
 		helpDialog.stop();
@@ -660,6 +661,7 @@ public class ForegroundLayer {
 	}
 	
 	public void openLoadDialog() {
+		Logger.log(LOG_TAG,"openLoadDialog()");
 		loadDialogOpen=true;
 		dialogWindow.opacity=1;
 		loadDialogSmall.setPosition(homeMenu.loadButton.x-homeMenu.loadButton.radiusX,homeMenu.loadButton.y);
@@ -681,6 +683,7 @@ public class ForegroundLayer {
 	}
 	
 	public void closeLoadDialog() {
+		Logger.log(LOG_TAG,"closeLoadDialog()");
 		loadDialogOpen=false;
 		dialogWindow.sendTo(loadDialogSmall);
 		loadDialog.stop();
@@ -709,6 +712,7 @@ public class ForegroundLayer {
 	
 	//////////////////// Instructions from Player ////////////////////
 	public void startWifiPrompt() {
+		Logger.log(LOG_TAG,"startWifiPrompt()");
 		wifiButton.startFlashing();
 		wifiButton.setTouchable(true);
 		wifiLabel.startFlashing();
@@ -716,6 +720,7 @@ public class ForegroundLayer {
 	}
 	
 	public void stopWifiPrompt() {
+		Logger.log(LOG_TAG,"stopWifiPrompt()");
 		wifiButton.fadeOut();
 		wifiButton.setTouchable(false);
 		wifiLabel.fadeOut();
@@ -723,6 +728,7 @@ public class ForegroundLayer {
 	}
 	
 	public void startEnterPlayerName() {
+		Logger.log(LOG_TAG,"startEnterPlayerName()");
 		enterName1Label.fadeIn();
 		enterName2Label.fadeIn();
 		enterNameDoneButton.fadeIn();
@@ -731,6 +737,7 @@ public class ForegroundLayer {
 	}
 	
 	public void stopEnterPlayerName() {
+		Logger.log(LOG_TAG,"stopEnterPlayerName()");
 		enterName1Label.fadeOut();
 		enterName2Label.fadeOut();
 		enterNameDoneButton.fadeOut();
@@ -739,12 +746,14 @@ public class ForegroundLayer {
 	}
 	
 	public void startSearchForGames() {
+		Logger.log(LOG_TAG,"startSearchForGames()");
 		searchingLabel.startFlashing();
 		searchingAnimation.ping();
 		searchingAnimation.setTouchable(true);
 	}
 	
 	public void stopSearchForGames() {
+		Logger.log(LOG_TAG,"stopSearchForGames()");
 		searchingAnimation.stop();
 		searchingLabel.stopFlashing();
 		searchingLabel.opacity=0;
@@ -752,6 +761,7 @@ public class ForegroundLayer {
 	}
 	
 	public void startBuyin(String tableName,boolean loadedGame) {
+		Logger.log(LOG_TAG,"stopSearchForGames()");
 		dialogWindow.setOpacity(1);
 		dialogWindow.setPosition(buyinDialogSmall.x,buyinDialogSmall.y);
 		dialogWindow.setDimensions(buyinDialogSmall.radiusX,buyinDialogSmall.radiusY);
@@ -763,12 +773,14 @@ public class ForegroundLayer {
 	}
 	
 	public void stopBuyin() {
+		Logger.log(LOG_TAG,"stopBuyin()");
 		dialogWindow.remove();
 		buyinDialog.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_BUYIN);
 	}
 	
 	public void startManualConnectDialog() {
+		Logger.log(LOG_TAG,"startManualConnectDialog()");
 		dialogWindow.setOpacity(1);
 		dialogWindow.setPosition(buyinDialogSmall.x,buyinDialogSmall.y);
 		dialogWindow.setDimensions(buyinDialogSmall.radiusX,buyinDialogSmall.radiusY);
@@ -779,6 +791,7 @@ public class ForegroundLayer {
 	}
 	
 	public void stopManualConnectDialog() {
+		Logger.log(LOG_TAG,"startManualConnectDialog()");
 		dialogWindow.remove();
 		manualConnectDialog.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_MANUAL_CONNECT);
@@ -786,6 +799,7 @@ public class ForegroundLayer {
 	}
 	
 	public void startLeaveTableDialog(String tableName) {
+		Logger.log(LOG_TAG,"startLeaveTableDialog("+tableName+")");
 		dialogWindow.setOpacity(1);
 		dialogWindow.setPosition(leaveTableDialogSmall.x,leaveTableDialogSmall.y);
 		dialogWindow.setDimensions(leaveTableDialogSmall.radiusX,leaveTableDialogSmall.radiusY);
@@ -796,12 +810,14 @@ public class ForegroundLayer {
 	}
 	
 	public void stopLeaveTableDialog() {
+		Logger.log(LOG_TAG,"stopLeaveTableDialog()");
 		dialogWindow.remove();
 		leaveTableDialog.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_LEAVE_TABLE);
 	}
 	
 	public void startDestroyTableDialog(String tableName) {
+		Logger.log(LOG_TAG,"startDestroyTableDialog("+tableName+")");
 		dialogWindow.setOpacity(1);
 		dialogWindow.setPosition(destroyTableDialogSmall.x,destroyTableDialogSmall.y);
 		dialogWindow.setDimensions(destroyTableDialogSmall.radiusX,destroyTableDialogSmall.radiusY);
@@ -812,12 +828,14 @@ public class ForegroundLayer {
 	}
 	
 	public void stopDestroyTableDialog() {
+		Logger.log(LOG_TAG,"stopDestroyTableDialog()");
 		dialogWindow.remove();
 		destroyTableDialog.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_DESTROY_TABLE);
 	}
 	
 	public void startAutosaveDialog(int defaultSlot,String[] tableNames) {
+		Logger.log(LOG_TAG,"startAutosaveDialog()");
 		dialogWindow.setOpacity(1);
 		dialogWindow.setPosition(autosaveDialogSmall.x,autosaveDialogSmall.y);
 		dialogWindow.setDimensions(autosaveDialogSmall.radiusX,autosaveDialogSmall.radiusY);
@@ -829,25 +847,30 @@ public class ForegroundLayer {
 	}
 	
 	public void stopAutosaveDialog() {
+		Logger.log(LOG_TAG,"stopAutosaveDialog()");
 		dialogWindow.remove();
 		autosaveDialog.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_AUTOSAVE_DIALOG);
 	}
 	
 	public void notifyAtPlayerPosition() {
+		Logger.log(LOG_TAG,"notifyAtPlayerPosition()");
 		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER);
 	}
 	
 	public void notifyLeftPlayerPosition() {
+		Logger.log(LOG_TAG,"notifyLeftPlayerPosition()");
 		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER);
 	}
 	
 	public void showTableStatusMenu(String tableName) {
+		Logger.log(LOG_TAG,"showTableStatusMenu()");
 		tableStatusMenu.setTableName(tableName);
 		tableStatusMenu.show();
 	}
 	
 	public void showTextMessage(String textMessage) {
+		Logger.log(LOG_TAG,"showTextMessage("+textMessage+")");
 		playerPrompt.setPosition(posPlayerPromptOffscreen);
 		playerPrompt.setText(textMessage);
 		playerPrompt.loadTexture();
@@ -857,10 +880,12 @@ public class ForegroundLayer {
 	}
 	
 	public void hideTextMessage() {
+		Logger.log(LOG_TAG,"hideTextMessage()");
 		showPlayerPrompt=false;
 	}
 
 	public void promptStateChange(String messageStateChange) {
+		Logger.log(LOG_TAG,"promptStateChange("+messageStateChange+")");
 		stateChangePrompt.setText(messageStateChange);
 		stateChangePrompt.loadTexture();
 		stateChangePrompt.fadeIn();
@@ -868,6 +893,7 @@ public class ForegroundLayer {
 	}
 
 	public void stateChangeACKed() {
+		Logger.log(LOG_TAG,"stateChangeACKed()");
 		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
 		stateChangePrompt.setText("");
 		stateChangePrompt.fadeOut();
@@ -884,25 +910,30 @@ public class ForegroundLayer {
 	}
 	
 	public void startReconnect() {
+		Logger.log(LOG_TAG,"startReconnect()");
 		reconnect1Label.fadeIn();
 		reconnect2Label.startFlashing();
 	}
 	
 	public void stopReconnect() {
+		Logger.log(LOG_TAG,"stopReconnect()");
 		reconnect1Label.fadeOut();
 		reconnect2Label.fadeOut();
 	}
 	
 	public void startWaitNextHand() {
+		Logger.log(LOG_TAG,"startWaitNextHand()");
 		waitNextHandLabel.startFlashing();
 	}
 	
 	public void stopWaitNextHand() {
+		Logger.log(LOG_TAG,"stopWaitNextHand()");
 		waitNextHandLabel.fadeOut();
 	}
 	
 	//////////////////// Instructions from Table ////////////////////
 	public void startEnterTableName() {
+		Logger.log(LOG_TAG,"startEnterTableName()");
 		enterTableName1Label.fadeIn();
 		enterTableName2Label.fadeIn();
 		enterTableNameDoneButton.fadeIn();
@@ -911,6 +942,7 @@ public class ForegroundLayer {
 	}
 	
 	public void stopEnterTableName() {
+		Logger.log(LOG_TAG,"stopEnterTableName()");
 		enterTableName1Label.fadeOut();
 		enterTableName2Label.fadeOut();
 		enterTableNameDoneButton.fadeOut();
@@ -919,6 +951,7 @@ public class ForegroundLayer {
 	}
 	
 	public void startSetValues() {
+		Logger.log(LOG_TAG,"startSetValues()");
 		setValuesLabel.fadeIn();
 		setValuesOkButton.fadeIn();
 		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
@@ -929,6 +962,7 @@ public class ForegroundLayer {
 	}
 
 	public void stopSetValues() {
+		Logger.log(LOG_TAG,"stopSetValues()");
 		setValuesLabel.fadeOut();
 		setValuesOkButton.fadeOut();
 		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
@@ -939,12 +973,14 @@ public class ForegroundLayer {
 	}
 	
 	public void startLobby() {
+		Logger.log(LOG_TAG,"startLobby()");
 		lobbyStatusLabel.startFlashing();
 		showIpAddress();
 		input.pushTouchFocus(ForegroundInput.TOUCH_LOBBY);
 	}
 	
 	public void stopLobby() {
+		Logger.log(LOG_TAG,"stopLobby()");
 		lobbyStatusLabel.fadeOut();
 		hideIpAddress();
 		stopWifiPrompt();
@@ -954,29 +990,35 @@ public class ForegroundLayer {
 	}
 	
 	public void startLobbyLoaded() {
+		Logger.log(LOG_TAG,"startLobbyLoaded()");
 		lobbyStatusLabel.startFlashing();
 		input.pushTouchFocus(ForegroundInput.TOUCH_LOBBY_LOADED);
 	}
 	
 	public void notifyGameStarting() {
+		Logger.log(LOG_TAG,"notifyGameStarting()");
 		input.pushTouchFocus(ForegroundInput.TOUCH_TABLE_GAMEPLAY);
 	}
 	
 	public void stopGame() {
+		Logger.log(LOG_TAG,"stopGame()");
 		input.popTouchFocus(ForegroundInput.TOUCH_TABLE_GAMEPLAY);
 	}
 	
 	public void startTutorialArrangement(Player player) {
+		Logger.log(LOG_TAG,"startTutorialArrangement()");
 		input.pushTouchFocus(ForegroundInput.TOUCH_TUTORIAL_ARRANGEMENT);
 		tutorialArrangement.start(player,this);
 	}
 	
 	public void stopTutorialArrangement() {
+		Logger.log(LOG_TAG,"stopTutorialArrangement()");
 		tutorialArrangement.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_TUTORIAL_ARRANGEMENT);
 	}
 	
 	public void notifyGameCanStart(boolean fadeButton) {
+		Logger.log(LOG_TAG,"notifyGameCanStart()");
 		gotoGameButton.fadeIn();
 		gotoGameButton.setTouchable(true);
 		if (!fadeButton) {
@@ -985,18 +1027,21 @@ public class ForegroundLayer {
 	}
 	
 	public void notifyGameCantStart() {
+		Logger.log(LOG_TAG,"notifyGameCantStart()");
 		gotoGameButton.fadeOut();
 		gotoGameButton.setTouchable(false);
 		lobbyStatusLabel.startFlashing();
 	}
 	
 	public void pauseLobby() {
+		Logger.log(LOG_TAG,"pauseLobby()");
 		lobbyStatusLabel.fadeOut();
 		gotoGameButton.fadeOut();
 		gotoGameButton.setTouchable(false);
 	}
 	
 	public void resumeLobby() {
+		Logger.log(LOG_TAG,"resumeLobby()");
 		lobbyStatusLabel.startFlashing();
 		if (game.mWL.table.countPlayers()>=2) {
 			gotoGameButton.fadeIn();
@@ -1005,39 +1050,46 @@ public class ForegroundLayer {
 	}
 	
 	public void startDealerSelect() {
+		Logger.log(LOG_TAG,"startDealerSelect()");
 		selectingDealerLabel.startFlashing();
 	}
 	
 	public void stopDealerSelect() {
+		Logger.log(LOG_TAG,"stopDealerSelect()");
 		selectingDealerLabel.fadeOut();
 		winLabel.fadeOut();
 	}
 	
 	public void showWinLabel(TextLabel name) {
+		Logger.log(LOG_TAG,"showWinLabel("+name.getText()+")");
 		winLabel.setText(name.getText()+WIN_TEXT);
 		winLabel.loadTexture();
 		winLabel.fadeIn();
 	}
 
 	public void startSelectWinner() {
+		Logger.log(LOG_TAG,"startSelectWinner()");
 		selectWinnerLabel.startFlashing();
 		splitButton.fadeIn();
 		splitButton.setTouchable(true);
 	}
 	
 	public void stopSelectWinner() {
+		Logger.log(LOG_TAG,"stopSelectWinner()");
 		selectWinnerLabel.fadeOut();
 		splitButton.fadeOut();
 		splitButton.setTouchable(false);
 	}
 	
 	public void startSelectWinnersSplit() {
+		Logger.log(LOG_TAG,"startSelectWinnersSplit()");
 		selectWinnersSplitLabel.startFlashing();
 		splitCancelButton.fadeIn();
 		splitCancelButton.setTouchable(true);
 	}
 	
 	public void stopSelectWinnersSplit() {
+		Logger.log(LOG_TAG,"stopSelectWinnersSplit()");
 		selectWinnersSplitLabel.fadeOut();
 		splitCancelButton.fadeOut();
 		splitCancelButton.setTouchable(false);
@@ -1046,6 +1098,7 @@ public class ForegroundLayer {
 	} 
 
 	public void startBootDialog(float xSeat,float ySeat,float rotation) {
+		Logger.log(LOG_TAG,"startBootDialog()");
 		dialogWArrowWindow.setOpacity(1);
 		bootDialogSmall.setPosition(xSeat,ySeat);
 		dialogWArrowWindow.setPosition(bootDialogSmall.x,bootDialogSmall.y);
@@ -1059,21 +1112,25 @@ public class ForegroundLayer {
 	}
 	
 	public void stopBootDialog() {
+		Logger.log(LOG_TAG,"stopBootDialog()");
 		dialogWArrowWindow.remove();
 		bootDialog.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_BOOT_DIALOG);
 	}
 	
 	public void setIpAddress(String ipAddressStr) {
+		Logger.log(LOG_TAG,"setIpAddress("+ipAddressStr+")");
 		ipAddress.setText(ipAddressStr);
 	}
 	
 	public void showIpAddress() {
+		Logger.log(LOG_TAG,"showIpAddress()");
 		ipAddress.loadTexture();
 		ipAddress.fadeIn();
 	}
 	
 	public void hideIpAddress() {
+		Logger.log(LOG_TAG,"hideIpAddress()");
 		ipAddress.fadeOut();
 	}
 }

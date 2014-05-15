@@ -18,6 +18,9 @@ import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.util.Logger;
 
 public class ThisPlayer {
+	
+	public static final String LOG_TAG = "DPCPlayer";
+	
 	//////////////////// Constants ////////////////////
 	static final int[] defaultChipNums={8,4,2};
 	
@@ -479,10 +482,11 @@ public class ThisPlayer {
 		// TODO if table status menu open will hold touch focus!
 		mWL.game.mFL.tableStatusMenu.remove();
 		mWL.game.mFL.stopWaitNextHand();
-		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"notifyTableDisconnected");
+		Logger.log(LOG_TAG,"notifyTableDisconnected()");
 	}
 	
 	private void cancelMoveState() {
+		Logger.log(LOG_TAG,"notifyTableDisconnected()");
 		mWL.game.mFL.stateChangeACKed();
 		connectionBlob.fadeOut();
 		connectionBlob.opacity=0;
@@ -699,6 +703,7 @@ public class ThisPlayer {
 	
 	public void notifyReadyToSearch() {
 		// TODO deal with case where player zooms out at any time in the process
+		Logger.log(LOG_TAG,"notifyReadyToSearch()");
 		if (connectivityStatus==CONN_IDLE||connectivityStatus==CONN_SEARCH_HOLDOFF) {
 			connectivityStatus=CONN_SEARCHING;
 			mWL.game.mFL.startSearchForGames();
@@ -707,6 +712,7 @@ public class ThisPlayer {
 	}
 	
 	public void searchHoldoff() {
+		Logger.log(LOG_TAG,"searchHoldoff()");
 		connectivityStatus=CONN_SEARCH_HOLDOFF;
 		searchHoldoffTimer=0;
 	}
@@ -716,6 +722,7 @@ public class ThisPlayer {
 	}
 	
 	public void stopSearchForGames() {
+		Logger.log(LOG_TAG,"stopSearchForGames()");
 		connectivityStatus=CONN_IDLE;
 		mWL.game.mFL.stopSearchForGames();
 		networkInterface.stopRequestGames();
@@ -759,6 +766,7 @@ public class ThisPlayer {
 	}
 	
 	private void submitBet() {
+		Logger.log(LOG_TAG,"submitBet()");
 		int move;
 		if (!isAllIn()) {
 			move=GameLogic.MOVE_BET;
@@ -776,6 +784,7 @@ public class ThisPlayer {
 	}
 	
 	public void doCheck() {
+		Logger.log(LOG_TAG,"doCheck()");
 		if (!waitingOnHost) {
 			mWL.soundFX.checkSound.play();
 			networkInterface.submitMove(GameLogic.MOVE_CHECK,"");
@@ -788,6 +797,7 @@ public class ThisPlayer {
 	}
 	
 	public void doFold() {
+		Logger.log(LOG_TAG,"doFold()");
 		if (!waitingOnHost) {
 			mWL.soundFX.foldSound.play();
 			networkInterface.submitMove(GameLogic.MOVE_FOLD,"");
@@ -830,34 +840,33 @@ public class ThisPlayer {
 			joinToken.setPosition(joinTokenStart);
 			mWL.game.mFL.startBuyin(table.getName(),loadedGame);
 		}
-		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Table Found: "+table.getName());
+		Logger.log(LOG_TAG,"notifyTableFound("+table.getName()+","+loadedGame+")");
 	}
 	
 	public void notifyConnectResult(boolean result,String tableName) {
+		Logger.log(LOG_TAG,"notifyConnectResult("+result+")");
 		if (result) {
 			connectivityStatus=CONN_CONNECTED;
 			this.tableName=tableName;
 			plaque.setTouchable(false);
-			Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Connection Successful");
 		} else {
 			// TODO notify player
 			connectivityStatus=CONN_IDLE;
 			searchHoldoff();
 			mWL.game.mFL.stopBuyin();
-			Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Connection Failed");
 		}
 		connectingTable=null;
 	}
 	
 	public void notifyConnectionLost() {
-		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Connection Dropped");
+		Logger.log(LOG_TAG,"notifyConnectionLost()");
 		waitingOnHost=true;
 		cancelMoveState();
 		mWL.game.mFL.startReconnect();
 	}
 	
 	public void notifyReconnected() {
-		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Reconnected");
+		Logger.log(LOG_TAG,"notifyReconnected()");
 		waitingOnHost=false;
 		mWL.game.mFL.stopReconnect();
 	}
@@ -867,7 +876,7 @@ public class ThisPlayer {
 	}
 	
 	public void setupChips(ChipStack setupStack,int color) {
-		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Setup Chips");
+		Logger.log(LOG_TAG,"setupChips()");
 		clearAllStacks();
 		mainStacks[ChipCase.CHIP_A].setOpacity(1);
 		mainStacks[ChipCase.CHIP_B].setOpacity(1);
@@ -883,6 +892,7 @@ public class ThisPlayer {
 	}
 	
 	public void setDealer(boolean isDealer) {
+		Logger.log(LOG_TAG,"setupChips("+isDealer+")");
 		this.isDealer=isDealer;
 		if (isDealer) {
 			dealerButton.opacity=1;
@@ -890,10 +900,12 @@ public class ThisPlayer {
 	}
 	
 	public void notifyWaitNextHand() {
+		Logger.log(LOG_TAG,"notifyWaitNextHand()");
 		mWL.game.mFL.startWaitNextHand();
 	}
 	
 	public void promptMove(int betStake,boolean foldEnabled,String message) {
+		Logger.log(LOG_TAG,"promptMove("+betStack+","+foldEnabled+","+message+")");
 		if (foldEnabled) {
 			enableFold();
 		}
@@ -912,6 +924,7 @@ public class ThisPlayer {
 	}
 	
 	public void promptStateChange(String messageStateChange,int stake,boolean foldEnabled,String message) {
+		Logger.log(LOG_TAG,"promptStateChange("+messageStateChange+","+stake+","+foldEnabled+","+message+")");
 		mWL.game.mFL.promptStateChange(messageStateChange);
 		this.stake=stake;
 		this.foldEnabled=foldEnabled;
@@ -923,6 +936,7 @@ public class ThisPlayer {
 	}
 	
 	public void doWin(ChipStack winStack_) {
+		Logger.log(LOG_TAG,"doWin()");
 		int[] chipCount={0,0,0};
 		for (int i=0;i<winStack_.size();i++) {
 			winStack_.get(i).x=winStackOrigin.x;
@@ -944,6 +958,7 @@ public class ThisPlayer {
 	}
 
 	public void textMessage(String message) {
+		Logger.log(LOG_TAG,"textMessage("+message+")");
 		if (message.equals("")) {
 			mWL.game.mFL.hideTextMessage();
 		} else {
@@ -957,7 +972,7 @@ public class ThisPlayer {
 	}
 	
 	public void notifyBootedByHost() {
-		Logger.log(DPCGame.DEBUG_LOG_PLAYER_TAG,"Booted by Table");
+		Logger.log(LOG_TAG,"notifyBootedByHost()");
 		if (connectivityStatus==CONN_CONNECTED) {
 			connectivityStatus=CONN_IDLE;
 			notifyTableDisconnected();

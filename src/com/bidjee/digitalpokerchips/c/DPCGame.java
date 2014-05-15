@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.bidjee.digitalpokerchips.i.IActivity;
 import com.bidjee.digitalpokerchips.i.ITextFactory;
 import com.bidjee.digitalpokerchips.m.ScreenState;
+import com.bidjee.util.Logger;
 
 public class DPCGame extends Game {
 	
@@ -21,16 +22,7 @@ public class DPCGame extends Game {
 	public static final int RESOLUTION_MEDIUM = 1;
 	public static final int RESOLUTION_HIGH = 2;
 	
-	public static final String DEBUG_LOG_LIFECYCLE_TAG = "DPCLifecycle";
-	public static final String DEBUG_LOG_NETWORK_TAG = "DPCNetwork";
-	public static final String DEBUG_LOG_PLAYER_TAG = "DPCPlayer";
-	public static final String DEBUG_LOG_TABLE_TAG = "DPCTable";
-	public static final String DEBUG_LOG_GAME_STATE_TAG = "DPCGameState";
-	public static final String DEBUG_LOG_WORLD_NAVIGATION_TAG = "DPCWorldNavigation";
-	public static final String DEBUG_LOG_TOUCH_FOCUS_TAG = "DPCTouchFocus";
-	public static final String DEBUG_LOG_SAVE_LOAD_TAG = "DPCSaveLoad";
-	public static final String DEBUG_LOG_GAME_MOVES_TAG = "DPCGameMoves";
-	
+	public static final String LOG_TAG = "DPCGame";
 	
 	/********** State Variables **********
 	 * renderNumber: Allows two frames to be drawn before anything is done to
@@ -70,7 +62,7 @@ public class DPCGame extends Game {
 	public static ITextFactory textFactory;
 	// Debugging //
 	private FPSLogger fps;
-	public static boolean debugMode=true;
+	public static boolean debugMode=false;
 	public static boolean runAllTutorials=true;
 	
 	public DPCGame(IActivity activity_) {
@@ -82,11 +74,16 @@ public class DPCGame extends Game {
 		freezeAnimation=true;
 		exitPending=false;
 		activity=activity_;
+		Logger.loggingMasterOn=true;
+		Logger.loggingOn=true;
 	}
 	
 	////////////////////Life-cycle Events ////////////////////
+	@Override
+	public void create() {}
+	
 	public void initGame() {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG,"DPCGame - initGame()");
+		Logger.log(LOG_TAG,"** initGame() **");
 		mTS=new TitleScreen(this);
 		textFactory=activity.getITextFactory();
 		im=new InputMultiplexer();
@@ -100,13 +97,8 @@ public class DPCGame extends Game {
 	}
 	
 	@Override
-	public void create () {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "************PlayerGame_create()************");		
-	}
-	
-	@Override
 	public void resize(int width,int height) {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "DPCGame - resize("+width+","+height+")");
+		Logger.log(LOG_TAG, "resize("+width+","+height+")");
 		if (width < 500) {
 			resolutionSetting = RESOLUTION_LOW;
 		} else if (width < 1000) {
@@ -130,7 +122,7 @@ public class DPCGame extends Game {
 	
 	@Override
 	public void pause() {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "DPCGame - pause()");
+		Logger.log(LOG_TAG, "pause()");
 		if (im!=null) {
 			im.touchUp(0,0,0,0);
 		}
@@ -142,7 +134,7 @@ public class DPCGame extends Game {
 	
 	@Override
 	public void resume() {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "DPCGame - resume()");
+		Logger.log(LOG_TAG, "resume()");
 		if (screenState!=ScreenState.NONE) {
 			Gdx.input.setCatchBackKey(true);
 			Gdx.input.setInputProcessor(im);
@@ -157,7 +149,7 @@ public class DPCGame extends Game {
 	
 	@Override
 	public void dispose() {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "DPCGame - dispose()");
+		Logger.log(LOG_TAG, "dispose()");
 		mTS.dispose();
 		mWL.dispose();
 		mFL.dispose();
@@ -170,7 +162,7 @@ public class DPCGame extends Game {
 		float delta=Gdx.graphics.getDeltaTime();
 		delta=Math.min(delta,0.05f);
 		if (renderNumber<2) {
-			Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "DPCGame - render()");
+			Logger.log(LOG_TAG, "render() frame: "+renderNumber);
 			renderNumber++;
 			Gdx.gl.glClearColor(0,0,0,1);
 			Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
@@ -225,7 +217,7 @@ public class DPCGame extends Game {
 	}
 	
 	public void loadSynchronous() {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "DPCGame - loadSynchronous()");
+		Logger.log(LOG_TAG, "loadSynchronous()");
 		if (mWL==null&&mFL==null) {
 			mWL=new WorldLayer(this,activity.getIPlayerNetwork(),activity.getIHostNetwork(),activity.getITableStore());
 			mFL=new ForegroundLayer(this);
@@ -267,7 +259,7 @@ public class DPCGame extends Game {
 	}
 	
 	public void loadAssets() {
-		Gdx.app.log(DEBUG_LOG_LIFECYCLE_TAG, "DPCGame - loadAssets()");
+		Logger.log(LOG_TAG, "loadAssets()");
 		TextureParameter tParam=new TextureParameter();
 		tParam.minFilter=TextureFilter.Linear;
 		tParam.magFilter=TextureFilter.Linear;

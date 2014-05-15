@@ -11,13 +11,22 @@ import com.badlogic.gdx.Gdx;
 
 public class Logger {
 	
+	public static boolean loggingOn=false;
+	public static boolean loggingMasterOn=false;
+	
 	public static void log(String tag,String msg) {
 		Gdx.app.log(tag,msg);
-		appendLog(tag,msg);
+		if (loggingOn) {
+			appendLog(tag,msg);
+		}
+		if (loggingMasterOn) {
+			appendLog("DPCMaster",tag+": "+msg);
+			Gdx.app.log("DPCMaster",tag+": "+msg);
+		}
 	}
 
 	
-	private static void appendLog(String fileName,String msg) {       
+	private static void appendLog(String fileName,String msg) {
 	   File logFile = new File("sdcard/logs/"+fileName+".file");
 	   if (!logFile.exists()) {
 	      try {

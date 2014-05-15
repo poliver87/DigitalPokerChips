@@ -140,7 +140,6 @@ public class ManualConnectDialog extends Dialog {
 			hostBytes[3]=(byte) (Integer.parseInt(ipQuads[3].getText())&0xFF);
 		} catch (NumberFormatException nfe) {
 			validIP=false;
-			Gdx.app.log(DPCGame.DEBUG_LOG_NETWORK_TAG,"ManualConnectDialog - getHostBytes() - invalid host bytes");
 		}
 		if (validIP) {
 			return hostBytes;
