@@ -5,12 +5,10 @@ public class PlayerEntry implements Comparable<PlayerEntry> {
 		
 	public static int playerEntryTextSize;
 	
-	public final String hostName;
 	public TextLabel name;
 	public TextLabel amount;
 	
-	public PlayerEntry(String hostName,String name,int amount) {
-		this.hostName=hostName;
+	public PlayerEntry(String name,int amount) {
 		this.name=new TextLabel(name,0,false,0,false);
 		this.name.setTextSize(playerEntryTextSize);
 		this.name.bodyColor=TextLabel.greyColor;

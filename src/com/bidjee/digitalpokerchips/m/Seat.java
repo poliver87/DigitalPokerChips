@@ -87,12 +87,13 @@ public class Seat {
 		// TODO change the flow of this so player gets sized like everything else
 		player_.setDimensions(radiusX,radiusY);
 		player_.setPosition(x,y,rotation);
-		player_.seat(this);
+		player_.seat();
 		setPlayer(player_);
 	}
 	
 	public void setPlayer(Player player_) {
 		player=player_;
+		player.seat();
 	}
 	
 	/** Note that anywhere south of the chair is included
@@ -135,20 +136,6 @@ public class Seat {
 			if (Seat.opacity>1)
 				Seat.opacity=1;
 		}
-	}
-	
-	public Seat copy() {
-		Seat seat_=new Seat(position);
-		seat_.x=x;
-		seat_.y=y;
-		seat_.rotation=rotation;
-		seat_.player=player;
-		return seat_;
-	}
-	
-	public void reset() {		
-		player=null;
-		opacity=0;
 	}
 
 	public static int getStartingSeat(int deltaAzimuth_) {

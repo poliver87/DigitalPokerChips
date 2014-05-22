@@ -1,5 +1,6 @@
 package com.bidjee.digitalpokerchips.m;
 
+import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.c.WorldLayer;
 
 public class Player extends DPCSprite {
@@ -17,22 +18,21 @@ public class Player extends DPCSprite {
 	public static final int ARROW_SENDING = 2;
 	// state variables //
 	public TextLabel name;
-	public String hostName;
 	public int color;
 	public int state;
 	private int startStackTimer;
 	public boolean isFolded;
 	public boolean isAllIn;
 	public boolean hasBet;
-	public boolean exitPending;
 	public boolean sittingOut;
 	public boolean selected;
 	public boolean getsRemainder;
 	public int chipAmount;
-	public boolean waitingSetupACK;
-	public boolean waitingWinningsACK;
 	public boolean isConnected;
-	private int[] buyinBuild;
+	public boolean isSeated;
+	public boolean hasBoughtIn;
+	public boolean isLoadedPlayer;
+	public int[] buyinBuild;
 	public int azimuth;
 	public boolean connectionShowing;
 	// Objects //
@@ -53,8 +53,9 @@ public class Player extends DPCSprite {
 	
 	private Card card;
 	
-	public Player(String name_,String hostName_,DPCSprite connectionBlob) {
-		hostName=hostName_;
+	private Vector2 posJoinTokenStart=new Vector2();
+	
+	public Player(String name_,DPCSprite connectionBlob) {
 		name=new TextLabel(name_,0,false,0,false);
 		name.maxOpacity=0.5f;
 		isTouched=false;
@@ -62,7 +63,6 @@ public class Player extends DPCSprite {
 		isFolded=false;
 		isAllIn=false;
 		hasBet=false;
-		exitPending=false;
 		sittingOut=false;
 		selected=false;
 		getsRemainder=false;
@@ -70,9 +70,8 @@ public class Player extends DPCSprite {
 		betStack=new ChipStack();
 		winStack=new ChipStack();
 		chipAmount=0;
-		waitingSetupACK=false;
-		waitingWinningsACK=false;
 		isConnected=false;
+		hasBoughtIn=false;
 		joinToken.opacity=0;
 		if (connectionBlob!=null) {
 			copyConnectionBlobFrom(connectionBlob);
@@ -96,9 +95,6 @@ public class Player extends DPCSprite {
 		resetBettingStack();
 		resetBetStack();
 		resetWinStack();
-		// TODO decide what to do with chip amounts etc
-		waitingSetupACK=false;
-		waitingWinningsACK=false;
 		selectionHighlight.fadeOut();
 		selectionHighlight.opacity=0;
 	}
@@ -136,7 +132,7 @@ public class Player extends DPCSprite {
 	public void setPosition(float x_,float y_,float rotation_) {
 		nameOffset=radiusY*0.2f;
 		setRotation(rotation_);
-		joinToken.setPosition((int)(x_+Math.sin(Math.toRadians(rotation_))*(Seat.radiusY+joinToken.radiusY+2)),
+		posJoinTokenStart.set((int)(x_+Math.sin(Math.toRadians(rotation_))*(Seat.radiusY+joinToken.radiusY+2)),
 				(int)(y_-Math.cos(Math.toRadians(rotation_))*(Seat.radiusY+joinToken.radiusY+2)));
 		joinToken.rotation=rotation_;
 		connectionBlobOffset=Seat.radiusY;
@@ -291,9 +287,10 @@ public class Player extends DPCSprite {
 		winStack.setOpacity(1);
 	}
 
-	public void seat(Seat seat) {
+	public void seat() {
 		betStack.scaleLabel();
 		opacity=1;
+		isSeated=true;
 	}
 	
 	public void copyConnectionBlobFrom(DPCSprite connectionBlob) {
@@ -305,7 +302,7 @@ public class Player extends DPCSprite {
 	public void doRxJoinCoin() {
 		state=STATE_RXING_JOIN_COIN;
 		joinToken.opacity=1;
-		waitingSetupACK=true;
+		joinToken.setPosition(posJoinTokenStart);
 	}
 
 	public void pauseStartStack(float delta_) {

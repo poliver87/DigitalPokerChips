@@ -1,5 +1,8 @@
 package com.bidjee.digitalpokerchips.c;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
@@ -391,6 +394,12 @@ public class DPCGame extends Game {
 		}
 		return azimuth_;
 	}
+	
+	public static String getTimeStamp() {
+    	Calendar c = Calendar.getInstance();
+    	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+    	return sdf.format(c.getTime());
+    }
 	
 }
 

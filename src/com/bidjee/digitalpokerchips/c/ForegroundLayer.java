@@ -976,6 +976,10 @@ public class ForegroundLayer {
 		Logger.log(LOG_TAG,"startLobby()");
 		lobbyStatusLabel.startFlashing();
 		showIpAddress();
+		if (game.mWL.table.countPlayers()>=2) {
+			gotoGameButton.fadeIn();
+			gotoGameButton.setTouchable(true);
+		}
 		input.pushTouchFocus(ForegroundInput.TOUCH_LOBBY);
 	}
 	
@@ -983,7 +987,6 @@ public class ForegroundLayer {
 		Logger.log(LOG_TAG,"stopLobby()");
 		lobbyStatusLabel.fadeOut();
 		hideIpAddress();
-		stopWifiPrompt();
 		gotoGameButton.fadeOut();
 		gotoGameButton.setTouchable(false);
 		input.popTouchFocus(ForegroundInput.TOUCH_LOBBY);
@@ -1031,22 +1034,6 @@ public class ForegroundLayer {
 		gotoGameButton.fadeOut();
 		gotoGameButton.setTouchable(false);
 		lobbyStatusLabel.startFlashing();
-	}
-	
-	public void pauseLobby() {
-		Logger.log(LOG_TAG,"pauseLobby()");
-		lobbyStatusLabel.fadeOut();
-		gotoGameButton.fadeOut();
-		gotoGameButton.setTouchable(false);
-	}
-	
-	public void resumeLobby() {
-		Logger.log(LOG_TAG,"resumeLobby()");
-		lobbyStatusLabel.startFlashing();
-		if (game.mWL.table.countPlayers()>=2) {
-			gotoGameButton.fadeIn();
-			gotoGameButton.setTouchable(true);
-		}
 	}
 	
 	public void startDealerSelect() {

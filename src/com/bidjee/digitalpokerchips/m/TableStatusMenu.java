@@ -3,7 +3,6 @@ package com.bidjee.digitalpokerchips.m;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import com.badlogic.gdx.Gdx;
 import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.ForegroundInput;
 import com.bidjee.digitalpokerchips.c.ForegroundLayer;
@@ -20,7 +19,7 @@ public class TableStatusMenu {
 	static final int STATE_HIDE = 6;
 	
 	private int animationState;
-	public String nudgeHostName;
+	public String nudgeName;
 	
 	public Button handle;
 	public Button leaveButton;
@@ -135,10 +134,12 @@ public class TableStatusMenu {
 	}
 	
 	public void show() {
-		opacity=1;
-		animationState=STATE_SHOW;
+		if (opacity!=1) {
+			opacity=1;
+			translateX(xHidden-x);
+		}
 		handle.setTouchable(true);
-		translateX(xHidden-x);
+		animationState=STATE_SHOW;
 	}
 	
 	public void remove() {
@@ -200,13 +201,13 @@ public class TableStatusMenu {
 		Collections.sort(playerList);
 	}
 	
-	public void enableNudge(String hostName) {
+	public void enableNudge(String name) {
 		for (int i=0;i<playerList.size();i++) {
-			if (playerList.get(i).hostName.equals(hostName)) {
+			if (playerList.get(i).name.equals(name)) {
 				bellButton.y=yPlayerEntryBottom-i*yPlayerEntryPitch+playerList.get(i).name.radiusY;
 				bellButton.opacity=1;
 				bellButton.setTouchable(true);
-				nudgeHostName=hostName;
+				nudgeName=name;
 				break;
 			}
 		}

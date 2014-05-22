@@ -1,6 +1,5 @@
 package com.bidjee.digitalpokerchips.c;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.input.GestureDetector;
 import com.bidjee.digitalpokerchips.i.IHostNetwork;
@@ -31,6 +30,7 @@ public class WorldLayer implements Screen {
 	float oldWorldWidth;
 	float oldWorldHeight;
 	int limChipFlingVel;
+	public CameraPosition camPosNone=new CameraPosition("None");
 	public CameraPosition camPosHome=new CameraPosition("Home");
 	public CameraPosition camPosPlayer=new CameraPosition("Player");
 	public CameraPosition camPosTable=new CameraPosition("Table");
@@ -69,6 +69,7 @@ public class WorldLayer implements Screen {
 		gestureInput=new GestureDetector(mWGI);
 		mWGI.setScreen(this);
 		soundFX=new SoundFX();
+		cameraDestination=camPosNone;
 		thisPlayer=new ThisPlayer(this,playerNetworkInterface);
 		table=new Table(this,hostNetworkInterface,tableStore);
 		int[] values_={25,100,200};

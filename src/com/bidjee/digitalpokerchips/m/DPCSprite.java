@@ -182,9 +182,11 @@ public class DPCSprite {
 	}
 	
 	public void startFlashing() {
-		flashing=true;
-		if (fadeState==FADE_NONE) {
-			fadeState=FADE_FADE_IN;
+		if (!flashing) {
+			flashing=true;
+			if (fadeState==FADE_NONE) {
+				fadeState=FADE_FADE_IN;
+			}
 		}
 	}
 	

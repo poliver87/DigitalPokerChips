@@ -14,6 +14,7 @@ import com.bidjee.digitalpokerchips.m.ColorPool;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.Deck;
 import com.bidjee.digitalpokerchips.m.GameLogic;
+import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.Player;
 import com.bidjee.digitalpokerchips.m.Pot;
 import com.bidjee.digitalpokerchips.m.Seat;
@@ -79,7 +80,7 @@ public class Table {
 	public Player pickedUpPlayer;
 	public Deck deck;
 	public ArrayList<Pot> pots;
-	public ArrayList<Player> playersPendingBuyin=new ArrayList<Player>();
+	public ArrayList<Player> players=new ArrayList<Player>();
 	
 	//////////////////// Text Labels ////////////////////
 	public TextField tableNameField;
@@ -202,6 +203,12 @@ public class Table {
 		if (gameState==STATE_GAME) {
 			gameLogic.updateLogic();
 		}
+		if (gameState==STATE_LOBBY) {
+			if (mWL.game.runTutorialArrangement&&countPlayersLobby()==1) {
+				mWL.game.runTutorialArrangement=false;
+				mWL.game.mFL.startTutorialArrangement(getAnyPlayer());
+			}
+		}
 	}
 	
 	public void animate(float delta) {
@@ -269,7 +276,7 @@ public class Table {
 			}
 		} else if (gameState==STATE_SELECTING_DEALER) {
 			if (dealerButton.opacity==1) {
-				if (gameLogic.getDealer()==GameLogic.NO_DEALER) {
+				if (gameLogic.getDealer()==GameLogic.NO_PLAYER) {
 					boolean allCardsVisible=true;
 					for (int seatIndex=0;seatIndex<NUM_SEATS;seatIndex++) {
 						
@@ -456,17 +463,12 @@ public class Table {
 			if (thisPlayer!=null) {
 				if (thisPlayer.state==Player.STATE_SENDING_START_STACK) {
 					if (!mWL.worldRenderer.camera.isOnScreen(thisPlayer.winStack.getTopPixel())) {						
-						if (!thisPlayer.exitPending) {
-							networkInterface.sendSetupInfo(thisPlayer.hostName,i,thisPlayer.color,thisPlayer.winStack.toString());
+						if (thisPlayer.isConnected) {
+							sendSetupInfo(thisPlayer);
 							thisPlayer.sentStartStack();
-							syncAllTableStatusMenu();
-							if (gameState==STATE_LOBBY) {
+							if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
 								setConnectionShowing(thisPlayer,true);
 								thisPlayer.name.fadeIn();
-								if (mWL.game.runTutorialArrangement&&countPlayersLobby()==1) {
-									mWL.game.runTutorialArrangement=false;
-									mWL.game.mFL.startTutorialArrangement(thisPlayer);
-								}
 							}
 						}
 					}
@@ -599,7 +601,10 @@ public class Table {
 		}
 	}
 	
-	//////////////////// State Changers ////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////// State Management //////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	
 	private void setGameState(int gameState) {
 		leftGameState(this.gameState);
 		Logger.log(LOG_TAG,"setGameState("+gameState+")");
@@ -608,10 +613,6 @@ public class Table {
 			//
 		} else if (gameState==STATE_LOBBY) {
 			mWL.game.mFL.startLobby();
-			if (countPlayers()==2) {
-				mWL.game.mFL.notifyGameCanStart(false);
-			}
-			networkInterface.startLobby(false,null);
 			if (!wifiEnabled) {
 				wifiOff();
 			}
@@ -624,7 +625,6 @@ public class Table {
 			}
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			mWL.game.mFL.startLobbyLoaded();
-			networkInterface.startLobby(true,getAllPlayerNames());
 			if (!wifiEnabled) {
 				wifiOff();
 			}
@@ -669,6 +669,9 @@ public class Table {
 			for (int i=0;i<NUM_SEATS;i++) {
 				seats[i].playerSlot.fadeOut();
 				seats[i].playerSlot.opacity=0;
+				if (seats[i].player!=null) {
+					seats[i].player.isLoadedPlayer=false;
+				}
 			}
 			mWL.game.mFL.stopLobby();
 		} else if (gameState==STATE_SELECTING_DEALER) {
@@ -705,10 +708,7 @@ public class Table {
 			destroyTable();
 			mWL.sendCameraTo(mWL.camPosChipCase);
 		} else if (gameState==STATE_LOBBY_LOADED) {
-			ColorPool.unassignAll();
-			for (int i=0;i<Table.NUM_SEATS;i++) {
-				seats[i].removePlayer();
-			}
+			destroyTable();
 			setGameState(STATE_NONE);
 			mWL.sendCameraTo(mWL.camPosHome);
 		} else if (gameState==STATE_SELECTING_DEALER) {
@@ -718,10 +718,18 @@ public class Table {
 		}
 	}
 	
+	public void startTableSetup() {
+		Logger.log(LOG_TAG,"startTableSetup()");
+		inSetupFlow=true;
+		mWL.sendCameraTo(mWL.camPosTableName);
+		saveSlot=SAVE_SLOT_NONE;
+	}
+	
 	public void notifyAtTablePosition() {
 		Logger.log(LOG_TAG,"notifyAtTablePosition()");
-		networkInterface.createTable(tableNameField.getText());
+		createTable();
 		if (!loadedGame) {
+			gameLogic.resetTable();
 			setGameState(STATE_LOBBY);
 		} else {
 			setGameState(STATE_LOBBY_LOADED);
@@ -759,31 +767,74 @@ public class Table {
 		mWL.game.mFL.stopSetValues();
 	}
 	
+	//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////// WiFi Connectivity /////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	
+	
 	public void wifiOn(String ipAddressStr) {
 		Logger.log(LOG_TAG,"wifiOn("+ipAddressStr+")");
 		wifiEnabled=true;
 		mWL.game.mFL.setIpAddress(ipAddressStr);
 		if (gameState==STATE_LOBBY) {
+			networkInterface.createTable(tableNameField.getText());
+			mWL.game.mFL.startLobby();
 			mWL.game.mFL.stopWifiPrompt();
-			mWL.game.mFL.resumeLobby();
-			mWL.game.mFL.showIpAddress();
+		} else if (gameState==STATE_LOBBY_LOADED) {
+			networkInterface.createTable(tableNameField.getText());
+			mWL.game.mFL.startLobbyLoaded();
+			mWL.game.mFL.stopWifiPrompt();
+		} else if (gameState==STATE_SELECTING_DEALER) {
+			networkInterface.createTable(tableNameField.getText());
+			
+			mWL.game.mFL.stopWifiPrompt();
+		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
+			networkInterface.createTable(tableNameField.getText());
+			
+			mWL.game.mFL.stopWifiPrompt();
+		} else if (gameState==STATE_GAME) {
+			networkInterface.createTable(tableNameField.getText());
+			
+			mWL.game.mFL.stopWifiPrompt();
 		}
 		
-		// TODO deal with the other cases
 	}
 	
 	public void wifiOff() {
 		Logger.log(LOG_TAG,"wifiOff()");
 		wifiEnabled=false;
+		mWL.game.mFL.hideIpAddress();
 		if (gameState==STATE_LOBBY) {
-			mWL.game.mFL.pauseLobby();
+			networkInterface.destroyTable();
+			mWL.game.mFL.stopLobby();
+			mWL.game.mFL.startWifiPrompt();
+		} else if (gameState==STATE_LOBBY_LOADED) {
+			networkInterface.destroyTable();
+			mWL.game.mFL.stopLobby();
+			mWL.game.mFL.startWifiPrompt();
+		} else if (gameState==STATE_SELECTING_DEALER) {
+			networkInterface.destroyTable();
+			
+			mWL.game.mFL.startWifiPrompt();
+		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
+			networkInterface.destroyTable();
+			
+			mWL.game.mFL.startWifiPrompt();
+		} else if (gameState==STATE_GAME) {
+			networkInterface.destroyTable();
+			
 			mWL.game.mFL.startWifiPrompt();
 		}
-		mWL.game.mFL.hideIpAddress();
-		// TODO deal with the other cases
 	}
 	
-	//////////////////// Internal Methods ////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	//////////////////////// Table Creation and Destruction //////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	
+	private void createTable() {
+		networkInterface.createTable(tableNameField.getText());
+	}
+	
 	private void destroyTable() {
 		Logger.log(LOG_TAG,"destroyTable()");
 		networkInterface.destroyTable();
@@ -791,111 +842,318 @@ public class Table {
 		for (int i=0;i<Table.NUM_SEATS;i++) {
 			seats[i].removePlayer();
 		}
+		removeAllPlayers();
+		pots.clear();
 		gameLogic.destroyTable();
 	}
 	
-	private void startLoadedGame() {
-		Logger.log(LOG_TAG,"startLoadedGame()");
-		networkInterface.stopLobby();
-		networkInterface.startLobby(false,null);
-		setGameState(STATE_SENDING_DEALER_BUTTON);
-	}
-	
-	public void rotateAndProjectPlayer(Player player) {
-		// check the screen edges and rotate player if necessary
-		player.setRotation(seats[calculateClosestSeatToPlayer(player)].rotation);
-		if (player.rotation==0) {
-			player.setY(mWL.table.seats[0].y);
-		} else if (player.rotation==-90) {
-			player.setX(mWL.table.seats[3].x);
-		} else if (player.rotation==180) {
-			player.setY(mWL.table.seats[4].y);
-		} else if (player.rotation==90) {
-			player.setX(mWL.table.seats[7].x);
+	public void saveTable() {
+		Logger.log(LOG_TAG,"saveTable()");
+		if (saveSlot==SAVE_SLOT_NONE) {
+			saveSlotSelected(SAVE_SLOT_1);
+			mWL.game.mFL.startAutosaveDialog(saveSlot,tableStore.getTableNames(SAVE_NUM_SLOTS));
+		} else {
+			tableStore.saveGame(saveSlot,tableNameField.getText(),buildTableStateString(),gameLogic.buildGameStateString());
+			gameLogic.saveDone();
 		}
 	}
 	
-	public void calculateClosestSeatToPickedUp() {
-		closestSeatToPickedUp=calculateClosestSeatToPlayer(pickedUpPlayer);
+	public void loadTable(int loadSlot) {
+		Logger.log(LOG_TAG,"loadTable("+loadSlot+")");
+		saveSlot=loadSlot;
+		String tableName=tableStore.getTableName(loadSlot);
+		String tableStateString=tableStore.getTableState(loadSlot);
+		String gameStateString=tableStore.getGameState(loadSlot);
+		tableNameField.setText(tableName);
+		setTableStateFromString(tableStateString);
+		gameLogic.setGameStateFromString(gameStateString);
+		loadedGame=true;
+		mWL.sendCameraTo(mWL.camPosTable);
 	}
 	
-	public int calculateClosestSeatToPlayer(Player player) {
-		int closestSeat=0;
-		double minDist=Math.pow((player.x-seats[0].x),2)+Math.pow((player.y-seats[0].y),2);
-		for (int seatIndex=0;seatIndex<NUM_SEATS;seatIndex++) {
-			if (Math.abs(player.rotation-seats[seatIndex].rotation)!=180) {
-				double dist=Math.pow((player.x-seats[seatIndex].x),2)+Math.pow((player.y-seats[seatIndex].y),2);
-				if (dist<minDist) {
-					minDist=dist;
-					closestSeat=seatIndex;
-				}
+	//////////////////////////////////////////////////////////////////////////////
+	//////////////////////////// Player Connectivity /////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	
+	public void notifyPlayerConnected(String playerName,int azimuth,int[] chipNumbers) {
+		Logger.log(LOG_TAG,"notifyPlayerConnected("+playerName+","+azimuth+")");
+		// Player buying in for first time
+		// Player reconnecting
+		// Player joining loaded game
+		// Player reconnecting after crashing
+		// Player reconnects after booted or new table created - should get booted
+		Player connectedPlayer=getPlayerFromPlayerName(playerName);
+		if (connectedPlayer==null) {
+			if (chipNumbers!=null) {
+				connectedPlayer=new Player(playerName,null);
+				connectedPlayer.azimuth=azimuth;
+				addPlayer(connectedPlayer);
+				connectedPlayer.setBuyinBuild(chipNumbers);
 			}
 		}
-		return closestSeat;
+		if (connectedPlayer!=null) {
+			connectedPlayer.isConnected=true;
+			if (!connectedPlayer.hasBoughtIn) {
+				if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
+					doPlayerBuyin(connectedPlayer);
+				} else if (gameState==STATE_GAME||gameState==STATE_SELECTING_DEALER||gameState==STATE_SENDING_DEALER_BUTTON) {
+					doPlayerBuyinNextHand(connectedPlayer);
+				} else {
+					Logger.log(LOG_TAG,"notifyPlayerConnected("+playerName+","+azimuth+") connected in invalid state");
+				}
+			} else {
+				notifyPlayerReconnected(playerName);
+			}
+		} else {
+			disconnectPlayer(playerName);
+		}
 	}
 	
-	private int countPlayersLobby() {
-		int count_=0;
+	private void notifyPlayerReconnected(String playerName) {
+		int seatIndex=getSeatFromPlayerName(playerName);
+		Player reconnectedPlayer=seats[seatIndex].player;
+		networkInterface.setColor(reconnectedPlayer.name.getText(),reconnectedPlayer.color);
+		setConnectionShowing(reconnectedPlayer,reconnectedPlayer.connectionShowing);
+		gameLogic.notifyPlayerReconnected(seatIndex);
+		syncAllTableStatusMenu();
+	}
+	
+	public void disconnectPlayer(String playerName) {
+		networkInterface.removePlayer(playerName);
+		Player player=getPlayerFromPlayerName(playerName);
+		if (player!=null) {
+			player.isConnected=false;
+		}
+	}
+	
+	public void removeFromTable(String playerName) {
+		Player player=getPlayerFromPlayerName(playerName);
+		disconnectPlayer(playerName);
+		removePlayer(playerName);
+		int seat=getSeatFromPlayerName(playerName);
+		if (seat>=0&&seat<NUM_SEATS) {
+			Logger.log(LOG_TAG,"removeFromTable("+playerName+") seat: "+seat);
+			if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
+				removeFromSeat(seat);
+			} else if (gameState==STATE_GAME) {
+				gameLogic.notifyPlayerLeft(seat);
+				seats[seat].player.name.fadeOut();
+				setConnectionShowing(seats[seat].player,false);
+				if (seats[seat].player.selected) {
+					seats[seat].player.setSelected(false);
+					updateSplitButtons();
+				}
+			}
+		} else if (pickedUpPlayer!=null&&pickedUpPlayer.name.getText().equals(playerName)) {
+			Logger.log(LOG_TAG,"removeFromTable("+playerName+") PUC");
+			removePickedUpPlayer();
+		} else {
+			Logger.log(LOG_TAG,"removeFromTable("+playerName+") not seated");
+		}
+		syncAllTableStatusMenu();
+		if (countPlayers()==1) {
+			mWL.game.mFL.notifyGameCantStart();
+		}
+	}
+	
+	public void notifyPlayerLeft(String playerName) {
+		Logger.log(LOG_TAG,"notifyPlayerLeft("+playerName+")");
+		Player player=getPlayerFromPlayerName(playerName);
+		if (player.isLoadedPlayer) {
+			disconnectPlayer(playerName);
+			player.connectionBlob.startFlashing();
+			player.setTouchable(false);
+			player.hasBoughtIn=false;
+		} else {
+			removeFromTable(playerName);
+		}
+	}
+	
+	//////////////////////////////////////////////////////////////////////////////
+	////////////////////////// Player Buy In and Exit ////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	
+	public void doPlayerBuyin(Player player) {
+		Logger.log(LOG_TAG,"doPlayerBuyin("+player.name.getText()+")");
+		if (!player.isSeated) {
+			int nextFreeSeat=getNextFreeSeat(player.azimuth);
+			if (nextFreeSeat>=0&&nextFreeSeat<NUM_SEATS) {
+				player.copyConnectionBlobFrom(seats[nextFreeSeat].playerSlot);
+				seats[nextFreeSeat].seatPlayer(player);
+				seats[nextFreeSeat].player.color=ColorPool.assignColor();
+				seats[nextFreeSeat].player.name.loadTexture();
+			}
+		}
+		if (player.isSeated) {
+			player.setTouchable(true);
+			player.doRxJoinCoin();			
+		}
+	}
+	
+	public void doPlayerBuyinNextHand(Player player) {
+		networkInterface.promptWaitNextHand(player.name.getText());
+		Logger.log(LOG_TAG,"doPlayerBuyinNextHand("+player.name.getText()+")");
+	}
+	
+	public void processBuyins() {
+		Logger.log(LOG_TAG,"processBuyins()");
+		Player anyUnseatedPlayer=getAnyUnseatedPlayer();
+		if (anyUnseatedPlayer!=null) {
+			while (getAnyUnseatedPlayer()!=null) {
+				doPlayerBuyin(getAnyUnseatedPlayer());
+			}
+		} else {
+			gameLogic.buyinsDone();
+		}
+	}
+	
+	private void removeFromSeat(int seat) {
+		Logger.log(LOG_TAG,"removeFromSeat("+seat+")");
+		ColorPool.unassignColor(seats[seat].player.color);
+		seats[seat].removePlayer();
+	}
+	
+	private void removePickedUpPlayer() {
+		Logger.log(LOG_TAG,"removePickedUpPlayer()");
+		ColorPool.unassignColor(pickedUpPlayer.color);
+		pickedUpPlayer=null;
+	}
+	
+	public void unseatDisconnectedPlayers() {
+		Logger.log(LOG_TAG,"unseatDisconnectedPlayers()");
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null&&!seats[i].player.isConnected) {
+				ColorPool.unassignColor(seats[i].player.color);
+				seats[i].removePlayer();
+			}
+		}
+	}
+	
+	//////////////////////////////////////////////////////////////////////////////
+	////////////////////////// Table to Player Messages //////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	
+	public void sendSetupInfo(Player player) {
+		Logger.log(LOG_TAG,"sendSetupInfo("+player.name.getText()+")");
+		networkInterface.setColor(player.name.getText(),player.color);
+		networkInterface.sendChips(player.name.getText(),player.winStack.toString());		
+		player.hasBoughtIn=true;
+		syncAllTableStatusMenu();
+		if (gameState==STATE_LOBBY) {
+			if (countPlayers()>=2) {
+				mWL.game.mFL.notifyGameCanStart(true);
+			}
+		} else if (gameState==STATE_LOBBY_LOADED) {
+			if (allPlayersSetup()) {
+				setGameState(STATE_SENDING_DEALER_BUTTON);
+			}
+		} else if (gameState==STATE_GAME) {
+			if (allPlayersSetup()) {
+				gameLogic.buyinsDone();
+			}
+		}
+	}
+	
+	public void promptMove(int currBetter,MovePrompt movePrompt) {
+		Logger.log(LOG_TAG,"promptMove("+currBetter+","+movePrompt.stake+","+movePrompt.foldEnabled+","+movePrompt.message+","+movePrompt.messageStateChange+")");
+		networkInterface.promptMove(seats[currBetter].player.name.getText(),movePrompt,seats[currBetter].player.chipAmount);
+		seats[currBetter].player.name.fadeIn();
+		setConnectionShowing(seats[currBetter].player,true);
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null&&i!=currBetter) {
+				networkInterface.enableNudge(seats[i].player.name.getText(),seats[currBetter].player.name.getText());
+			}
+		}
+	}
+	
+	public void promptDealer(int dealer,String dealerMessage) {
+		Logger.log(LOG_TAG,"promptDealer("+dealer+","+dealerMessage+")");
+		networkInterface.sendTextMessage(seats[dealer].player.name.getText(),dealerMessage);
+	}
+	
+	public void sendWinnings(int player,ChipStack winStack) {
+		Logger.log(LOG_TAG,"sendWinnings("+player+","+winStack.value());
+		networkInterface.sendChips(seats[player].player.name.getText(),winStack.toString());
+		seats[player].player.chipAmount+=seats[player].player.winStack.value();
+		seats[player].player.resetWinStack();
+		syncAllTableStatusMenu();
+	}
+	
+	public void sendDealerButton(int dealer) {
+		Logger.log(LOG_TAG,"sendDealerButton("+dealer+")");
+		networkInterface.sendDealerChip(seats[dealer].player.name.getText());
+	}
+	
+	public void recallDealerButton(int dealer) {
+		Logger.log(LOG_TAG,"recallDealerButton("+dealer+")");
+		networkInterface.recallDealerChip(seats[dealer].player.name.getText());
+	}
+	
+	private void setConnectionShowing(Player player,boolean showing) {
+		Logger.log(LOG_TAG,"setConnectionShowing()");
+		if (showing) {
+			player.setConnectionShowing(true);
+			networkInterface.showConnection(player.name.getText());
+		} else {
+			player.setConnectionShowing(false);
+			networkInterface.hideConnection(player.name.getText());
+		}
+	}
+	
+	public void cancelMove(int seat) {
+		Logger.log(LOG_TAG,"cancelMove("+seat+")");
+		networkInterface.cancelMove(seats[seat].player.name.getText());
+	}
+	
+	public void syncPlayersChips(int seat) {
+		Logger.log(LOG_TAG,"syncPlayersChips("+seat+")");
+		networkInterface.syncPlayersChips(seats[seat].player.name.getText(),seats[seat].player.chipAmount);
+	}
+	
+	private void syncAllTableStatusMenu() {
+		Logger.log(LOG_TAG,"syncAllTableStatusMenu()");
+		ArrayList<Player> players=new ArrayList<Player>();
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null) {
-				count_++;
+				players.add(seats[i].player);
 			}
 		}
-		if (pickedUpPlayer!=null&&pickedUpPlayer.isConnected)
-			count_++;
-		return count_;
+		networkInterface.syncAllTableStatusMenu(players);
 	}
 	
-	private boolean allPlayersSetup() {
-		boolean allPlayersSetup=true;
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null) {
-				if (!seats[i].player.isConnected||seats[i].player.waitingSetupACK) {
-					allPlayersSetup=false;
-				}
-			}
-		}
-		Logger.log(LOG_TAG,"allPlayersSetup = "+allPlayersSetup);
-		return allPlayersSetup;
-	}
+	//////////////////////////////////////////////////////////////////////////////
+	////////////////////////// Player to Table Messages //////////////////////////
+	//////////////////////////////////////////////////////////////////////////////	
 	
-	public int countPlayers() {
-		int count_=0;
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null&&!seats[i].player.waitingSetupACK) {
-				count_++;
-			}
+	public void moveRxd(String playerName,int move,String chipString) {
+		networkInterface.disableNudge();
+		int moveRxdPlayer=getSeatFromPlayerName(playerName);
+		seats[moveRxdPlayer].player.name.fadeOut();
+		setConnectionShowing(seats[moveRxdPlayer].player,false);
+		closeBootDialog();
+		if (!chipString.equals("")) {
+			seats[moveRxdPlayer].player.setBettingStack(ChipStack.parseStack(chipString));
+			seats[moveRxdPlayer].player.bettingStack.setX(seats[moveRxdPlayer].xOffscreen);
+			seats[moveRxdPlayer].player.bettingStack.setY(seats[moveRxdPlayer].yOffscreen);
+			seats[moveRxdPlayer].player.bettingStack.setDest(seats[moveRxdPlayer].x,seats[moveRxdPlayer].y,seats[moveRxdPlayer].player.betStack.size());
+			animationState=ANIM_BETTING;
 		}
-		if (pickedUpPlayer!=null&&!pickedUpPlayer.waitingSetupACK)
-			count_++;
-		Logger.log(LOG_TAG,"countPlayers() = "+count_);
-		return count_;
-	}
-	
-    public int getPosition(final String hostName_) {
-    	int position=-1;
-		for (int i=0;i<Table.NUM_SEATS;i++) {
-			if (seats[i].player!=null&&seats[i].player.hostName!=null) {
-				if (seats[i].player.hostName.equals(hostName_)) {
-					position=i;
-					break;
-				}
-			}
-		}
-		Logger.log(LOG_TAG,"getPosition("+hostName_+") = "+position);
-		return position;
+		gameLogic.moveRxd(moveRxdPlayer,move);
+		syncAllTableStatusMenu();
+		Logger.log(LOG_TAG,"moveRxd("+playerName+","+move+","+chipString+")"+seats[moveRxdPlayer].player.name.getText());
 	}
     
-	public void setDealer(int dealer) {
-		Logger.log(LOG_TAG,"setDealer("+dealer+")");
-		gameLogic.setDealer(dealer);
-		if (dealer==GameLogic.NO_DEALER) {
-			dealerButton.rotation=seats[0].rotation;
-		} else {
-			dealerButton.rotation=seats[dealer].rotation;
+	public void bellRxd(String destPlayerName) {
+		if (gameLogic.currBetter>=0&&gameLogic.currBetter<=NUM_SEATS) {
+			if (seats[gameLogic.currBetter].player!=null&&seats[gameLogic.currBetter].player.name.getText().equals(destPlayerName)) {
+				networkInterface.sendBell(destPlayerName);
+			}
 		}
-		dealerButton.atDest=false;
 	}
+	
+	//////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////// Game Logic //////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
 	
 	private void dealCards() {
 		Logger.log(LOG_TAG,"dealCards()");
@@ -924,113 +1182,88 @@ public class Table {
 		return highestPlayer;
 	}
 	
-	private int getIndexFromHostName(String hostName) {
-		int index_=-1;
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null&&seats[i].player.hostName.equals(hostName))
-				index_=i;
-		}
-		if (index_>=0) {
-			Logger.log(LOG_TAG,"getIndexFromHostName("+hostName+") = "+index_);
+	public void setDealer(int dealer) {
+		Logger.log(LOG_TAG,"setDealer("+dealer+")");
+		gameLogic.setDealer(dealer);
+		if (dealer==GameLogic.NO_PLAYER) {
+			dealerButton.rotation=seats[0].rotation;
 		} else {
-			String logMsg="getIndexFromHostName("+hostName+") index not found from host names:";
-			for (int i=0;i<NUM_SEATS;i++) {
-				if (seats[i].player!=null) {
-					logMsg=logMsg+" <"+i+": "+seats[i].player.hostName+">";
-				}
-			}
-			Logger.log(LOG_TAG,logMsg);
+			dealerButton.rotation=seats[dealer].rotation;
 		}
-		return index_;
+		dealerButton.atDest=false;
 	}
 	
-	private int getIndexFromPlayerName(String playerName) {
-		int index=-1;
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null&&seats[i].player.name.getText().equals(playerName)) {
-				index=i;
-				break;
-			}
-		}
-		Logger.log(LOG_TAG,"getIndexFromPlayerName("+playerName+") = "+index);
-		return index;
+	public void formPots() {
+		Logger.log(LOG_TAG,"formPots()");
+		displayedPotIndex=pots.size()-1;
+		animationState=ANIM_FORM_POTS;
 	}
 	
-	public void updatePotRotation() {
-		// calculate min pot distance from each entitled player
-		int closestPlayer=-1;
-		float closestDistanceSquared=0;
+	public void clearPots() {
+		Logger.log(LOG_TAG,"clearPots()");
+		displayedPotIndex=0;
+		pots.clear();
+	}
+	
+	public void makeNewPot(ArrayList<Integer> playersEntitled) {
+		Logger.log(LOG_TAG,"makeNewPot()");
+		pots.add(new Pot());
+		pots.get(pots.size()-1).playersEntitled=playersEntitled;
+		pots.get(pots.size()-1).potStack.setX(Pot.originX);
+		pots.get(pots.size()-1).potStack.setY(Pot.originY);
+		pots.get(pots.size()-1).potStack.scaleLabel();
+	}
+	
+	public void fadeInNextPot() {
+		displayedPotIndex=pots.size()-1;
+		pots.get(displayedPotIndex).potStack.setOpacity(0);
+		animationState=ANIM_FADEIN_POT;
+	}
+	
+	public void showLastPot() {
+		displayedPotIndex=pots.size()-1;
+	}
+	
+	public void enablePotArrows() {
+		if (displayedPotIndex>0) {
+			mWL.game.mFL.potArrowRight.fadeIn();
+			mWL.game.mFL.potArrowRight.setTouchable(true);
+		}
+		if (displayedPotIndex<pots.size()-1) {
+			mWL.game.mFL.potArrowLeft.fadeIn();
+			mWL.game.mFL.potArrowLeft.setTouchable(true);
+		}
+	}
+	
+	public void disablePotArrows() {
+		mWL.game.mFL.potArrowLeft.fadeOut();
+		mWL.game.mFL.potArrowLeft.setTouchable(false);
+		mWL.game.mFL.potArrowRight.fadeOut();
+		mWL.game.mFL.potArrowRight.setTouchable(false);
+	}
+	
+	public void startSelectWinner() {
+		animationState=ANIM_SELECT_WINNER;
+		mWL.game.mFL.startSelectWinner();
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
-				float distToPlayerSquared=(float) (Math.pow(Math.abs(seats[i].x-pots.get(displayedPotIndex).potStack.getX()),2)+
-						Math.pow(Math.abs(seats[i].y-pots.get(displayedPotIndex).potStack.getY()),2));
-				if (closestPlayer==-1||distToPlayerSquared<closestDistanceSquared) {
-					closestDistanceSquared=distToPlayerSquared;
-					closestPlayer=i;
-				}
+				seats[i].player.name.fadeIn();
+				setConnectionShowing(seats[i].player,true);
 			}
 		}
-		if (pots.get(displayedPotIndex).potStack.getRotation()!=seats[closestPlayer].rotation) {
-			pots.get(displayedPotIndex).potStack.setRotation(seats[closestPlayer].rotation);
-		}
 	}
 	
-	private String buildTableStateString() {
-		String outString=ChipCase.valuesToString();
-		for (int i=0;i<Table.NUM_SEATS;i++) {
-			if (seats[i].player!=null){
-				outString=outString.concat("<PLAYER>"+i+"<PLAYER/><NAME>"+
-						seats[i].player.name.getText()+"<NAME/>"+"<AMOUNT>"+
-						seats[i].player.chipAmount+"<AMOUNT/>");
-			}
-		}
-		return outString;
+	public void startWinnerByDefault(int winner) {
+		animationState=ANIM_WINNER_BY_DEFAULT;
+		this.winner=winner;
+		seats[winner].player.name.fadeIn();
+		setConnectionShowing(seats[winner].player,true);
+		pots.get(displayedPotIndex).potStack.setRotation(seats[winner].rotation);
 	}
 	
-	private void setTableStateFromString(String tableStateStr) {
-		ChipCase.setValuesFromString(tableStateStr);
-		while (tableStateStr.contains("<PLAYER>")&&tableStateStr.contains("<AMOUNT/>")) {
-    		int startIndex=tableStateStr.indexOf("<PLAYER>")+"<PLAYER>".length();
-    		int endIndex=tableStateStr.indexOf("<PLAYER/>");
-    		int playerIndex=Integer.parseInt(tableStateStr.substring(startIndex,endIndex));
-    		startIndex=tableStateStr.indexOf("<NAME>")+"<NAME>".length();
-    		endIndex=tableStateStr.indexOf("<NAME/>");
-    		String name=tableStateStr.substring(startIndex,endIndex);
-    		startIndex=tableStateStr.indexOf("<AMOUNT>")+"<AMOUNT>".length();
-    		endIndex=tableStateStr.indexOf("<AMOUNT/>");
-    		int amount=Integer.parseInt(tableStateStr.substring(startIndex,endIndex));
-    		seats[playerIndex].seatPlayer(new Player(name,null,seats[playerIndex].playerSlot));
-			seats[playerIndex].player.isConnected=false;
-			seats[playerIndex].player.color=ColorPool.assignColor();
-			seats[playerIndex].player.chipAmount=amount;
-			seats[playerIndex].player.setBuyinBuild(ChipCase.calculateSimplestBuild(amount));
-			seats[playerIndex].player.name.loadTexture();
-    		tableStateStr=tableStateStr.substring(endIndex+"<AMOUNT/>".length());
-    	}
-	}
-	
-	private ArrayList<String> getAllPlayerNames() {
-		ArrayList<String> playerNames=new ArrayList<String>();
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null) {
-				playerNames.add(seats[i].player.name.getText());
-			}
-		}
-		return playerNames;
-	}
-	
-	public void cancelMove(int seat) {
-		Logger.log(LOG_TAG,"cancelMove("+seat+")");
-		networkInterface.cancelMove(seats[seat].player.hostName);
-	}
-	
-	//////////////////// Input to Table Messages ////////////////////
-	public void createTable() {
-		Logger.log(LOG_TAG,"createTable()");
-		inSetupFlow=true;
-		mWL.sendCameraTo(mWL.camPosTableName);
-		saveSlot=SAVE_SLOT_NONE;
-	}
+	//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////// Input Callbacks ///////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////	
 	
 	public void tableNameDone() {
 		Logger.log(LOG_TAG,"tableNameDone()");
@@ -1051,7 +1284,7 @@ public class Table {
 	
 	public void setPickedUpPlayer(int seatIndex_) {
 		pickedUpPlayer=seats[seatIndex_].player;
-		seats[seatIndex_].player=null;
+		seats[seatIndex_].removePlayer();
 		pickedUpPlayer.setIsTouched(true);
 		pickedUpPlayer.atDest=false;
 	}
@@ -1155,7 +1388,7 @@ public class Table {
 	}
 	
 	public void bootButtonClicked() {
-		exitFromTable(seats[bootDialogPlayer].player.hostName);
+		removeFromTable(seats[bootDialogPlayer].player.name.getText());
 		closeBootDialog();
 	}
 	
@@ -1305,224 +1538,232 @@ public class Table {
 		}
 	}
 	
-	//////////////////// World to Player Messages ////////////////////
+	//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////// Private Helpers ///////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////
 	
-	//////////////////// GameLogic to Table Messages ////////////////////
-	public void formPots() {
-		Logger.log(LOG_TAG,"formPots()");
-		displayedPotIndex=pots.size()-1;
-		animationState=ANIM_FORM_POTS;
-	}
+	Object playersLock=new Object();
 	
-	public void clearPots() {
-		Logger.log(LOG_TAG,"clearPots()");
-		displayedPotIndex=0;
-		pots.clear();
-	}
-	
-	public void makeNewPot(ArrayList<Integer> playersEntitled) {
-		Logger.log(LOG_TAG,"makeNewPot()");
-		pots.add(new Pot());
-		pots.get(pots.size()-1).playersEntitled=playersEntitled;
-		pots.get(pots.size()-1).potStack.setX(Pot.originX);
-		pots.get(pots.size()-1).potStack.setY(Pot.originY);
-		pots.get(pots.size()-1).potStack.scaleLabel();
-	}
-	
-	public void fadeInNextPot() {
-		displayedPotIndex=pots.size()-1;
-		pots.get(displayedPotIndex).potStack.setOpacity(0);
-		animationState=ANIM_FADEIN_POT;
-	}
-	
-	public void showLastPot() {
-		displayedPotIndex=pots.size()-1;
-	}
-	
-	public void enablePotArrows() {
-		if (displayedPotIndex>0) {
-			mWL.game.mFL.potArrowRight.fadeIn();
-			mWL.game.mFL.potArrowRight.setTouchable(true);
-		}
-		if (displayedPotIndex<pots.size()-1) {
-			mWL.game.mFL.potArrowLeft.fadeIn();
-			mWL.game.mFL.potArrowLeft.setTouchable(true);
+	private void addPlayer(Player player) {
+		synchronized (playersLock) {
+			players.add(player);
 		}
 	}
 	
-	public void disablePotArrows() {
-		mWL.game.mFL.potArrowLeft.fadeOut();
-		mWL.game.mFL.potArrowLeft.setTouchable(false);
-		mWL.game.mFL.potArrowRight.fadeOut();
-		mWL.game.mFL.potArrowRight.setTouchable(false);
-	}
-	
-	public void startSelectWinner() {
-		animationState=ANIM_SELECT_WINNER;
-		mWL.game.mFL.startSelectWinner();
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
-				seats[i].player.name.fadeIn();
-				setConnectionShowing(seats[i].player,true);
+	private void removePlayer(String playerName) {
+		synchronized (playersLock) {
+			for (int i=players.size()-1;i>=0;i--) {
+				if (players.get(i).name.getText().equals(playerName)) {
+					players.remove(i);
+				}
 			}
 		}
 	}
 	
-	public void startWinnerByDefault(int winner) {
-		animationState=ANIM_WINNER_BY_DEFAULT;
-		this.winner=winner;
-		seats[winner].player.name.fadeIn();
-		setConnectionShowing(seats[winner].player,true);
-		pots.get(displayedPotIndex).potStack.setRotation(seats[winner].rotation);
-	}
-	
-	public void processBuyins() {
-		Logger.log(LOG_TAG,"processBuyins()");
-		if (playersPendingBuyin.size()>0) {
-			doPlayerBuyin(playersPendingBuyin.get(0));
-			playersPendingBuyin.remove(0);
-		} else {
-			gameLogic.buyinsDone();
-		}
-		// TODO deal with case where buyins happen during this process
-	}
-	
-	public void saveTable() {
-		Logger.log(LOG_TAG,"saveTable()");
-		if (saveSlot==SAVE_SLOT_NONE) {
-			saveSlotSelected(SAVE_SLOT_1);
-			mWL.game.mFL.startAutosaveDialog(saveSlot,tableStore.getTableNames(SAVE_NUM_SLOTS));
-		} else {
-			tableStore.saveGame(saveSlot,tableNameField.getText(),buildTableStateString(),gameLogic.buildGameStateString());
-			gameLogic.saveDone();
+	private void removeAllPlayers() {
+		synchronized (playersLock) {
+			players.clear();
 		}
 	}
 	
-	public void loadTable(int loadSlot) {
-		Logger.log(LOG_TAG,"loadTable("+loadSlot+")");
-		saveSlot=loadSlot;
-		String tableName=tableStore.getTableName(loadSlot);
-		String tableStateString=tableStore.getTableState(loadSlot);
-		String gameStateString=tableStore.getGameState(loadSlot);
-		tableNameField.setText(tableName);
-		setTableStateFromString(tableStateString);
-		gameLogic.setGameStateFromString(gameStateString);
-		loadedGame=true;
-		mWL.sendCameraTo(mWL.camPosTable);
-	}
-	
-	//////////////////// Table to Player Messages ////////////////////
-	
-	public void promptMove(int currBetter,int stake,boolean foldEnabled,String message,String messageStateChange) {
-		Logger.log(LOG_TAG,"promptMove("+currBetter+","+stake+","+foldEnabled+","+message+","+messageStateChange+")");
-		networkInterface.promptMove(seats[currBetter].player.hostName,currBetter,stake,foldEnabled,message,messageStateChange);
-		seats[currBetter].player.name.fadeIn();
-		setConnectionShowing(seats[currBetter].player,true);
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null&&i!=currBetter) {
-				networkInterface.enableNudge(seats[i].player.hostName,seats[currBetter].player.hostName);
+	public boolean checkPlayerConnected(String playerName) {
+		boolean connected=false;
+		synchronized (playersLock) {
+			for (int i=players.size()-1;i>=0;i--) {
+				if (players.get(i).name.getText().equals(playerName)) {
+					connected=true;
+				}
 			}
 		}
+		return connected;
 	}
 	
-	public void promptDealer(int dealer,String dealerMessage) {
-		Logger.log(LOG_TAG,"promptDealer("+dealer+","+dealerMessage+")");
-		networkInterface.sendTextMessage(seats[dealer].player.hostName,dealerMessage);
-	}
-	
-	public void sendWinnings(int player,ChipStack winStack) {
-		Logger.log(LOG_TAG,"sendWinnings("+player+","+winStack.value());
-		networkInterface.sendChips(seats[player].player.hostName,player,winStack.toString());
-		seats[player].player.chipAmount+=seats[player].player.winStack.value();
-		seats[player].player.resetWinStack();
-		syncAllTableStatusMenu();
-	}
-	
-	public void sendDealerButton(int dealer) {
-		Logger.log(LOG_TAG,"sendDealerButton("+dealer+")");
-		networkInterface.sendDealerChip(seats[dealer].player.hostName);
-	}
-	
-	public void recallDealerButton(int dealer) {
-		Logger.log(LOG_TAG,"recallDealerButton("+dealer+")");
-		networkInterface.recallDealerChip(seats[dealer].player.hostName);
-	}
-	
-	public void bootPlayerFromTable(int player) {
-		Logger.log(LOG_TAG,"bootPlayerFromTable("+player+")");
-		networkInterface.removePlayer(seats[player].player.hostName);
-		ColorPool.unassignColor(seats[player].player.color);
-		seats[player].player=null;
-	}
-	
-	public void clearExitPendingPlayers() {
-		Logger.log(LOG_TAG,"clearExitPendingPlayers()");
-		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null&&seats[i].player.exitPending) {
-				ColorPool.unassignColor(seats[i].player.color);
-				seats[i].player=null;
+	private Player getAnyPlayer() {
+		Player thisPlayer=null;
+		synchronized (playersLock) {
+			if (players.size()>0) {
+				thisPlayer=players.get(0);
+			} else {
+				Logger.log(LOG_TAG,"getAnyPlayer() - Error: no players connected");
 			}
+		}
+		return thisPlayer;
+	}
+	
+	private Player getAnyUnseatedPlayer() {
+		Player thisPlayer=null;
+		synchronized (playersLock) {
+			for (int i=players.size()-1;i>=0;i--) {
+				if (!players.get(i).isSeated) {
+					thisPlayer=players.get(i);
+					break;
+				}
+			}
+		}
+		return thisPlayer;
+	}
+	
+	public void rotateAndProjectPlayer(Player player) {
+		// check the screen edges and rotate player if necessary
+		player.setRotation(seats[calculateClosestSeatToPlayer(player)].rotation);
+		if (player.rotation==0) {
+			player.setY(mWL.table.seats[0].y);
+		} else if (player.rotation==-90) {
+			player.setX(mWL.table.seats[3].x);
+		} else if (player.rotation==180) {
+			player.setY(mWL.table.seats[4].y);
+		} else if (player.rotation==90) {
+			player.setX(mWL.table.seats[7].x);
 		}
 	}
 	
-	private void syncAllTableStatusMenu() {
-		Logger.log(LOG_TAG,"syncAllTableStatusMenu()");
-		ArrayList<Player> players=new ArrayList<Player>();
+	public void calculateClosestSeatToPickedUp() {
+		closestSeatToPickedUp=calculateClosestSeatToPlayer(pickedUpPlayer);
+	}
+	
+	public int calculateClosestSeatToPlayer(Player player) {
+		int closestSeat=0;
+		double minDist=Math.pow((player.x-seats[0].x),2)+Math.pow((player.y-seats[0].y),2);
+		for (int seatIndex=0;seatIndex<NUM_SEATS;seatIndex++) {
+			if (Math.abs(player.rotation-seats[seatIndex].rotation)!=180) {
+				double dist=Math.pow((player.x-seats[seatIndex].x),2)+Math.pow((player.y-seats[seatIndex].y),2);
+				if (dist<minDist) {
+					minDist=dist;
+					closestSeat=seatIndex;
+				}
+			}
+		}
+		return closestSeat;
+	}
+	
+	private int countPlayersLobby() {
+		int count_=0;
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null) {
-				players.add(seats[i].player);
+				count_++;
 			}
 		}
-		networkInterface.syncAllTableStatusMenu(players);
+		if (pickedUpPlayer!=null&&pickedUpPlayer.isConnected)
+			count_++;
+		return count_;
 	}
 	
-	private void setConnectionShowing(Player player,boolean showing) {
-		Logger.log(LOG_TAG,"setConnectionShowing()");
-		if (showing) {
-			player.setConnectionShowing(true);
-			networkInterface.showConnection(player.hostName);
-		} else {
-			player.setConnectionShowing(false);
-			networkInterface.hideConnection(player.hostName);
+	private boolean allPlayersSetup() {
+		boolean allPlayersSetup=true;
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null) {
+				if (!seats[i].player.isConnected||!seats[i].player.hasBoughtIn) {
+					allPlayersSetup=false;
+				}
+			}
+		}
+		Logger.log(LOG_TAG,"allPlayersSetup = "+allPlayersSetup);
+		return allPlayersSetup;
+	}
+	
+	public int countPlayers() {
+		int count_=0;
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null&&seats[i].player.hasBoughtIn) {
+				count_++;
+			}
+		}
+		if (pickedUpPlayer!=null&&!pickedUpPlayer.hasBoughtIn)
+			count_++;
+		Logger.log(LOG_TAG,"countPlayers() = "+count_);
+		return count_;
+	}
+	
+	private int getSeatFromPlayerName(String playerName) {
+		int index=-1;
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null&&seats[i].player.name.getText().equals(playerName)) {
+				index=i;
+				break;
+			}
+		}
+		Logger.log(LOG_TAG,"getIndexFromPlayerName("+playerName+") = "+index);
+		return index;
+	}
+	
+	private Player getPlayerFromPlayerName(String playerName) {
+		Player thisPlayer=null;
+		synchronized (playersLock) {
+			for (int i=players.size()-1;i>=0;i--) {
+				if (players.get(i).name.getText().equals(playerName)) {
+					thisPlayer=players.get(i);
+					break;
+				}
+			}
+		}
+		return thisPlayer;
+	}
+	
+	public void updatePotRotation() {
+		// calculate min pot distance from each entitled player
+		int closestPlayer=-1;
+		float closestDistanceSquared=0;
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
+				float distToPlayerSquared=(float) (Math.pow(Math.abs(seats[i].x-pots.get(displayedPotIndex).potStack.getX()),2)+
+						Math.pow(Math.abs(seats[i].y-pots.get(displayedPotIndex).potStack.getY()),2));
+				if (closestPlayer==-1||distToPlayerSquared<closestDistanceSquared) {
+					closestDistanceSquared=distToPlayerSquared;
+					closestPlayer=i;
+				}
+			}
+		}
+		if (pots.get(displayedPotIndex).potStack.getRotation()!=seats[closestPlayer].rotation) {
+			pots.get(displayedPotIndex).potStack.setRotation(seats[closestPlayer].rotation);
 		}
 	}
 	
-	//////////////////// Player to Table Messages ////////////////////
-	public boolean requestGamePermission(String playerName) {
-		return true;
+	private String buildTableStateString() {
+		String outString=ChipCase.valuesToString();
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			if (seats[i].player!=null){
+				outString=outString.concat("<PLAYER>"+i+"<PLAYER/><NAME>"+
+						seats[i].player.name.getText()+"<NAME/>"+"<AMOUNT>"+
+						seats[i].player.chipAmount+"<AMOUNT/>");
+			}
+		}
+		return outString;
 	}
 	
-	public void notifyPlayerConnected(String hostName,String playerName,int azimuth,int[] chipNumbers) {
-		Logger.log(LOG_TAG,"notifyPlayerConnected("+hostName+","+playerName+","+azimuth+")");
-		Player connectedPlayer=new Player(playerName,hostName,null);
-		connectedPlayer.setBuyinBuild(chipNumbers);
-		connectedPlayer.azimuth=azimuth;
-		if (gameState==STATE_LOBBY) {
-			doPlayerBuyin(connectedPlayer);
-		} else if (gameState==STATE_LOBBY_LOADED) {
-			doPlayerBuyinLoaded(connectedPlayer);
-		} else if (gameState==STATE_GAME) {
-			doPlayerBuyinNextHand(connectedPlayer);
-		} else {
-			networkInterface.removePlayer(hostName);
-		}
+	private void setTableStateFromString(String tableStateStr) {
+		ChipCase.setValuesFromString(tableStateStr);
+		while (tableStateStr.contains("<PLAYER>")&&tableStateStr.contains("<AMOUNT/>")) {
+    		int startIndex=tableStateStr.indexOf("<PLAYER>")+"<PLAYER>".length();
+    		int endIndex=tableStateStr.indexOf("<PLAYER/>");
+    		int playerIndex=Integer.parseInt(tableStateStr.substring(startIndex,endIndex));
+    		startIndex=tableStateStr.indexOf("<NAME>")+"<NAME>".length();
+    		endIndex=tableStateStr.indexOf("<NAME/>");
+    		String name=tableStateStr.substring(startIndex,endIndex);
+    		startIndex=tableStateStr.indexOf("<AMOUNT>")+"<AMOUNT>".length();
+    		endIndex=tableStateStr.indexOf("<AMOUNT/>");
+    		int amount=Integer.parseInt(tableStateStr.substring(startIndex,endIndex));
+    		
+    		Player thisPlayer=new Player(name,seats[playerIndex].playerSlot);
+    		addPlayer(thisPlayer);
+    		seats[playerIndex].seatPlayer(thisPlayer);
+    		thisPlayer.isConnected=false;
+    		thisPlayer.isLoadedPlayer=true;
+    		thisPlayer.color=ColorPool.assignColor();
+    		thisPlayer.chipAmount=amount;
+    		thisPlayer.setBuyinBuild(ChipCase.calculateSimplestBuild(amount));
+    		thisPlayer.name.loadTexture();
+    		tableStateStr=tableStateStr.substring(endIndex+"<AMOUNT/>".length());
+    	}
 	}
 	
-	public void doPlayerBuyin(Player player) {
-		int existingPlayer=getIndexFromHostName(player.hostName);
-		if (existingPlayer>=0&&existingPlayer<NUM_SEATS) {
-			ColorPool.unassignColor(seats[existingPlayer].player.color);
-			seats[existingPlayer].player=null;
-		}
-		int thisAzimuth_=mWL.game.calculateAzimuth();
-		int deltaAzimuth_=thisAzimuth_-player.azimuth;
-		
+	public int getNextFreeSeat(int azimuth) {
+		int nextFree=-1;
+		int thisAzimuth=mWL.game.calculateAzimuth();
+		int deltaAzimuth_=thisAzimuth-azimuth;
 		if (deltaAzimuth_<0) {
 			deltaAzimuth_+=360;
 		}
 		int startingSeat_=Seat.getStartingSeat(deltaAzimuth_);
-		int nextFree=-1;
-					
 		for (int i=0;i<NUM_SEATS;i++) {
 			int thisSeat=startingSeat_+((i+1)/2)*(int)(Math.pow(-1,i%2+1));
 			if (thisSeat>=NUM_SEATS) {
@@ -1535,162 +1776,7 @@ public class Table {
 				break;
 			}
 		}
-		
-		if (nextFree>=0&&nextFree<NUM_SEATS) {
-			player.copyConnectionBlobFrom(seats[nextFree].playerSlot);
-			seats[nextFree].seatPlayer(player);
-			seats[nextFree].player.doRxJoinCoin();
-			seats[nextFree].player.isConnected=true;
-			seats[nextFree].player.color=ColorPool.assignColor();
-			seats[nextFree].player.name.loadTexture();
-			seats[nextFree].player.setTouchable(true);
-			
-		}
-		Logger.log(LOG_TAG,"doPlayerBuyin("+player.name.getText()+") nextFree = "+nextFree);
+		return nextFree;
 	}
 	
-	public void doPlayerBuyinLoaded(Player player) {
-		int seat=getIndexFromPlayerName(player.name.getText());
-		seats[seat].player.hostName=player.hostName;
-		seats[seat].player.doRxJoinCoin();
-		seats[seat].player.isConnected=true;
-		setConnectionShowing(seats[seat].player,true);
-		seats[seat].player.isFolded=true;
-		seats[seat].player.setTouchable(true);
-		Logger.log(LOG_TAG,"doPlayerBuyinLoaded("+player.name.getText()+")");
-	}
-	
-	public void doPlayerBuyinNextHand(Player player) {
-		networkInterface.promptWaitNextHand(player.hostName);
-		playersPendingBuyin.add(player);
-		Logger.log(LOG_TAG,"doPlayerBuyinNextHand("+player.name.getText()+")");
-	}
-	
-	public void notifyPlayerReconnected(String hostName) {
-		int seat=getIndexFromHostName(hostName);
-		syncAllTableStatusMenu();
-		if (seat>=0&&seat<NUM_SEATS) {
-			if (gameLogic.getDealer()==seat) {
-				networkInterface.sendDealerChip(hostName);
-			} else {
-				networkInterface.recallDealerChip(hostName);
-			}
-			if (seats[seat].player.connectionShowing) {
-				setConnectionShowing(seats[seat].player,true);
-			}
-			Logger.log(LOG_TAG,"notifyPlayerReconnected("+hostName+") "+seats[seat].player.name.getText()+ "reconnected");
-		} else if (pickedUpPlayer!=null&&pickedUpPlayer.hostName.equals(hostName)) {
-			setConnectionShowing(pickedUpPlayer,true);
-			Logger.log(LOG_TAG,"notifyPlayerReconnected("+hostName+") "+pickedUpPlayer.name.getText()+ "reconnected as PUC");
-		} else {
-			// TODO maybe deal with case where buyins are pending?
-			Logger.log(LOG_TAG,"notifyPlayerReconnected("+hostName+") "+"player not found so removed");
-			networkInterface.removePlayer(hostName);
-		}
-	}
-	
-	public void setPlayerName(final String hostName_,final String name_) {
-		Logger.log(LOG_TAG,"setPlayerName("+hostName_+","+name_+")");
-		for (int i=0;i<Table.NUM_SEATS;i++) {
-			if (seats[i].player!=null&&seats[i].player.hostName.equals(hostName_)) {
-				seats[i].player.setName(name_);
-				seats[i].player.name.loadTexture();
-				syncAllTableStatusMenu();
-			}
-		}
-		if (pickedUpPlayer!=null&&pickedUpPlayer.hostName.equals(hostName_)) {
-			pickedUpPlayer.setName(name_);
-			pickedUpPlayer.name.loadTexture();
-			syncAllTableStatusMenu();
-		}
-	}
-	
-	public void exitFromTable(String hostName) {
-		networkInterface.removePlayer(hostName);
-		int seat=getIndexFromHostName(hostName);
-		if (seat>=0&&seat<NUM_SEATS) {
-			Logger.log(LOG_TAG,"exitFromTable("+hostName+") seat: "+seat);
-			if (gameState==STATE_LOBBY) {
-				bootPlayerFromTable(seat);
-			} else if (gameState==STATE_LOBBY_LOADED) {
-				seats[seat].player.hostName=null;
-				seats[seat].player.isConnected=false;
-				seats[seat].player.connectionBlob.startFlashing();
-				seats[seat].player.setTouchable(false);
-			} else if (gameState==STATE_GAME) {
-				gameLogic.exitFromGame(seat);
-				seats[seat].player.name.fadeOut();
-				setConnectionShowing(seats[seat].player,false);
-				if (seats[seat].player.selected) {
-					seats[seat].player.setSelected(false);
-					updateSplitButtons();
-				}
-				closeBootDialog();
-			}
-		} else {
-			Logger.log(LOG_TAG,"exitFromTable("+hostName+") seat not found");
-		}
-		if (pickedUpPlayer!=null&&pickedUpPlayer.hostName.equals(hostName)) {
-			Logger.log(LOG_TAG,"exitFromTable("+hostName+") PUC");
-			ColorPool.unassignColor(pickedUpPlayer.color);
-			pickedUpPlayer.name.dispose();
-			pickedUpPlayer=null;
-		}
-		syncAllTableStatusMenu();
-		if (countPlayers()==1) {
-			mWL.game.mFL.notifyGameCantStart();
-		}
-		
-		// TODO remove player from buyin pending players if necessary
-	}
-	
-	public void moveRxd(String hostName,int move,String chipString) {
-		networkInterface.disableNudge();
-		int moveRxdPlayer=getIndexFromHostName(hostName);
-		seats[moveRxdPlayer].player.name.fadeOut();
-		setConnectionShowing(seats[moveRxdPlayer].player,false);
-		closeBootDialog();
-		if (!chipString.equals("")) {
-			seats[moveRxdPlayer].player.setBettingStack(ChipStack.parseStack(chipString));
-			seats[moveRxdPlayer].player.bettingStack.setX(seats[moveRxdPlayer].xOffscreen);
-			seats[moveRxdPlayer].player.bettingStack.setY(seats[moveRxdPlayer].yOffscreen);
-			seats[moveRxdPlayer].player.bettingStack.setDest(seats[moveRxdPlayer].x,seats[moveRxdPlayer].y,seats[moveRxdPlayer].player.betStack.size());
-			animationState=ANIM_BETTING;
-		}
-		gameLogic.moveRxd(moveRxdPlayer,move);
-		syncAllTableStatusMenu();
-		Logger.log(LOG_TAG,"moveRxd("+hostName+","+move+","+chipString+")"+seats[moveRxdPlayer].player.name.getText());
-	}
-	
-	public void setupACKEd(final String hostName) {
-		int position=getPosition(hostName);
-		seats[position].player.waitingSetupACK=false;
-		if (gameState==STATE_LOBBY) {
-			if (countPlayers()==2) {
-				mWL.game.mFL.notifyGameCanStart(true);
-			}
-		} else if (gameState==STATE_LOBBY_LOADED) {
-			if (allPlayersSetup()) {
-				startLoadedGame();
-			}
-		} else if (gameState==STATE_GAME) {
-			processBuyins();
-		}
-		Logger.log(LOG_TAG,"setupACKEd("+hostName+")");
-	}
-	
-	public void chipsACKed(String hostName) {
-		int player=getIndexFromHostName(hostName);
-		seats[player].player.waitingWinningsACK=false;
-		Logger.log(LOG_TAG,"chipsACKed("+hostName+")");
-	}
-    
-	public void bellRxd(String destHostName) {
-		if (gameLogic.currBetter>=0&&gameLogic.currBetter<=NUM_SEATS) {
-			if (seats[gameLogic.currBetter].player!=null&&seats[gameLogic.currBetter].player.hostName.equals(destHostName)) {
-				networkInterface.sendBell(destHostName);
-			}
-		}
-	}
-
 }

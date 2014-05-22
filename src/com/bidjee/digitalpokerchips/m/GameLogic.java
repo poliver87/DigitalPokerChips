@@ -1,12 +1,7 @@
 package com.bidjee.digitalpokerchips.m;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 
-import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.Table;
 import com.bidjee.util.Logger;
 
@@ -32,7 +27,6 @@ public class GameLogic {
 	public static final String STATE_PROCESS_POTS="STATE_PROCESS_POTS";
 	public static final String STATE_SELECT_WINNER="STATE_SELECT_WINNER";
 	public static final String STATE_SEND_WINNINGS="STATE_SEND_WINNINGS";
-	public static final String STATE_WAIT_WINNINGS_ACKS="STATE_WAIT_WINNINGS_ACKS";
 	public static final String STATE_RECALL_DEALER="STATE_RECALL_DEALER";
 	public static final String STATE_REMOVE_PLAYERS="STATE_REMOVE_PLAYERS";
 	public static final String STATE_START_HAND="STATE_START_HAND";
@@ -51,7 +45,7 @@ public class GameLogic {
 	public static final int MOVE_FOLD = 2;
 	public static final int MOVE_ALL_IN = 3;
 	
-	public static final int NO_DEALER=-1;
+	public static final int NO_PLAYER=-1;
 	// References //
 	Table table;
 	
@@ -70,7 +64,8 @@ public class GameLogic {
 	
 	public GameLogic(Table table) {
 		this.table=table;
-		dealer=NO_DEALER;
+		dealer=NO_PLAYER;
+		currBetter=NO_PLAYER;
 	}
 	
 	public void setDimensions(float worldWidth,float worldHeight) {
@@ -110,6 +105,7 @@ public class GameLogic {
 			setGameState(STATE_NEXT_BET);
 		} else if (state.equals(STATE_NEXT_BET)) {
 			if (checkRoundComplete()) {
+				currBetter=NO_PLAYER;
 				if (currStake==0) {
 					// no bets were placed so don't wait for pots to form
 					setGameState(STATE_END_ROUND);
@@ -118,7 +114,7 @@ public class GameLogic {
 				}
 			} else {
 				// if round not complete, open betting to next player
-				doNextBet();
+				openBetTo(getNextBetter(currBetter));
 				setGameState(STATE_WAITING_BET);
 			}
 		} else if (state.equals(STATE_WAITING_BET)) {
@@ -212,39 +208,29 @@ public class GameLogic {
 							table.seats[i].player.winStack.value());
 					table.sendWinnings(i,table.seats[i].player.winStack);					
 					table.seats[i].player.isAllIn=false;
-					table.seats[i].player.waitingWinningsACK=true;
 				}
 			}
 			//flingPotLabel.fadeOut();
 			//flingDemo.stop();
-			setGameState(STATE_WAIT_WINNINGS_ACKS);
-		} else if (state.equals(STATE_WAIT_WINNINGS_ACKS)) {
-			boolean waitingWinningsACKs_=false;
-			for (int i=0;i<Table.NUM_SEATS;i++) {
-				if (table.seats[i].player!=null&&!table.seats[i].player.exitPending)
-					waitingWinningsACKs_|=table.seats[i].player.waitingWinningsACK;
-			}
-			if (!waitingWinningsACKs_) {
-				table.pots.remove(table.displayedPotIndex);
-				if (table.pots.size()==0) {
-					setGameState(STATE_RECALL_DEALER);
-				} else {
-					setGameState(STATE_WAIT_FADEIN_POT);
-					table.fadeInNextPot();
-				}
-			}
+			table.pots.remove(table.displayedPotIndex);
+			if (table.pots.size()==0) {
+				setGameState(STATE_RECALL_DEALER);
+			} else {
+				setGameState(STATE_WAIT_FADEIN_POT);
+				table.fadeInNextPot();
+			}	
 		} else if (state.equals(STATE_RECALL_DEALER)) {
 			setGameState(STATE_REMOVE_PLAYERS);
 			table.recallDealerButton(dealer);
 		} else if (state.equals(STATE_REMOVE_PLAYERS)) {
-			table.clearExitPendingPlayers();
 			for (int i=0;i<Table.NUM_SEATS;i++) {
 				if (table.seats[i].player!=null) {
 					if (table.seats[i].player.isAllIn) {
-						table.bootPlayerFromTable(i);
+						table.removeFromTable(table.seats[i].player.name.getText());
 					}
 				}
 			}
+			table.unseatDisconnectedPlayers();
 			if (table.countPlayers()>1) {
 				setDealer(findNextDealer(dealer));
 				waitingSave=true;
@@ -270,12 +256,8 @@ public class GameLogic {
 	
 	public void resetTable() {
 		Logger.log(LOG_TAG,"resetTable()");
-		for (int i=0;i<Table.NUM_SEATS;i++) {
-			if (table.seats[i].player!=null) {
-				table.seats[i].player.reset();
-			}
-		}
-		table.pots.clear();
+		currBetter=NO_PLAYER;
+		setDealer(NO_PLAYER);
 		removeAllPrompts();
 	}
 	
@@ -380,41 +362,50 @@ public class GameLogic {
 		
 	}
 	
-	private void doNextBet() {
+	private void openBetTo(int nextBetter) {
 		// open the betting to the next non-folded non-all in player
-		Logger.log(LOG_TAG,"doNextBet()");
-		currBetter=getNextBetter(currBetter);
+		Logger.log(LOG_TAG,"openBetTo("+nextBetter+")");
+		currBetter=nextBetter;
+		MovePrompt thisMovePrompt=new MovePrompt();
 		if (!smallBlindsIn) {
-			table.promptMove(currBetter,1,false,"Small Blinds","");
+			thisMovePrompt.stake=1;
+			thisMovePrompt.foldEnabled=false;
+			thisMovePrompt.message="Small Blinds";
+			thisMovePrompt.messageStateChange="";
 			table.mWL.game.mFL.blindsInLabel.startFlashing();
 		} else if (!bigBlindsIn) {
-			table.promptMove(currBetter,Math.max(currStake,1),false,"Big Blinds","");
+			thisMovePrompt.stake=Math.max(currStake,1);
+			thisMovePrompt.foldEnabled=false;
+			thisMovePrompt.message="Big Blinds";
+			thisMovePrompt.messageStateChange="";
 		} else if (openingBet) {
-			openingBet=false;
-			String msgStateChange="Open ";
+			thisMovePrompt.messageStateChange="Open ";
 			if (dealStage==DEAL_FLOP) {
-				msgStateChange+=FLOP_STRING;
+				thisMovePrompt.messageStateChange+=FLOP_STRING;
 				table.mWL.game.mFL.flopLabel.fadeIn();
 			} else if (dealStage==DEAL_TURN) {
-				msgStateChange+=TURN_STRING;
+				thisMovePrompt.messageStateChange+=TURN_STRING;
 				table.mWL.game.mFL.turnLabel.fadeIn();
 			} else if (dealStage==DEAL_RIVER) {
-				msgStateChange+=RIVER_STRING;
+				thisMovePrompt.messageStateChange+=RIVER_STRING;
 				table.mWL.game.mFL.riverLabel.fadeIn();
 			}
-			msgStateChange+=" Betting";
-			String msg="Check or Bet";
-			table.promptMove(currBetter,0,true,msg,msgStateChange);
+			thisMovePrompt.messageStateChange+=" Betting";
+			thisMovePrompt.stake=0;
+			thisMovePrompt.foldEnabled=true;
+			thisMovePrompt.message="Check or Bet";
 		} else {
 			int amountToCall=currStake-table.seats[currBetter].player.betStack.value();
-			String msg;
+			thisMovePrompt.stake=amountToCall;
+			thisMovePrompt.foldEnabled=true;
 			if (amountToCall==0) {
-				msg="Check or Bet";
+				thisMovePrompt.message="Check or Bet";
 			} else {
-				msg=amountToCall+" to Call";
+				thisMovePrompt.message=amountToCall+" to Call";
 			}
-			table.promptMove(currBetter,amountToCall,true,msg,"");
+			thisMovePrompt.messageStateChange="";
 		}
+		table.promptMove(currBetter,thisMovePrompt);
 		waitingForBet=true;
 	}
 	
@@ -587,25 +578,11 @@ public class GameLogic {
 	
 	public void destroyTable() {
 		Logger.log(LOG_TAG,"destroyTable()");
-		setDealer(NO_DEALER);
+		resetTable();
 	}
 	
-	public boolean requestGamePermission(String playerName_) {
-		boolean permissionGranted_=false;
-		for (int i=0;i<Table.NUM_SEATS;i++) {
-			if (table.seats[i].player!=null) {
-				if (!table.seats[i].player.isConnected&&table.seats[i].player.name.getText().equals(playerName_)) {
-					permissionGranted_=true;
-				}
-			}
-		}
-		Logger.log(LOG_TAG,"requestGamePermission("+playerName_+") = "+permissionGranted_);
-		return permissionGranted_;
-	}
-	
-	public void exitFromGame(int seat) {
-		Logger.log(LOG_TAG,"exitFromGame("+seat+")");
-		table.seats[seat].player.exitPending=true;
+	public void notifyPlayerLeft(int seat) {
+		Logger.log(LOG_TAG,"notifyPlayerLeft("+seat+")");
 		table.seats[seat].player.isFolded=true;
 		for (int i=0;i<table.pots.size();i++) {
 			if (table.pots.get(i).playersEntitled.contains(seat)) {
@@ -616,9 +593,21 @@ public class GameLogic {
 		skipPlayer(seat);
 	}
 	
+	public void notifyPlayerReconnected(int seat) {
+		Logger.log(LOG_TAG,"notifyPlayerReconnected("+seat+")");
+		if (dealer==seat) {
+			table.sendDealerButton(seat);
+		} else {
+			table.recallDealerButton(seat);
+		}
+		if (currBetter==seat) {
+			openBetTo(currBetter);
+		} else {
+			table.syncPlayersChips(seat);
+		}
+	}
+	
 	public void sitPlayerOut(int seat) {
-		//table.seats[seat].player.sittingOut=true;
-		// TODO remove this if not needed
 		Logger.log(LOG_TAG,"sitPlayerOut("+seat+")");
 		table.seats[seat].player.isFolded=true;
 		for (int i=0;i<table.pots.size();i++) {
@@ -640,8 +629,10 @@ public class GameLogic {
 				bigBlindsIn=true;
 				table.mWL.game.mFL.blindsInLabel.fadeOut();
 			}
+			if (openingBet) {
+				openingBet=false;
+			}
 		}
-		table.seats[seat].player.waitingWinningsACK=false;
 	}
 
 	public void moveRxd(int seatIndex,int move) {
@@ -654,6 +645,9 @@ public class GameLogic {
 			table.mWL.game.mFL.blindsInLabel.fadeOut();
 		} else {
 			table.seats[seatIndex].player.hasBet=true;
+		}
+		if (openingBet) {
+			openingBet=false;
 		}
 		if (move==MOVE_CHECK) {
 			//table.enableUndo(seatIndex);

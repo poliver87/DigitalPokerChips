@@ -3,6 +3,7 @@ package com.bidjee.digitalpokerchips.i;
 import java.util.ArrayList;
 
 import com.bidjee.digitalpokerchips.c.Table;
+import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.Player;
 
 public interface IHostNetwork {
@@ -11,23 +12,23 @@ public interface IHostNetwork {
 	public String getIpAddress();
 	boolean getWifiEnabled();
 	public void setTable(Table table);
-	public void sendDealerChip(String dealerHostName);
-	public void recallDealerChip(String dealerHostName);
-	public void sendChips(String hostName,int position,String chipString);
-	public void sendSetupInfo(String hostName,int position,int color,String chipString);
-	public void sendTextMessage(String hostName_,String message);
-	public void removePlayer(String hostName);
-	public void startLobby(boolean loadedGame,ArrayList<String> playerNames);
-	public void stopLobby();
+	public void sendDealerChip(String playerName);
+	public void recallDealerChip(String playerName);
+	public void sendChips(String playerName,String chipString);
+	public void setColor(String playerName,int color);
+	public void sendTextMessage(String playerName,String message);
+	public void removePlayer(String playerName);
 	public void createTable(String tableName);
 	public void destroyTable();
+	public void syncPlayersChips(String playerName,int chipAmount);
 	public void syncAllTableStatusMenu(ArrayList<Player> players);
-	public void promptMove(String hostName,int position,int stake,boolean foldEnabled,String message,String messageStateChange);
-	public void cancelMove(String hostName);
-	public void sendBell(String destHostName);
-	public void enableNudge(String dstHostName,String nudgableHostName);
+	public void promptMove(String playerName,MovePrompt movePrompt,int chipAmount);
+	public void cancelMove(String playerName);
+	public void sendBell(String playerName);
+	public void enableNudge(String dstPlayerName,String nudgablePlayerName);
 	public void disableNudge();
-	public void showConnection(String hostName);
-	public void hideConnection(String hostName);
-	public void promptWaitNextHand(String hostName);	
+	public void showConnection(String playerName);
+	public void hideConnection(String playerName);
+	public void promptWaitNextHand(String playerName);
+	public void parsePlayerMessage(String playerName,String msg);
 }

@@ -404,7 +404,7 @@ public class ForegroundInput implements InputProcessor {
 			if (mFL.homeMenu.createButton.getIsTouched()) {
 				handled_=true;
 				mFL.homeMenu.createButton.setIsTouched(false);
-				mFL.game.mWL.table.createTable();
+				mFL.game.mWL.table.startTableSetup();
 			}
 			if (mFL.homeMenu.loadButton.getIsTouched()) {
 				handled_=true;
