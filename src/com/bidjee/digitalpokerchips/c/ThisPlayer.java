@@ -899,12 +899,12 @@ public class ThisPlayer {
 			connectingTable=table;
 			stopSearchForGames();
 			ChipCase.values=table.vals;
-			clearAllStacks();
 			if (!connectNow) {
 				connectivityStatus=CONN_BUYIN;
+				clearAllStacks();
 				joinToken.fadeIn();
 				joinToken.setPosition(joinTokenStart);
-				mWL.game.mFL.startBuyin(table.getName(),connectNow);
+				mWL.game.mFL.startBuyin(table.getName());
 			} else {
 				connectivityStatus=CONN_CONNECTING;
 				networkInterface.requestConnect(connectingTable,mWL.game.calculateAzimuth(),null);
@@ -1037,8 +1037,8 @@ public class ThisPlayer {
 		}
 	}
 
-	public void enableNudge(String hostName) {
-		mWL.game.mFL.tableStatusMenu.enableNudge(hostName);
+	public void enableNudge(String name) {
+		mWL.game.mFL.tableStatusMenu.enableNudge(name);
 	}
 	
 	public void disableNudge() {
@@ -1061,6 +1061,11 @@ public class ThisPlayer {
 		if (difference>0) {
 			ChipStack syncStack=new ChipStack();
 			syncStack.buildStackFrom(ChipCase.calculateSimplestBuild(difference));
+			doWin(syncStack);
+		} else if (difference<0) {
+			clearAllStacks();
+			ChipStack syncStack=new ChipStack();
+			syncStack.buildStackFrom(ChipCase.calculateSimplestBuild(chipAmount));
 			doWin(syncStack);
 		}
 	}

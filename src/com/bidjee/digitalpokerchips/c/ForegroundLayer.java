@@ -760,7 +760,7 @@ public class ForegroundLayer {
 		searchingAnimation.setTouchable(false);
 	}
 	
-	public void startBuyin(String tableName,boolean loadedGame) {
+	public void startBuyin(String tableName) {
 		Logger.log(LOG_TAG,"stopSearchForGames()");
 		dialogWindow.setOpacity(1);
 		dialogWindow.setPosition(buyinDialogSmall.x,buyinDialogSmall.y);
@@ -768,7 +768,6 @@ public class ForegroundLayer {
 		dialogWindow.sendTo(buyinDialog);
 		buyinDialog.disappear();
 		buyinDialog.setTableName(tableName);
-		buyinDialog.setLoadedGame(loadedGame);
 		input.pushTouchFocus(ForegroundInput.TOUCH_BUYIN);
 	}
 	

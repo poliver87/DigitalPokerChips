@@ -203,7 +203,7 @@ public class TableStatusMenu {
 	
 	public void enableNudge(String name) {
 		for (int i=0;i<playerList.size();i++) {
-			if (playerList.get(i).name.equals(name)) {
+			if (playerList.get(i).name.getText().equals(name)) {
 				bellButton.y=yPlayerEntryBottom-i*yPlayerEntryPitch+playerList.get(i).name.radiusY;
 				bellButton.opacity=1;
 				bellButton.setTouchable(true);

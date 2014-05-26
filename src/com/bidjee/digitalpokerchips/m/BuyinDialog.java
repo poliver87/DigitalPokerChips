@@ -8,8 +8,6 @@ public class BuyinDialog extends Dialog {
 	
 	static final String TITLE_STRING = "Would you like to join ";
 	
-	public boolean loadedGame;
-	
 	public TextLabel titleLabel;
 	public TextLabel instrLabel;
 	public Button[] upArrows=new Button[ChipCase.CHIP_TYPES];
@@ -107,20 +105,18 @@ public class BuyinDialog extends Dialog {
 		okButton.setTouchable(true);
 		cancelButton.fadeIn();
 		cancelButton.setTouchable(true);
-		if (!loadedGame) {
-			instrLabel.fadeIn();
-			for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-				upArrows[i].fadeIn();
-				upArrows[i].setTouchable(true);
-				downArrows[i].fadeIn();
-				downArrows[i].setTouchable(true);
-				chipStacks[i].totalLabel.fadeIn();
-				chipStacks[i].updateTotalLabel();
-			}
-			totalLabel.fadeIn();
-			totalNumberLabel.fadeIn();
-			updateBuyinTotal();
+		instrLabel.fadeIn();
+		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
+			upArrows[i].fadeIn();
+			upArrows[i].setTouchable(true);
+			downArrows[i].fadeIn();
+			downArrows[i].setTouchable(true);
+			chipStacks[i].totalLabel.fadeIn();
+			chipStacks[i].updateTotalLabel();
 		}
+		totalLabel.fadeIn();
+		totalNumberLabel.fadeIn();
+		updateBuyinTotal();
 	}
 	
 	@Override
@@ -216,10 +212,6 @@ public class BuyinDialog extends Dialog {
 	public void setTableName(String tableName) {
 		titleLabel.setText(TITLE_STRING+tableName+"?");
 		titleLabel.loadTexture();
-	}
-	
-	public void setLoadedGame(boolean loadedGame) {
-		this.loadedGame=loadedGame;
 	}
 
 }
