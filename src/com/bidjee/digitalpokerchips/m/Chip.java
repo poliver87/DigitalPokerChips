@@ -198,9 +198,9 @@ public class Chip implements Comparable<Chip> {
 
 	@Override
 	public int compareTo(Chip o) {
-		if (this.z>(o.z+0.3f)) {
+		if (this.z>o.z) {
 			return 1;
-		} else if (this.z<(o.z-0.3f)) {
+		} else if (this.z<o.z) {
 			return -1;
 		} else {
 			if (this.y<o.y) {

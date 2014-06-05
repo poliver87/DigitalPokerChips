@@ -24,7 +24,7 @@ public class ThisPlayer {
 	public static final String LOG_TAG = "DPCPlayer";
 	
 	//////////////////// Constants ////////////////////
-	static final int[] defaultChipNums={8,4,2};
+	static final int[] defaultChipNums={1,1,0};
 	
 	public static final int DURATION_SEARCH_HOLDOFF = 2000;
 	static final int RECONNECT_INTERVAL = 3000;
