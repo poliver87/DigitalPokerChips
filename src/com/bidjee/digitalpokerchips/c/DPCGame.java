@@ -23,6 +23,7 @@ public class DPCGame extends Game {
 	
 	// This should be in master and not proto
 	
+	// This should be in master and not proto1
 	public static final int RESOLUTION_LOW = 0;
 	public static final int RESOLUTION_MEDIUM = 1;
 	public static final int RESOLUTION_HIGH = 2;

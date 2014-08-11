@@ -43,7 +43,6 @@ public class TitleScreen {
 		logo=new DPCSprite();
 		loadBar=new DPCSprite();
 		screenLaidOut=false;
-		
 	}
 	
 	public void dispose() {
@@ -72,7 +71,7 @@ public class TitleScreen {
 	
 	private void setDimensions(int screenWidth,int screenHeight) {
 		Gdx.app.log("DPCLifecycle", "TitleScreen - setDimensions("+screenWidth+","+screenHeight+")");
-		logo.setDimensions((int)(screenHeight*0.5f),(int)(screenHeight*0.5f));
+		logo.setDimensions((int)(screenHeight*1.78f),screenHeight);
 		loadBar.setDimensions((int) (screenHeight*0.3f),(int) (screenHeight*0.03f));
 	}
 	
