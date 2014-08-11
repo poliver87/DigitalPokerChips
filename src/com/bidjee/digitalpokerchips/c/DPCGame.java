@@ -21,6 +21,8 @@ import com.bidjee.util.Logger;
 
 public class DPCGame extends Game {
 	
+	// This should be in master and not proto
+	
 	public static final int RESOLUTION_LOW = 0;
 	public static final int RESOLUTION_MEDIUM = 1;
 	public static final int RESOLUTION_HIGH = 2;
@@ -83,7 +85,9 @@ public class DPCGame extends Game {
 	
 	////////////////////Life-cycle Events ////////////////////
 	@Override
-	public void create() {}
+	public void create() {
+		Texture.setEnforcePotImages(false);
+	}
 	
 	public void initGame() {
 		Logger.log(LOG_TAG,"** initGame() **");
