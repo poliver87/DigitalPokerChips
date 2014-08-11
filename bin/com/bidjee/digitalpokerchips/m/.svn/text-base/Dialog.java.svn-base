@@ -1,0 +1,11 @@
+package com.bidjee.digitalpokerchips.m;
+
+import java.util.ArrayList;
+
+public abstract class Dialog extends DPCSprite {
+	
+	public abstract void start();
+	
+	public abstract void stop();
+
+}

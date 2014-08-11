@@ -1,0 +1,133 @@
+package com.bidjee.digitalpokerchips.m;
+
+public class DialogWindow extends DPCSprite {
+	
+	public float xDest;
+	public float yDest;
+	public int radiusXDest;
+	public int radiusYDest;
+	
+	private boolean resizing;
+	private boolean moving;
+	
+	private float yLast;
+	private float xLast;
+	private int radiusXLast;
+	private int radiusYLast;
+	
+	public Dialog dialogDest;
+	
+	public DialogWindow() {
+		resizing=false;
+		moving=false;
+	}
+	
+	@Override
+	public void setDimensions(int radiusX_,int radiusY_) {
+		super.setDimensions(radiusX_,radiusY_);
+	}
+	
+	@Override
+	public void setPosition(float x_,float y_) {
+		super.setPosition(x_,y_);
+	}
+	
+	@Override
+	public void scalePosition(float scaleX_,float scaleY_) {
+		super.scalePosition(scaleX_,scaleY_);
+	}
+	
+	@Override
+	public void animate(float delta_) {
+		super.animate(delta_);
+		
+		if (moving) {
+			if (Math.abs(y-yDest)<1&&
+					Math.abs(x-xDest)<1) {
+				moving=false;
+				x=xDest;
+				y=yDest;
+				dialogDest.start();
+			} else {
+				float timeFactor_=delta_*9;
+				y=(float)(y-timeFactor_*(y-yDest));
+				x=(float)(x-timeFactor_*(x-xDest));
+			}
+			if (resizing) {
+				if (!moving) {
+					resizing=false;
+					radiusX=radiusXDest;
+					radiusY=radiusYDest;
+				} else {
+					double distToTravel=Math.sqrt((yDest-yLast)*(yDest-yLast)+(xDest-xLast)*(xDest-xLast));
+					double distTravelled=Math.sqrt((y-yLast)*(y-yLast)+(x-xLast)*(x-xLast));
+					float travelRatio=(float) (distTravelled/distToTravel);
+					radiusX=(int) (radiusXLast+travelRatio*(radiusXDest-radiusXLast));
+					radiusY=(int) (radiusYLast+travelRatio*(radiusYDest-radiusYLast));
+				}
+			}
+		} else if (resizing) {
+			boolean xDone_=false;
+			if (radiusXDest>radiusX) {
+				radiusX=(int)(radiusX+delta_*6*(radiusX))+1;
+				if (radiusX>=radiusXDest) {
+					xDone_=true;
+					radiusX=radiusXDest;
+				}
+			} else {
+				if (Math.abs(radiusX-radiusXDest)<=1) {
+					xDone_=true;
+					radiusX=radiusXDest;
+				} else {
+					float timeFactor_=delta_*9;
+					radiusX=(int)(radiusX-timeFactor_*(radiusX-radiusXDest));
+				}
+			}
+			boolean yDone_=false;
+			if (radiusYDest>radiusY) {
+				radiusY=(int)(radiusY+delta_*6*(radiusY))+1;
+				if (radiusY>=radiusYDest) {
+					yDone_=true;
+					radiusY=radiusYDest;
+				}
+			} else {
+				if (Math.abs(radiusY-radiusYDest)<=1) {
+					yDone_=true;
+					radiusY=radiusYDest;
+				} else {
+					float timeFactor_=delta_*9;
+					radiusY=(int)(radiusY-timeFactor_*(radiusY-radiusYDest));
+				}
+			}
+			if (xDone_&&yDone_) {
+				resizing=false;
+				dialogDest.start();
+			}
+		}
+	}
+	
+	public void sendTo(Dialog dialogDest_) {
+		dialogDest=dialogDest_;
+		if (x!=dialogDest_.x||y!=dialogDest_.y) {
+			moving=true;
+			xDest=dialogDest_.x;
+			yDest=dialogDest_.y;
+			yLast=y;
+			xLast=x;
+		}
+		if (radiusX!=dialogDest_.radiusX||radiusY!=dialogDest_.radiusY) {
+			resizing=true;
+			radiusXDest=dialogDest_.radiusX;
+			radiusYDest=dialogDest_.radiusY;
+			radiusXLast=radiusX;
+			radiusYLast=radiusY;
+		}
+	}
+
+	public void remove() {
+		moving=false;
+		resizing=false;
+		fadeOut();
+	}
+	
+}
