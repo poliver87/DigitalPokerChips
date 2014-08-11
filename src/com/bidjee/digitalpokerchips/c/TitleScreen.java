@@ -71,7 +71,7 @@ public class TitleScreen {
 	
 	private void setDimensions(int screenWidth,int screenHeight) {
 		Gdx.app.log("DPCLifecycle", "TitleScreen - setDimensions("+screenWidth+","+screenHeight+")");
-		logo.setDimensions((int)(screenHeight*1.78f),screenHeight);
+		logo.setDimensions((int)(screenHeight*0.89f),(int)(screenHeight*0.5f));
 		loadBar.setDimensions((int) (screenHeight*0.3f),(int) (screenHeight*0.03f));
 	}
 	

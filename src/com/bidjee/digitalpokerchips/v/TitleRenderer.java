@@ -65,7 +65,7 @@ public class TitleRenderer {
 		if (logoTexture!=null)
 			logoTexture.dispose();
 		logoTexture=null;
-		logoTexture=new Texture(Gdx.files.internal("logo_bidjee.png"), Format.RGBA8888, true);
+		logoTexture=new Texture(Gdx.files.internal("splash.png"), Format.RGBA8888, true);
 		logoTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
 		blackRectangleTexture=new Texture(Gdx.files.internal("black.png"), Format.RGBA8888, true);
 		blackRectangleTexture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
@@ -91,7 +91,7 @@ public class TitleRenderer {
 			batch.draw(logoTexture,
 					mTS.logo.x-mTS.logo.radiusX,mTS.logo.y-mTS.logo.radiusY,
 					mTS.logo.radiusX*2,mTS.logo.radiusY*2,
-					0,0,744,744,false,false);
+					0,0,980,550,false,false);
 	        alphaShader=batch.getColor();
 	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
