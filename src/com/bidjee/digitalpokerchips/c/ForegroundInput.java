@@ -2,7 +2,6 @@ package com.bidjee.digitalpokerchips.c;
 
 import java.util.Stack;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
 import com.bidjee.digitalpokerchips.m.ChipCase;
@@ -14,16 +13,14 @@ public class ForegroundInput implements InputProcessor {
 	
 	public static final String TOUCH_NOTHING = "TOUCH_NOTHING";
 	public static final String TOUCH_HOME = "TOUCH_HOME";
-	public static final String TOUCH_PLAYERS_NAME = "TOUCH_PLAYERS_NAME";
 	public static final String TOUCH_TABLES_NAME = "TOUCH_TABLES_NAME";
 	public static final String TOUCH_CHIP_VALUES = "TOUCH_CHIP_VALUES";
 	public static final String TOUCH_BUYIN = "TOUCH_BUYIN";
 	public static final String TOUCH_MANUAL_CONNECT = "TOUCH_MANUAL_CONNECT";
 	public static final String TOUCH_LEAVE_TABLE = "TOUCH_LEAVE_TABLE";
+	public static final String TOUCH_PLAYER_LOGIN = "TOUCH_PLAYER_LOGIN";
 	public static final String TOUCH_DESTROY_TABLE = "TOUCH_DESTROY_TABLE";
 	public static final String TOUCH_BOOT_DIALOG = "TOUCH_BOOT_DIALOG";
-	public static final String TOUCH_HELP_WINDOW = "TOUCH_HELP_WINDOW";
-	public static final String TOUCH_HELP_DIALOG = "TOUCH_HELP_DIALOG";
 	public static final String TOUCH_LOAD_DIALOG = "TOUCH_LOAD_DIALOG";
 	public static final String TOUCH_TUTORIAL_TABLE_NAME = "TOUCH_TUTORIAL_TABLE_NAME";
 	public static final String TOUCH_PLAYER = "TOUCH_PLAYER";
@@ -38,6 +35,7 @@ public class ForegroundInput implements InputProcessor {
 	
 	public static final String TYPING_NONE = "TYPING_NONE";
 	public static final String TYPING_MANUAL_CONNECT = "TYPING_MANUAL_CONNECT";
+	public static final String TYPING_NAME_FIELD = "TYPING_NAME_FIELD";
 	
 	ForegroundLayer mFL;
 	
@@ -63,6 +61,16 @@ public class ForegroundInput implements InputProcessor {
 				mFL.manualConnectDialog.keyTyped(""+character);
 			}
 		}
+		if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
+			handled=true;
+			if (character=='\b') {
+				mFL.playerLoginDialog.backspace();
+			} else if (character=='\n') {
+				mFL.playerLoginDialog.enterTyped();
+			} else if ((int)(character)!=0) {
+				mFL.playerLoginDialog.keyTyped(""+character);
+			}
+		}
 		return handled;
 	}
 
@@ -79,12 +87,12 @@ public class ForegroundInput implements InputProcessor {
 	public void backPressed() {
 		if (touchFocus.size()>0) {
 			Logger.log(LOG_TAG,"backPressed() - touchFocus = "+getLastTouchFocus());
-			if (getLastTouchFocus().equals(TOUCH_PLAYERS_NAME)) {
-				mFL.game.mWL.thisPlayer.nameDone();
-			} else if (getLastTouchFocus().equals(TOUCH_BUYIN)) {
+			if (getLastTouchFocus().equals(TOUCH_BUYIN)) {
 				mFL.game.mWL.thisPlayer.buyinDialogDone(null);
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				mFL.game.mWL.thisPlayer.manualConnectDialogDone(false);
+			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
+				mFL.game.mWL.thisPlayer.playerLoginDone(false);
 			} else if (getLastTouchFocus().equals(TOUCH_LEAVE_TABLE)) {
 				mFL.game.mWL.thisPlayer.leaveDialogDone(false);
 			} else if (getLastTouchFocus().equals(TOUCH_DESTROY_TABLE)) {
@@ -93,18 +101,6 @@ public class ForegroundInput implements InputProcessor {
 				mFL.game.mWL.table.autosaveDialogDone();
 			} else if (getLastTouchFocus().equals(TOUCH_TABLE_STATUS)) {
 				mFL.tableStatusMenu.close();
-			} else if (getLastTouchFocus().equals(TOUCH_HELP_WINDOW)) {
-				if (mFL.helpDialog.getCloseEnabled()) {
-					mFL.closeHelp();
-				}
-			} else if (getLastTouchFocus().equals(TOUCH_HELP_DIALOG)) {
-				if (mFL.helpDialog.currentSlide>0) {
-					mFL.helpDialog.previous();
-				} else {
-					if (mFL.helpDialog.getCloseEnabled()) {
-						mFL.closeHelp();
-					}
-				}
 			} else if (getLastTouchFocus().equals(TOUCH_LOAD_DIALOG)) {
 				mFL.closeLoadDialog();
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_STATE_CHANGE)) {
@@ -134,59 +130,23 @@ public class ForegroundInput implements InputProcessor {
 		float touchY=mFL.foregroundRenderer.yViewToWorld(screenY);
 		if (pointer==0&&touchFocus.size()>0) {
 			Logger.log(LOG_TAG,"touchDown("+touchX+","+touchY+") touchFocus = "+getLastTouchFocus());
+			
 			if (getLastTouchFocus().equals(TOUCH_TUTORIAL_TABLE_NAME)) {
 				handled_=true;
 			} else if (getLastTouchFocus().equals(TOUCH_HOME)) {
-				if (!mFL.game.wifiEnabled&&mFL.wifiButton.pointContained(touchX, touchY)) {
+				if (mFL.homeUIAnimation.hostButton.pointContained(touchX, touchY)) {
 					handled_=true;
-					mFL.wifiButton.setIsTouched(true);
-				} else if (mFL.homeMenu.createButton.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.homeMenu.createButton.setIsTouched(true);
-				} else if (mFL.homeMenu.loadButton.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.homeMenu.loadButton.setIsTouched(true);
-				} else if (mFL.homeMenu.joinButton.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.homeMenu.joinButton.setIsTouched(true);
-				} else if (mFL.homeMenu.howButton.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.homeMenu.howButton.setIsTouched(true);
+					mFL.homeUIAnimation.hostButton.setIsTouched(true);
 				}
-			} else if (getLastTouchFocus().equals(TOUCH_PLAYERS_NAME)) {
-				if (mFL.enterNameDoneButton.getTouchable()&&
-						mFL.enterNameDoneButton.pointContained(touchX, touchY)) {
+				if (mFL.homeUIAnimation.joinButton.pointContained(touchX, touchY)) {
 					handled_=true;
-					mFL.enterNameDoneButton.setIsTouched(true);
+					mFL.homeUIAnimation.joinButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_TABLES_NAME)) {
 				if (mFL.enterTableNameDoneButton.getTouchable()&&
 						mFL.enterTableNameDoneButton.pointContained(touchX, touchY)) {
 					handled_=true;
 					mFL.enterTableNameDoneButton.setIsTouched(true);
-				}
-			} else if (getLastTouchFocus().equals(TOUCH_HELP_WINDOW)||getLastTouchFocus().equals(TOUCH_HELP_DIALOG)) {
-				handled_=true;
-				if (mFL.dialogWindow.pointContained(touchX,touchY)) {
-					if (getLastTouchFocus().equals(TOUCH_HELP_DIALOG)) {
-						if (mFL.helpDialog.closeButton.getTouchable()&&
-								mFL.helpDialog.closeButton.pointContained(touchX,touchY)) {
-							mFL.helpDialog.closeButton.setIsTouched(true);
-						} else if (mFL.helpDialog.nextButton.getTouchable()&&
-								mFL.helpDialog.nextButton.pointContained(touchX,touchY)) {
-							mFL.helpDialog.nextButton.setIsTouched(true);
-						} else if (mFL.helpDialog.previousButton.getTouchable()&&
-								mFL.helpDialog.previousButton.pointContained(touchX,touchY)) {
-							mFL.helpDialog.previousButton.setIsTouched(true);
-						} else if (mFL.helpDialog.doneButton.getTouchable()&&
-								mFL.helpDialog.doneButton.pointContained(touchX,touchY)) {
-							mFL.helpDialog.doneButton.setIsTouched(true);
-						} 
-					}
-				} else {
-					if (mFL.helpDialog.getCloseEnabled()) {
-						mFL.closeHelp();
-					}
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_LOAD_DIALOG)) {
 				handled_=true;
@@ -251,6 +211,17 @@ public class ForegroundInput implements InputProcessor {
 				} else if (mFL.buyinDialog.cancelButton.getTouchable()&&
 						mFL.buyinDialog.cancelButton.pointContained(touchX, touchY)) {
 					mFL.buyinDialog.cancelButton.setIsTouched(true);
+				}
+			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
+				handled_=true;
+				if (mFL.playerLoginDialog.nameField.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.setFieldFocus(mFL.playerLoginDialog.nameField);
+				} else if (mFL.playerLoginDialog.guestOKButton.getTouchable()&&
+						mFL.playerLoginDialog.guestOKButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.guestOKButton.setIsTouched(true);
+				} else if (mFL.playerLoginDialog.facebookButton.getTouchable()&&
+						mFL.playerLoginDialog.facebookButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.facebookButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				handled_=true;
@@ -395,36 +366,30 @@ public class ForegroundInput implements InputProcessor {
 	public boolean touchUp(int screenX,int screenY,int pointer,int button) {
 		boolean handled_=false;
 		if (pointer==0&&touchFocus.size()>0) {
-			
+			if (mFL.homeUIAnimation.hostButton.getIsTouched()) {
+				handled_=true;
+				mFL.homeUIAnimation.hostButton.setIsTouched(false);
+				mFL.game.mWL.hostSelected();
+			}
+			if (mFL.homeUIAnimation.joinButton.getIsTouched()) {
+				handled_=true;
+				mFL.homeUIAnimation.joinButton.setIsTouched(false);
+				mFL.game.mWL.joinSelected();
+			}
+			if (mFL.playerLoginDialog.guestOKButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerLoginDialog.guestOKButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.playerLoginDone(mFL.playerLoginDialog.nameField.getText(),null);
+			}
+			if (mFL.playerLoginDialog.facebookButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerLoginDialog.facebookButton.setIsTouched(false);
+				mFL.game.performFacebookClick();
+			}
 			if (mFL.wifiButton.getIsTouched()) {
 				handled_=true;
 				mFL.wifiButton.setIsTouched(false);
 				mFL.game.launchSettings();
-			}
-			if (mFL.homeMenu.createButton.getIsTouched()) {
-				handled_=true;
-				mFL.homeMenu.createButton.setIsTouched(false);
-				mFL.game.mWL.table.startTableSetup();
-			}
-			if (mFL.homeMenu.loadButton.getIsTouched()) {
-				handled_=true;
-				mFL.homeMenu.loadButton.setIsTouched(false);
-				mFL.loadSelected();
-			}
-			if (mFL.homeMenu.joinButton.getIsTouched()) {
-				handled_=true;
-				mFL.homeMenu.joinButton.setIsTouched(false);
-				mFL.game.mWL.sendCameraTo(mFL.game.mWL.camPosPlayer);
-			}
-			if (mFL.homeMenu.howButton.getIsTouched()) {
-				handled_=true;
-				mFL.homeMenu.howButton.setIsTouched(false);
-				mFL.howSelected();
-			}
-			if (mFL.enterNameDoneButton.getIsTouched()) {
-				handled_=true;
-				mFL.enterNameDoneButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.nameDone();
 			}
 			if (mFL.enterTableNameDoneButton.getIsTouched()) {
 				handled_=true;
@@ -531,26 +496,6 @@ public class ForegroundInput implements InputProcessor {
 				mFL.loadDialog.cancelButton.setIsTouched(false);
 				mFL.loadDialogDone(false);
 			}
-			if (mFL.helpDialog.closeButton.getIsTouched()) {
-				handled_=true;
-				mFL.helpDialog.closeButton.setIsTouched(false);
-				mFL.closeHelp();
-			}
-			if (mFL.helpDialog.nextButton.getIsTouched()) {
-				handled_=true;
-				mFL.helpDialog.nextButton.setIsTouched(false);
-				mFL.helpDialog.next();
-			}
-			if (mFL.helpDialog.previousButton.getIsTouched()) {
-				handled_=true;
-				mFL.helpDialog.previousButton.setIsTouched(false);
-				mFL.helpDialog.previous();
-			}
-			if (mFL.helpDialog.doneButton.getIsTouched()) {
-				handled_=true;
-				mFL.helpDialog.doneButton.setIsTouched(false);
-				mFL.closeHelp();
-			}
 			if (mFL.tableStatusMenu.handle.getIsTouched()) {
 				handled_=true;
 				mFL.tableStatusMenu.handle.setIsTouched(false);
@@ -622,28 +567,28 @@ public class ForegroundInput implements InputProcessor {
 					mFL.wifiButton.setIsTouched(false);
 				}
 			}
-			if (mFL.homeMenu.createButton.getIsTouched()) {
+			if (mFL.homeUIAnimation.hostButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.homeMenu.createButton.pointContained(touchX, touchY)) {
-					mFL.homeMenu.createButton.setIsTouched(false);
+				if (!mFL.homeUIAnimation.hostButton.pointContained(touchX, touchY)) {
+					mFL.homeUIAnimation.hostButton.setIsTouched(false);
 				}
 			}
-			if (mFL.homeMenu.loadButton.getIsTouched()) {
+			if (mFL.homeUIAnimation.joinButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.homeMenu.loadButton.pointContained(touchX, touchY)) {
-					mFL.homeMenu.loadButton.setIsTouched(false);
+				if (!mFL.homeUIAnimation.joinButton.pointContained(touchX, touchY)) {
+					mFL.homeUIAnimation.joinButton.setIsTouched(false);
 				}
 			}
-			if (mFL.homeMenu.joinButton.getIsTouched()) {
+			if (mFL.playerLoginDialog.guestOKButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.homeMenu.joinButton.pointContained(touchX, touchY)) {
-					mFL.homeMenu.joinButton.setIsTouched(false);
+				if (!mFL.playerLoginDialog.guestOKButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.guestOKButton.setIsTouched(false);
 				}
 			}
-			if (mFL.homeMenu.howButton.getIsTouched()) {
+			if (mFL.playerLoginDialog.facebookButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.homeMenu.howButton.pointContained(touchX, touchY)) {
-					mFL.homeMenu.howButton.setIsTouched(false);
+				if (!mFL.playerLoginDialog.facebookButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.facebookButton.setIsTouched(false);
 				}
 			}
 			if (mFL.enterNameDoneButton.getIsTouched()) {
@@ -776,30 +721,6 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				if (!mFL.loadDialog.cancelButton.pointContained(touchX, touchY)) {
 					mFL.loadDialog.cancelButton.setIsTouched(false);
-				}
-			}
-			if (mFL.helpDialog.closeButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.helpDialog.closeButton.pointContained(touchX, touchY)) {
-					mFL.helpDialog.closeButton.setIsTouched(false);
-				}
-			}
-			if (mFL.helpDialog.nextButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.helpDialog.nextButton.pointContained(touchX, touchY)) {
-					mFL.helpDialog.nextButton.setIsTouched(false);
-				}
-			}
-			if (mFL.helpDialog.previousButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.helpDialog.previousButton.pointContained(touchX, touchY)) {
-					mFL.helpDialog.previousButton.setIsTouched(false);
-				}
-			}
-			if (mFL.helpDialog.doneButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.helpDialog.doneButton.pointContained(touchX, touchY)) {
-					mFL.helpDialog.doneButton.setIsTouched(false);
 				}
 			}
 			if (mFL.tableStatusMenu.handle.getIsTouched()) {

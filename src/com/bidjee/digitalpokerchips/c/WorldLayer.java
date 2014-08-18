@@ -8,6 +8,7 @@ import com.bidjee.digitalpokerchips.i.ITableStore;
 import com.bidjee.digitalpokerchips.m.CameraPosition;
 import com.bidjee.digitalpokerchips.m.Chip;
 import com.bidjee.digitalpokerchips.m.ChipCase;
+import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.s.SoundFX;
 import com.bidjee.digitalpokerchips.v.WorldRenderer;
 import com.bidjee.util.Logger;
@@ -34,9 +35,6 @@ public class WorldLayer implements Screen {
 	public CameraPosition camPosHome=new CameraPosition("Home");
 	public CameraPosition camPosPlayer=new CameraPosition("Player");
 	public CameraPosition camPosTable=new CameraPosition("Table");
-	public CameraPosition camPosPlayersName=new CameraPosition("Player's Name");
-	public CameraPosition camPosTableName=new CameraPosition("Table's Name");
-	public CameraPosition camPosChipCase=new CameraPosition("Chip Case");
 	
 	//////////////////// Controllers ////////////////////
 	public WorldInput input;
@@ -47,6 +45,8 @@ public class WorldLayer implements Screen {
 	
 	//////////////////// Models ////////////////////
 	public ChipCase chipCase;
+	public DPCSprite backgroundSprite=new DPCSprite();
+	public HomeDeviceAnimation homeDeviceAnimation;
 	
 	//////////////////// Renderers ////////////////////
 	WorldRenderer worldRenderer;
@@ -74,34 +74,34 @@ public class WorldLayer implements Screen {
 		table=new Table(this,hostNetworkInterface,tableStore);
 		int[] values_={25,100,200};
 		chipCase=new ChipCase(values_);
+		homeDeviceAnimation=new HomeDeviceAnimation();
 	}
 	
 	public void setDimensions(float worldWidth,float worldHeight) {
+		int backgroundRadiusX=(int)(Math.max(worldWidth,worldHeight*0.89f)+1);
+		backgroundRadiusX=(int) (worldWidth*0.5f);
+		backgroundSprite.setDimensions(backgroundRadiusX,(int)(worldHeight*0.5f)+1);
 		Chip.radiusX=(int) (worldWidth*0.02f);
 		Chip.radiusY=(int) (Chip.radiusX*0.98f);
 		limChipFlingVel=(int) (worldHeight*0.15f);
 		thisPlayer.setDimensions(worldWidth,worldHeight);
 		table.setDimensions(worldWidth,worldHeight);
-		chipCase.setDimensions((int)(worldHeight*0.12f),(int)(worldHeight*0.12f));
+		homeDeviceAnimation.setDimensions(worldWidth, worldHeight);
 	}
 	
 	public void setPositions(int worldWidth,int worldHeight) {
+		backgroundSprite.setPosition(worldWidth*0.5f,worldHeight*0.5f);
 		camPosHome.set(worldWidth*0.5f,worldHeight*0.5f,0.25f);
-		camPosPlayer.set(worldWidth*0.5f,worldHeight*0.3f,1f);
-		camPosTable.set(worldWidth*0.5f,worldHeight*0.5f,1f);
-		camPosPlayersName.set(worldWidth*0.5f,worldHeight*0.12f,1f);
-		camPosTableName.set(worldWidth*0.5f,worldHeight*0.44f,1f);
-		camPosChipCase.set(worldWidth*0.5f,worldHeight*0.75f,1f);
+		camPosPlayer.set(worldWidth*0.5f,worldHeight*0.3f,2.7f);
+		camPosTable.set(worldWidth*0.5f,worldHeight*0.49f,1.4f);
 		thisPlayer.setPositions(worldWidth,worldHeight);
 		table.setPositions(worldWidth,worldHeight);
-		chipCase.setPosition(worldWidth*0.5f,worldHeight*0.8f);
-		
+		homeDeviceAnimation.setPositions(worldWidth, worldHeight);
 	}
 	
 	public void scalePositions(float scaleX,float scaleY) {
 		thisPlayer.scalePositions(scaleX,scaleY);
 		table.scalePositions(scaleX,scaleY);
-		chipCase.scalePosition(scaleX,scaleY);
 	}
 	
 	@Override
@@ -135,6 +135,7 @@ public class WorldLayer implements Screen {
 	public void start() {
 		sendCameraTo(camPosHome);
 		worldRenderer.camera.setTo(cameraDestination);
+		homeDeviceAnimation.begin(1000);
 	}
 	
 	@Override
@@ -168,6 +169,7 @@ public class WorldLayer implements Screen {
 
 	public void animate(float delta) {
 		worldRenderer.camera.animate(delta);
+		homeDeviceAnimation.animate(delta);
 		thisPlayer.animate(delta);
 		table.animate(delta);
 	}
@@ -178,9 +180,20 @@ public class WorldLayer implements Screen {
 	}
 	
 	private void controlLogic() {
+		if (cameraDestination==camPosHome) {
+			if (homeDeviceAnimation.loopedOnce&&!game.mFL.homeUIAnimation.running ) {
+				game.mFL.startHome();
+				homeDeviceAnimation.pause();
+			}
+			if (game.mFL.homeUIAnimation.done&&homeDeviceAnimation.paused) {
+				homeDeviceAnimation.resume();
+				homeDeviceAnimation.setDevicesTouchable(true);
+			}
+		}
 		thisPlayer.controlLogic();
 		table.controlLogic();
 	}
+	
 	
 	//////////////////// Navigation Control ////////////////////	
 	public void sendCameraTo(CameraPosition camPos) {
@@ -188,16 +201,10 @@ public class WorldLayer implements Screen {
 		cameraDestination=camPos;
 		worldRenderer.camera.sendTo(camPos);
 		if (cameraDestination==camPosHome) {
-			game.mFL.startHome();
+			;
 		} else if (cameraDestination==camPosPlayer) {
 			;
-		} else if (cameraDestination==camPosPlayersName) {
-			;
 		} else if (cameraDestination==camPosTable) {
-			;
-		} else if (cameraDestination==camPosTableName) {
-			;
-		} else if (cameraDestination==camPosChipCase) {
 			;
 		} else {
 			//
@@ -206,25 +213,15 @@ public class WorldLayer implements Screen {
 	}
 	
 	private void cameraLeftPosition(CameraPosition camPos) {
-		boolean validPosition=false;
 		if (camPos==camPosHome) {
 			game.mFL.stopHome();
-			validPosition=true;
-		} else if (camPos==camPosPlayersName) {
-			thisPlayer.notifyLeftNamePosition();
-			validPosition=true;
+			homeDeviceAnimation.pause();
+			homeDeviceAnimation.resetChips();
+			homeDeviceAnimation.setDevicesTouchable(false);
 		} else if (camPos==camPosPlayer) {
 			thisPlayer.notifyLeftPlayerPosition();
-			validPosition=true;
-		} else if (camPos==camPosTableName) {
-			table.notifyLeftTableNamePosition();
-			validPosition=true;
-		} else if (camPos==camPosChipCase) {
-			table.notifyLeftChipCasePosition();
-			validPosition=true;
 		} else if (camPos==camPosTable) {
 			table.notifyLeftTablePosition();
-			validPosition=true;
 		}
 		if (camPos!=null) {
 			Logger.log(LOG_TAG,"sendCameraTo("+camPos.toString()+")");
@@ -234,17 +231,11 @@ public class WorldLayer implements Screen {
 	
 	public void cameraAtDestination() {
 		if (cameraDestination==camPosHome) {
-			;
+			
 		} else if (cameraDestination==camPosPlayer) {
 			thisPlayer.notifyAtPlayerPosition();
-		} else if (cameraDestination==camPosPlayersName) {
-			thisPlayer.notifyAtNamePosition();
 		} else if (cameraDestination==camPosTable) {
 			table.notifyAtTablePosition();
-		} else if (cameraDestination==camPosTableName) {
-			table.notifyAtTableNamePosition();
-		} else if (cameraDestination==camPosChipCase) {
-			table.notifyAtChipCasePosition();
 		} else {
 			//
 		}
@@ -254,18 +245,14 @@ public class WorldLayer implements Screen {
 	public void navigateBack() {
 		if (cameraDestination==camPosHome) {
 			game.exitApp();
-		} else if (cameraDestination==camPosPlayersName) {
-			;
 		} else if (cameraDestination==camPosPlayer) {
-			if (thisPlayer.backPressed()) {
+			if (!thisPlayer.backPressed()) {
 				sendCameraTo(camPosHome);
 			}
-		} else if (cameraDestination==camPosTableName) {
-			sendCameraTo(camPosHome);
-		} else if (cameraDestination==camPosChipCase) {
-			sendCameraTo(camPosTableName);
 		} else if (cameraDestination==camPosTable) {
-			table.backPressed();
+			if (!table.backPressed()) {
+				sendCameraTo(camPosHome);
+			}
 		} else {
 			//
 		}
@@ -280,6 +267,15 @@ public class WorldLayer implements Screen {
 	public void wifiOff() {
 		thisPlayer.wifiOff();
 		table.wifiOff();
+	}
+	
+	//// Messages from Input ////
+	public void hostSelected() {
+		sendCameraTo(camPosTable);
+	}
+	
+	public void joinSelected() {
+		sendCameraTo(camPosPlayer);
 	}
 
 }

@@ -84,7 +84,6 @@ public class Table {
 	public ArrayList<Player> players=new ArrayList<Player>();
 	
 	//////////////////// Text Labels ////////////////////
-	public TextField tableNameField;
 	public TextLabel startLabel;
 	
 	//////////////////// Screen Scale & Layout ////////////////////
@@ -108,9 +107,6 @@ public class Table {
 		this.networkInterface=networkInterface;
 		networkInterface.setTable(this);
 		this.tableStore=tableStore;
-		tableNameField=new TextField(TABLE_NAME_DEFAULT,0,false,false);
-		tableNameField.label.setFontFace("ar_delaney.ttf");
-		tableNameField.label.opacity=0.8f;
 		startLabel=new TextLabel("Ready to Start",0,true,0,false);
 		startLabel.maxOpacity=0.75f;
 		dealerButton.opacity=0;
@@ -129,11 +125,6 @@ public class Table {
 	//////////////////// Scale & Layout ////////////////////
 	public void setDimensions(float worldWidth,float worldHeight) {
 		int radiusYTableName_=(int)(worldHeight*0.03f);
-		tableNameField.setDimensions((int)(worldWidth*0.06f),radiusYTableName_);
-		String tmp_=tableNameField.getText();
-		tableNameField.label.setText(WorldLayer.NAME_MEASURE);
-		tableNameField.label.setTextSizeToMax();
-		tableNameField.label.setText(tmp_);
 		dealerButton.setDimensions((int)(worldHeight*0.022f),(int)(worldHeight*0.022f));
 		int textSize_=Math.min(DPCGame.textFactory.getMaxTextSize(startLabel),
 				DPCGame.textFactory.getMaxTextSize(startLabel));
@@ -161,7 +152,6 @@ public class Table {
 		xRight=worldWidth*0.625f;
 		yTop=worldHeight*0.625f;
 		yBottom=worldHeight*0.375f;
-		tableNameField.setPosition(worldWidth*0.5f,worldHeight*0.5f);
 		posDealerButtonStart.set(worldWidth*0.5f,worldHeight*0.46f);
 		
 		Seat.distToOffscreen=Seat.radiusY+2*Chip.radiusY*(1+MAX_STACK_RENDER_NUM*Chip.Z_Y_OFFSET_RATIO);
@@ -181,7 +171,6 @@ public class Table {
 		sendOffscreenVel*=scaleX;
 		Pot.originX*=scaleX;
 		Pot.originY*=scaleY;
-		tableNameField.scalePosition(scaleX,scaleY);
 		dealerButton.scalePosition(scaleX,scaleY);
 		startLabel.scalePosition(scaleX,scaleY);
 		
@@ -230,7 +219,6 @@ public class Table {
 	
 	public void animate(float delta) {
 		startLabel.animate(delta);
-		tableNameField.animate(delta);
 		dealerButton.animate(delta);
 		for (int i=0;i<NUM_SEATS;i++) {
 			seats[i].animate(delta);
@@ -705,31 +693,34 @@ public class Table {
 	}
 	
 	/** Notify the table to handle the back press
-	 * @return return true if world can back out of this area
+	 * @return return true if back was handled
 	 */
-	public void backPressed() {
+	public boolean backPressed() {
 		Logger.log(LOG_TAG,"backPressed()");
+		boolean backHandled=false;
 		if (gameState==STATE_NONE) {
 			
 		} else if (gameState==STATE_LOBBY) {
 			setGameState(STATE_NONE);
 			destroyTable();
-			mWL.sendCameraTo(mWL.camPosChipCase);
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			destroyTable();
 			setGameState(STATE_NONE);
-			mWL.sendCameraTo(mWL.camPosHome);
 		} else if (gameState==STATE_SELECTING_DEALER) {
 			setGameState(STATE_LOBBY);
+			backHandled=true;
 		} else if (gameState==STATE_GAME) {
 			doDestroyDialog();
+			backHandled=true;
 		}
+		return backHandled;
 	}
 	
 	public void startTableSetup() {
 		Logger.log(LOG_TAG,"startTableSetup()");
 		inSetupFlow=true;
-		mWL.sendCameraTo(mWL.camPosTableName);
+		//mWL.sendCameraTo(mWL.camPosTableName);
+		mWL.sendCameraTo(mWL.camPosTable);
 		saveSlot=SAVE_SLOT_NONE;
 	}
 	
@@ -752,7 +743,6 @@ public class Table {
 	public void notifyAtTableNamePosition() {
 		Logger.log(LOG_TAG,"notifyAtTableNamePosition()");
 		mWL.game.mFL.startEnterTableName();
-		tableNameField.setFocus(true);
 		Gdx.input.setOnscreenKeyboardVisible(true);
 		mWL.input.setTypingFocus(WorldInput.TYPING_TABLE_NAME);
 	}
@@ -760,7 +750,6 @@ public class Table {
 	public void notifyLeftTableNamePosition() {
 		Logger.log(LOG_TAG,"notifyLeftTableNamePosition()");
 		mWL.game.mFL.stopEnterTableName();
-		tableNameField.setFocus(false);
 		mWL.input.setTypingFocus(WorldInput.TYPING_NOTHING);
 		Gdx.input.setOnscreenKeyboardVisible(false);
 	}
@@ -785,23 +774,23 @@ public class Table {
 		wifiEnabled=true;
 		mWL.game.mFL.setIpAddress(ipAddressStr);
 		if (gameState==STATE_LOBBY) {
-			networkInterface.createTable(tableNameField.getText());
+			networkInterface.createTable("table name");
 			mWL.game.mFL.startLobby();
 			mWL.game.mFL.stopWifiPrompt();
 		} else if (gameState==STATE_LOBBY_LOADED) {
-			networkInterface.createTable(tableNameField.getText());
+			networkInterface.createTable("table name");
 			mWL.game.mFL.startLobbyLoaded();
 			mWL.game.mFL.stopWifiPrompt();
 		} else if (gameState==STATE_SELECTING_DEALER) {
-			networkInterface.createTable(tableNameField.getText());
+			networkInterface.createTable("table name");
 			
 			mWL.game.mFL.stopWifiPrompt();
 		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
-			networkInterface.createTable(tableNameField.getText());
+			networkInterface.createTable("table name");
 			
 			mWL.game.mFL.stopWifiPrompt();
 		} else if (gameState==STATE_GAME) {
-			networkInterface.createTable(tableNameField.getText());
+			networkInterface.createTable("table name");
 			
 			mWL.game.mFL.stopWifiPrompt();
 		}
@@ -840,7 +829,7 @@ public class Table {
 	//////////////////////////////////////////////////////////////////////////////
 	
 	private void createTable() {
-		networkInterface.createTable(tableNameField.getText());
+		networkInterface.createTable("table name");
 	}
 	
 	private void destroyTable() {
@@ -861,7 +850,7 @@ public class Table {
 			saveSlotSelected(SAVE_SLOT_1);
 			mWL.game.mFL.startAutosaveDialog(saveSlot,tableStore.getTableNames(SAVE_NUM_SLOTS));
 		} else {
-			tableStore.saveGame(saveSlot,tableNameField.getText(),buildTableStateString(),gameLogic.buildGameStateString());
+			tableStore.saveGame(saveSlot,"table name",buildTableStateString(),gameLogic.buildGameStateString());
 			gameLogic.saveDone();
 		}
 	}
@@ -872,7 +861,7 @@ public class Table {
 		String tableName=tableStore.getTableName(loadSlot);
 		String tableStateString=tableStore.getTableState(loadSlot);
 		
-		tableNameField.setText(tableName);
+		//tableNameField.setText(tableName);
 		setTableStateFromString(tableStateString);
 		
 		loadedGame=true;
@@ -1274,10 +1263,9 @@ public class Table {
 	
 	public void tableNameDone() {
 		Logger.log(LOG_TAG,"tableNameDone()");
-		if (tableNameField.getText().equals("")) {
-			tableNameField.setText(TABLE_NAME_DEFAULT);
-		}
-		mWL.sendCameraTo(mWL.camPosChipCase);
+		//if (tableNameField.getText().equals("")) {
+			//tableNameField.setText(TABLE_NAME_DEFAULT);
+		//}
 	}
 	
 	public void setValuesDone() {
@@ -1374,7 +1362,7 @@ public class Table {
 	}
 	
 	public void doDestroyDialog() {
-		mWL.game.mFL.startDestroyTableDialog(tableNameField.getText());
+		mWL.game.mFL.startDestroyTableDialog("table name");
 	}
 	
 	public void destroyDialogDone(boolean actionCompleted) {

@@ -5,6 +5,11 @@ import com.badlogic.gdx.math.Vector2;
 
 public class DPCSprite {
 	
+	public static final int MOVE_NONE = 0;
+	public static final int MOVE_EASE_IN = 1;
+	public static final int MOVE_LINEAR = 2;
+	public static final int MOVE_BOUNCE = 3;
+	
 	public Texture texture;
 	public float x;
 	public float y;
@@ -21,6 +26,16 @@ public class DPCSprite {
 	public int radiusXDest;
 	public int radiusYDest;
 	public boolean atDest;
+	Vector2 velocity=new Vector2();
+	private float gravityAcceleration;
+	private float elasticity;
+	private float flightTime;
+	private float y0;
+	private float v0;
+	public float distanceMargin;
+	int moveHoldoffTimer;
+	int moveHoldoffDuration;
+	int moveFunction;
 	
 	private int fadeState;
 	private boolean flashing;
@@ -28,6 +43,8 @@ public class DPCSprite {
 	
 	private float fadeInSpeed;
 	private float fadeOutSpeed;
+	
+	public float moveSpeed;
 	
 	public int frame;
 	private int frameElapsed;
@@ -48,12 +65,14 @@ public class DPCSprite {
 		y=0;
 		radiusX=10;
 		radiusY=10;
+		atDest=true;
 		isTouched=false;
 		touchable=false;
 		opacity=1f;
 		rotation=0;
 		fadeState=FADE_NONE;
 		flashing=false;
+		moveSpeed=9;
 		frame=0;
 		touchAreaMultiplier=1;
 		maxOpacity=1;
@@ -61,6 +80,8 @@ public class DPCSprite {
 		fadeOutSpeed=5f;
 		flashVisibleTime=100;
 		flashInvisibleTime=300;
+		moveFunction=MOVE_EASE_IN;
+		distanceMargin=2;
 	}
 	
 	public DPCSprite(DPCSprite copyFrom) {
@@ -88,6 +109,7 @@ public class DPCSprite {
 		this.numFrames=copyFrom.numFrames;
 		this.flashVisibleTime=copyFrom.flashVisibleTime;
 		this.flashInvisibleTime=copyFrom.flashInvisibleTime;
+		this.moveFunction=copyFrom.moveFunction;
 	}
 
 	public void setDimensions(int radiusX,int radiusY) {
@@ -115,9 +137,39 @@ public class DPCSprite {
 		y*=scaleY;
 	}
 	
-	public void setDest(float xDest,float yDest) {
+	public void setDest(float xDest,float yDest,int holdoff) {
 		this.xDest=xDest;
 		this.yDest=yDest;
+		flightTime=0;
+		y0=y;
+		v0=0;
+		moveHoldoffTimer=0;
+		moveHoldoffDuration=holdoff;
+		atDest=false;
+	}
+	
+	public void setDest(float xDest,float yDest) {
+		this.setDest(xDest,yDest,0);
+	}
+	
+	public void setDest(Vector2 dest) {
+		this.setDest(dest.x,dest.y,0);
+	}
+	
+	public void setDest(Vector2 dest,int holdoff) {
+		this.setDest(dest.x, dest.y, holdoff);
+	}
+	
+	public void setMoveFunc(int moveFunc,float distanceMargin,float moveSpeed,float gravityAcceleration,float elasticity) {
+		this.moveFunction=moveFunc;
+		this.distanceMargin=distanceMargin;
+		this.moveSpeed=moveSpeed;
+		this.gravityAcceleration=-1*Math.abs(gravityAcceleration);
+		this.elasticity=elasticity;
+	}
+	
+	public void setMoveFunc(int moveFunc) {
+		this.setMoveFunc(moveFunc,this.distanceMargin,this.moveSpeed,this.gravityAcceleration,this.elasticity);
 	}
 	
 	public void setAnimation(int numFrames_,int frameDuration_) {
@@ -203,7 +255,7 @@ public class DPCSprite {
 				if (opacity>=maxOpacity) {
 					opacity=maxOpacity;
 					fadeState=FADE_WAIT_VISIBLE;
-					arrivalTime=System.currentTimeMillis();
+					arrivalTime=0;
 				}
 				break;
 			case FADE_FADE_OUT:
@@ -211,25 +263,29 @@ public class DPCSprite {
 				if (opacity<=0) {
 					opacity=0;
 					fadeState=FADE_WAIT_INVISIBLE;
-					arrivalTime=System.currentTimeMillis();
+					arrivalTime=0;
 				}
 				break;
 			case FADE_WAIT_VISIBLE:
-				if (System.currentTimeMillis()-arrivalTime>flashVisibleTime) {
+				if (arrivalTime>flashVisibleTime) {
 					if (flashing) {
 						fadeState=FADE_FADE_OUT;
 					} else {
 						fadeState=FADE_NONE;
 					}
+				} else {
+					arrivalTime+=delta*1000;
 				}
 				break;
 			case FADE_WAIT_INVISIBLE:
-				if (System.currentTimeMillis()-arrivalTime>flashInvisibleTime) {
+				if (arrivalTime>flashInvisibleTime) {
 					if (flashing) {
 						fadeState=FADE_FADE_IN;
 					} else{
 						fadeState=FADE_NONE;
 					}
+				} else {
+					arrivalTime+=delta*1000;
 				}
 				break;
 			default:
@@ -247,6 +303,50 @@ public class DPCSprite {
 			}
 			if (frame==numFrames) {
 				frame=0;
+			}
+		}
+		if (!atDest) {
+			if (moveHoldoffTimer>=moveHoldoffDuration) {
+				float xNew=0;
+				float yNew=0;
+				if (moveFunction==MOVE_EASE_IN) {
+					if (Math.abs(y-yDest)<distanceMargin&&Math.abs(x-xDest)<distanceMargin) {
+						atDest=true;
+					} else {
+						float timeFactor = delta*moveSpeed;
+						yNew=(float)(y-timeFactor*(y-yDest));
+						xNew=(float)(x-timeFactor*(x-xDest));
+						this.setPosition(xNew,yNew);
+					}
+				} else if (moveFunction==MOVE_LINEAR) {
+					
+				} else if (moveFunction==MOVE_BOUNCE) {
+					float yf=y0+v0*(flightTime+delta)+0.5f*gravityAcceleration*(flightTime+delta)*(flightTime+delta);
+					if (yf>yDest) {
+						flightTime+=delta;
+						yNew=y0+v0*flightTime+0.5f*gravityAcceleration*flightTime*flightTime;
+					} else {
+						float deltaY=y-yDest;
+						double vStart=v0+gravityAcceleration*flightTime;
+						double timeBeforeCollision=(-1*vStart-Math.sqrt(vStart*vStart-gravityAcceleration*deltaY))/gravityAcceleration;
+						double velocityAtCollision=vStart+gravityAcceleration*timeBeforeCollision;
+						yNew=yDest;
+						y0=yNew;
+						flightTime=(float) Math.max(delta-timeBeforeCollision, 0);
+						v0=(float) (-1*velocityAtCollision*elasticity);
+						yNew=y0+v0*flightTime+0.5f*gravityAcceleration*flightTime*flightTime;
+						if (yNew<=yDest) {
+							atDest=true;
+							flightTime=0;
+							v0=1000;
+							yNew=yDest;
+							y0=yNew;
+						}
+					}
+					this.setPosition(x,yNew);
+				}
+			} else {
+				moveHoldoffTimer+=delta*1000;
 			}
 		}
 	}

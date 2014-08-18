@@ -2,6 +2,7 @@ package com.bidjee.digitalpokerchips.c;
 
 import com.badlogic.gdx.Gdx;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
+import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.digitalpokerchips.v.TitleRenderer;
 
 public class TitleScreen {
@@ -12,17 +13,13 @@ public class TitleScreen {
 	
 	static final int STATE_LOGO_FADE_IN = 0;
 	static final int STATE_LOAD_SYNCH = 1;
-	static final int STATE_LOGO_DISPLAY = 2;
 	static final int STATE_LOGO_LOADING = 3;
 	static final int STATE_LOGO_SHRUNK = 4;
 	static final int STATE_FADE_OUT = 20;
 	// State Variables //
 	boolean screenLaidOut;
 	int animationState;
-	long startLogoTime;
 	public float screenOpacity;
-	public float initLoadProgress;
-	public float loadProgress;
 	public boolean loadingDone;
 	public boolean finished;
 	// Screen Scale & Layout //
@@ -31,7 +28,7 @@ public class TitleScreen {
 	// Objects Contained //
 	TitleRenderer titleRenderer;
 	public DPCSprite logo;
-	public DPCSprite loadBar;
+	public TextLabel loadingLabel;
 	// References //
 	DPCGame game;
 	// Debugging //	
@@ -41,7 +38,7 @@ public class TitleScreen {
 		game=game_;
 		titleRenderer=new TitleRenderer(this);
 		logo=new DPCSprite();
-		loadBar=new DPCSprite();
+		loadingLabel=new TextLabel("- Loading -",0,true,0,false);
 		screenLaidOut=false;
 	}
 	
@@ -72,19 +69,19 @@ public class TitleScreen {
 	private void setDimensions(int screenWidth,int screenHeight) {
 		Gdx.app.log("DPCLifecycle", "TitleScreen - setDimensions("+screenWidth+","+screenHeight+")");
 		logo.setDimensions((int)(screenHeight*0.89f),(int)(screenHeight*0.5f));
-		loadBar.setDimensions((int) (screenHeight*0.3f),(int) (screenHeight*0.03f));
+		loadingLabel.setMaxDimensions((int) (screenHeight*0.3f),(int) (screenHeight*0.03f));
+		loadingLabel.setTextSizeToMax();
 	}
 	
 	private void setPositions(int screenWidth,int screenHeight) {
 		Gdx.app.log("DPCLifecycle", "TitleScreen - setPositions("+screenWidth+","+screenHeight+")");
 		logo.setPosition(screenWidth*0.5f,screenHeight*0.5f);
-		loadBar.setPosition(logo.x,screenHeight*0.2f);
+		loadingLabel.setPosition(screenWidth*0.5f,screenHeight*0.15f);
 	}
 	
 	private void scalePositions(float scaleX,float scaleY) {
 		Gdx.app.log("DPCLifecycle", "TitleScreen - scalePositions("+scaleX+","+scaleY+")");
 		logo.scalePosition(scaleX,scaleY);
-		loadBar.scalePosition(scaleX,scaleY);
 	}
 	
 	public void resume() {
@@ -93,52 +90,46 @@ public class TitleScreen {
 		animationState=STATE_LOGO_FADE_IN;
 		finished=false;
 		screenOpacity=1;
-		loadProgress=0;
 		loadingDone=false;
 		logo.opacity=0;
-		loadBar.opacity=0;
+		loadingLabel.opacity=0;
+		resize(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 	}
 	
-	public void render(float delta_) {
-		animate(delta_);
+	public void render(float delta) {
+		animate(delta);
 		titleRenderer.render();
 	}
 	
-	public void animate(float delta_) {
+	public void animate(float delta) {
 		if (animationState==STATE_LOGO_FADE_IN) {
-			logo.opacity+=delta_*1.5f;
+			logo.opacity+=delta*1.5f;
 			if (logo.opacity>1) {
 				logo.opacity=1;
+				titleRenderer.loadDemoTextures();
+				loadingLabel.fadeIn();
 				animationState=STATE_LOAD_SYNCH;
 			}
-		} else if (animationState==STATE_LOAD_SYNCH) { 
-			startLogoTime=System.currentTimeMillis();
+		} else if (animationState==STATE_LOAD_SYNCH) {
 			game.loadSynchronous();
-			titleRenderer.loadDemoTextures();
-			animationState=STATE_LOGO_DISPLAY;
-		} else if (animationState==STATE_LOGO_DISPLAY) {
-			if ((System.currentTimeMillis()-startLogoTime)>DURATION_LOGO) {
-				animationState=STATE_LOGO_LOADING;
-				loadBar.opacity=1;
-				initLoadProgress=game.getLoadPercent();
-			}
+			animationState=STATE_LOGO_LOADING;
 		} else if (animationState==STATE_LOGO_LOADING) {
-			loadProgress=(game.getLoadPercent()-initLoadProgress)/(1-initLoadProgress);
+			loadingLabel.animate(delta);
 			if (game.getLoadPercent()==1) {
 				finished=true;
 			}
 		} else if (animationState==STATE_FADE_OUT) {
-			screenOpacity-=delta_*1f;
+			screenOpacity-=delta*1f;
 			if (screenOpacity<=0) {
 				screenOpacity=0;
 			}
-			logo.opacity-=delta_*2f;
+			logo.opacity-=delta*2f;
 			if (logo.opacity<=0) {
 				logo.opacity=0;
 			}
-			loadBar.opacity-=delta_*2f;
-			if (loadBar.opacity<=0) {
-				loadBar.opacity=0;
+			loadingLabel.opacity-=delta*2f;
+			if (loadingLabel.opacity<=0) {
+				loadingLabel.opacity=0;
 			}
 		}
 	}

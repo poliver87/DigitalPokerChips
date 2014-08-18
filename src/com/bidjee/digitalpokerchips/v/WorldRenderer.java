@@ -3,6 +3,8 @@ package com.bidjee.digitalpokerchips.v;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import javax.xml.ws.handler.MessageContext.Scope;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
@@ -14,6 +16,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.Table;
 import com.bidjee.digitalpokerchips.c.WorldLayer;
@@ -57,8 +61,9 @@ public class WorldRenderer {
 	public int screenHeight;
 	 // Textures //
 	Texture backgroundTexture;
-	Texture[] backgroundTextures;
-	Texture chipCaseTexture;
+	Texture tabletFrontTexture;
+	Texture tabletSideTexture;
+	
 	Texture tableHighlightTexture;
 	Texture dealerButtonTexture;
 	Texture[] chipTextures;
@@ -89,7 +94,6 @@ public class WorldRenderer {
 		camera=new Camera(this);
 		mWL=mWL_;
 		chipTextures=new Texture[ChipCase.CHIP_TYPES*Chip.CHIP_ROTATION_N];
-		backgroundTextures=new Texture[6];
 		suitsTextures=new Texture[4];
 	}
 	
@@ -148,18 +152,14 @@ public class WorldRenderer {
 		Gdx.app.log("DPCLifecycle", "WorldRenderer - loadTextures()");
 		
 		if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_LOW) {
-			backgroundTexture=manager_.get("background_low_res.png",Texture.class);
+			backgroundTexture=manager_.get("background.png",Texture.class);
 		} else if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_MEDIUM||
 				mWL.game.resolutionSetting==DPCGame.RESOLUTION_HIGH) {
-			backgroundTextures[0]=manager_.get("background_lb.png",Texture.class);
-			backgroundTextures[1]=manager_.get("background_lt.png",Texture.class);
-			backgroundTextures[2]=manager_.get("background_mb.png",Texture.class);
-			backgroundTextures[3]=manager_.get("background_mt.png",Texture.class);
-			backgroundTextures[4]=manager_.get("background_rb.png",Texture.class);
-			backgroundTextures[5]=manager_.get("background_rt.png",Texture.class);
+			backgroundTexture=manager_.get("background.png",Texture.class);
 		}
 		
-		chipCaseTexture=manager_.get("chip_case.png", Texture.class);
+		tabletFrontTexture=manager_.get("tablet_front.png", Texture.class);
+		tabletSideTexture=manager_.get("tablet_side.png", Texture.class);
 		tableHighlightTexture=manager_.get("table_highlight.png",Texture.class);
 		dealerButtonTexture=manager_.get("dealer_chip.png",Texture.class);
 		shadowTexture=manager_.get("shadow.png",Texture.class);
@@ -198,16 +198,6 @@ public class WorldRenderer {
 	
 	public void loadLabels() {
 		Gdx.app.log("DPCLifecycle", "WorldRenderer - loadLabels()");
-		mWL.thisPlayer.nameField.label.bodyColor=plaqueColor;
-		if (!mWL.thisPlayer.nameField.label.getText().equals("")) {
-			mWL.thisPlayer.nameField.label.loadTexture(plaqueColor,blackColor);
-		}
-		if (!mWL.table.tableNameField.label.getText().equals("")) {
-			mWL.table.tableNameField.label.loadTexture(tableNameColor,blackColor);
-		}
-		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-			mWL.chipCase.valueLabels[i].loadTexture(chipValueColor,blackColor);
-		}
 		if (mWL.thisPlayer.betStack.size()>0) {
 			mWL.thisPlayer.betStack.totalLabel.loadTexture();
 		}
@@ -242,16 +232,7 @@ public class WorldRenderer {
 		
 		renderBackground();
 		
-		if (!mWL.thisPlayer.nameField.label.getText().equals("")) {
-			batch.draw(mWL.thisPlayer.nameField.label.texture,mWL.thisPlayer.nameField.label.x-mWL.thisPlayer.nameField.label.radiusX,
-					mWL.thisPlayer.nameField.label.y-mWL.thisPlayer.nameField.label.radiusY,
-					mWL.thisPlayer.nameField.label.radiusX*2,mWL.thisPlayer.nameField.label.radiusY*2,0,0,
-					mWL.thisPlayer.nameField.label.radiusX*2,mWL.thisPlayer.nameField.label.radiusY*2,false,false);	
-		}
-		
 		renderLobby();
-		
-		renderEnterTableName();
 	
 		renderShadows();
 		
@@ -328,6 +309,7 @@ public class WorldRenderer {
 			}
 			if (renderTotals) {
 				if (chips.get(i).z==betStackTopZ) {
+					/*
 					batch.draw(mWL.thisPlayer.betStack.totalLabel.texture,
 							mWL.thisPlayer.betStack.totalLabel.x-mWL.thisPlayer.betStack.totalLabel.radiusX,
 							mWL.thisPlayer.betStack.totalLabel.y-mWL.thisPlayer.betStack.totalLabel.radiusY,
@@ -335,8 +317,10 @@ public class WorldRenderer {
 							mWL.thisPlayer.betStack.totalLabel.radiusY*2,
 							0,0,mWL.thisPlayer.betStack.totalLabel.radiusX*2,
 							mWL.thisPlayer.betStack.totalLabel.radiusY*2,false,false);
+							*/
 				}
 				for (int mainStack=0;mainStack<ChipCase.CHIP_TYPES;mainStack++) {
+					/*
 					if (chips.get(i).z==mainStackTop[mainStack]) {
 						batch.draw(mWL.thisPlayer.mainStacks[mainStack].totalLabel.texture,
 								mWL.thisPlayer.mainStacks[mainStack].totalLabel.x-mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusX,
@@ -346,6 +330,7 @@ public class WorldRenderer {
 								0,0,mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusX*2,
 								mWL.thisPlayer.mainStacks[mainStack].totalLabel.radiusY*2,false,false);
 					}
+					*/
 				}
 			}
 		}
@@ -375,35 +360,88 @@ public class WorldRenderer {
 		alphaShader=batch.getColor();
 		
 		if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_LOW) {
-			batch.draw(backgroundTexture,0,0,mWL.worldWidth,mWL.worldHeight);
+			batch.draw(backgroundTexture,mWL.backgroundSprite.x-mWL.backgroundSprite.radiusX,
+					mWL.backgroundSprite.y-mWL.backgroundSprite.radiusY,
+					mWL.backgroundSprite.radiusX*2,mWL.backgroundSprite.radiusY*2);
 		} else if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_MEDIUM||
 				mWL.game.resolutionSetting==DPCGame.RESOLUTION_HIGH) {
-			int backgroundTileWidth=(int) (mWL.worldWidth/3);
-			if (backgroundTileWidth*3<mWL.worldWidth) {
-				backgroundTileWidth++;
-			}
-			int backgroundTileHeight=(int) (mWL.worldHeight/2);
-			if (backgroundTileHeight*2<mWL.worldHeight) {
-				backgroundTileHeight++;
-			}
-			for (int i=0;i<3;i++) {
-				batch.draw(backgroundTextures[2*i],backgroundTileWidth*i,0,backgroundTileWidth,backgroundTileHeight);
-				batch.draw(backgroundTextures[2*i+1],backgroundTileWidth*i,backgroundTileHeight,backgroundTileWidth,backgroundTileHeight);
-			}
+			batch.draw(backgroundTexture,mWL.backgroundSprite.x-mWL.backgroundSprite.radiusX,
+					mWL.backgroundSprite.y-mWL.backgroundSprite.radiusY,
+					mWL.backgroundSprite.radiusX*2,mWL.backgroundSprite.radiusY*2);
 		}
 		
-		batch.draw(chipCaseTexture,
-				mWL.chipCase.x-mWL.chipCase.radiusX,
-				mWL.chipCase.y-mWL.chipCase.radiusY,
-				mWL.chipCase.radiusX*2,mWL.chipCase.radiusY*2,
-				0,0,412,390, false,false);
-		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {			
-			batch.draw(mWL.chipCase.valueLabels[i].texture,
-					mWL.chipCase.valueLabels[i].x-mWL.chipCase.valueLabels[i].radiusX,
-					mWL.chipCase.valueLabels[i].y-mWL.chipCase.valueLabels[i].radiusY,
-					mWL.chipCase.valueLabels[i].radiusX*2,mWL.chipCase.valueLabels[i].radiusY*2,
-					0,0,mWL.chipCase.valueLabels[i].radiusX*2,mWL.chipCase.valueLabels[i].radiusY*2,false,false);
+		batch.draw(tabletFrontTexture,
+				mWL.homeDeviceAnimation.hostSprite.x-mWL.homeDeviceAnimation.hostSprite.radiusX,
+				mWL.homeDeviceAnimation.hostSprite.y-mWL.homeDeviceAnimation.hostSprite.radiusY,
+				mWL.homeDeviceAnimation.hostSprite.radiusX*2,mWL.homeDeviceAnimation.hostSprite.radiusY*2,
+				0,0,1500,940, false,false);
+		batch.draw(tabletFrontTexture,
+				mWL.homeDeviceAnimation.p1Sprite.x-mWL.homeDeviceAnimation.p1Sprite.radiusX,
+				mWL.homeDeviceAnimation.p1Sprite.y-mWL.homeDeviceAnimation.p1Sprite.radiusY,
+				mWL.homeDeviceAnimation.p1Sprite.radiusX*2,mWL.homeDeviceAnimation.p1Sprite.radiusY*2,
+				0,0,1500,940, false,false);
+		batch.draw(tabletSideTexture,
+				mWL.homeDeviceAnimation.p2Sprite.x-mWL.homeDeviceAnimation.p2Sprite.radiusX,
+				mWL.homeDeviceAnimation.p2Sprite.y-mWL.homeDeviceAnimation.p2Sprite.radiusY,
+				mWL.homeDeviceAnimation.p2Sprite.radiusX*2,mWL.homeDeviceAnimation.p2Sprite.radiusY*2,
+				0,0,1026,1446, false,false);
+		batch.draw(tabletSideTexture,
+				mWL.homeDeviceAnimation.p3Sprite.x-mWL.homeDeviceAnimation.p3Sprite.radiusX,
+				mWL.homeDeviceAnimation.p3Sprite.y-mWL.homeDeviceAnimation.p3Sprite.radiusY,
+				mWL.homeDeviceAnimation.p3Sprite.radiusX*2,mWL.homeDeviceAnimation.p3Sprite.radiusY*2,
+				0,0,1026,1446,true,false);
+		
+		batch.flush();
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mWL.homeDeviceAnimation.chip1Sprite.opacity);
+		for (int i=0;i<4;i++) {
+			Rectangle scissors = new Rectangle(505,286,262,200);
+			
+			if (i==0) {
+				scissors.set(xWorldToScreen(mWL.homeDeviceAnimation.hostClippingRect.x),
+						yWorldToScreen(mWL.homeDeviceAnimation.hostClippingRect.y),
+						xWorldToScreen(mWL.homeDeviceAnimation.hostClippingRect.width),
+						yWorldToScreen(mWL.homeDeviceAnimation.hostClippingRect.height));
+			} else if (i==1) {
+				scissors.set(xWorldToScreen(mWL.homeDeviceAnimation.p1ClippingRect.x),
+						yWorldToScreen(mWL.homeDeviceAnimation.p1ClippingRect.y),
+						xWorldToScreen(mWL.homeDeviceAnimation.p1ClippingRect.width),
+						yWorldToScreen(mWL.homeDeviceAnimation.p1ClippingRect.height));
+			} else if (i==2) {
+				scissors.set(xWorldToScreen(mWL.homeDeviceAnimation.p2ClippingRect.x),
+						yWorldToScreen(mWL.homeDeviceAnimation.p2ClippingRect.y),
+						xWorldToScreen(mWL.homeDeviceAnimation.p2ClippingRect.width),
+						yWorldToScreen(mWL.homeDeviceAnimation.p2ClippingRect.height));
+			} else if (i==3) {
+				scissors.set(xWorldToScreen(mWL.homeDeviceAnimation.p3ClippingRect.x),
+						yWorldToScreen(mWL.homeDeviceAnimation.p3ClippingRect.y),
+						xWorldToScreen(mWL.homeDeviceAnimation.p3ClippingRect.width),
+						yWorldToScreen(mWL.homeDeviceAnimation.p3ClippingRect.height));
+			}
+			
+			if (ScissorStack.pushScissors(scissors)) {
+				batch.draw(chipTextures[0],
+						mWL.homeDeviceAnimation.chip1Sprite.x-mWL.homeDeviceAnimation.chip1Sprite.radiusX,
+						mWL.homeDeviceAnimation.chip1Sprite.y-mWL.homeDeviceAnimation.chip1Sprite.radiusY,
+						mWL.homeDeviceAnimation.chip1Sprite.radiusX*2,mWL.homeDeviceAnimation.chip1Sprite.radiusY*2,
+						0,0,256,chip_img_height,false,false);
+				batch.draw(chipTextures[0],
+						mWL.homeDeviceAnimation.chip2Sprite.x-mWL.homeDeviceAnimation.chip2Sprite.radiusX,
+						mWL.homeDeviceAnimation.chip2Sprite.y-mWL.homeDeviceAnimation.chip2Sprite.radiusY,
+						mWL.homeDeviceAnimation.chip2Sprite.radiusX*2,mWL.homeDeviceAnimation.chip2Sprite.radiusY*2,
+						0,0,256,chip_img_height,false,false);
+				batch.draw(chipTextures[0],
+						mWL.homeDeviceAnimation.chip3Sprite.x-mWL.homeDeviceAnimation.chip3Sprite.radiusX,
+						mWL.homeDeviceAnimation.chip3Sprite.y-mWL.homeDeviceAnimation.chip3Sprite.radiusY,
+						mWL.homeDeviceAnimation.chip3Sprite.radiusX*2,mWL.homeDeviceAnimation.chip3Sprite.radiusY*2,
+						0,0,256,chip_img_height,false,false);
+				
+				batch.flush();
+				ScissorStack.popScissors();
+			}
 		}
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
 		
 		// draw check highlight
 		if (mWL.thisPlayer.checkButton.opacity!=0) {
@@ -761,29 +799,6 @@ public class WorldRenderer {
 		batch.setProjectionMatrix(camera.getViewMatrix());
 	}
 	
-	public void renderEnterTableName() {
-		if (!mWL.table.tableNameField.label.equals("")) {
-			batch.draw(mWL.table.tableNameField.label.texture,mWL.table.tableNameField.label.x-mWL.table.tableNameField.label.radiusX,
-					mWL.table.tableNameField.label.y-mWL.table.tableNameField.label.radiusY,
-					mWL.table.tableNameField.label.radiusX*2,mWL.table.tableNameField.label.radiusY*2,0,0,
-					mWL.table.tableNameField.label.radiusX*2,mWL.table.tableNameField.label.radiusY*2,false,false);	
-		}
-		if (mWL.table.tableNameField.cursor.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mWL.table.tableNameField.cursor.opacity);
-			batch.draw(cursorTexture,
-					mWL.table.tableNameField.cursor.x-mWL.table.tableNameField.cursor.radiusX,
-					mWL.table.tableNameField.cursor.y-mWL.table.tableNameField.cursor.radiusY,
-					mWL.table.tableNameField.cursor.radiusX*2,mWL.table.tableNameField.cursor.radiusY*2,
-					0,0,32,128,false,false);
-			alphaShader=batch.getColor();
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		
-	}
-	
 	public void renderShadows() {
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
@@ -937,6 +952,7 @@ public class WorldRenderer {
 						0,0,256,chip_img_height,false,false);
 			}
 			if (stack_.totalLabel.texture!=null&&stack_.totalLabel.opacity!=0) {
+				/*
 				batch.draw(stack_.totalLabel.texture,
 						stack_.getTopX()-stack_.totalLabel.radiusX,
 						stack_.getTopY()-stack_.totalLabel.radiusY,
@@ -944,6 +960,7 @@ public class WorldRenderer {
 						stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,
 						1,1,rotation_,
 						0,0,stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,false,false);
+						*/
 			}
 		}
 		batch.setColor(alphaShader.r,alphaShader.g,

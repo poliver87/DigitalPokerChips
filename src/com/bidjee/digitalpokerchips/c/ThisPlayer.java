@@ -3,6 +3,7 @@ package com.bidjee.digitalpokerchips.c;
 import java.util.ArrayList;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.i.IPlayerNetwork;
 import com.bidjee.digitalpokerchips.m.Button;
@@ -15,8 +16,6 @@ import com.bidjee.digitalpokerchips.m.GameLogic;
 import com.bidjee.digitalpokerchips.m.Move;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.PlayerEntry;
-import com.bidjee.digitalpokerchips.m.TextField;
-import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.util.Logger;
 
 public class ThisPlayer {
@@ -24,20 +23,21 @@ public class ThisPlayer {
 	public static final String LOG_TAG = "DPCPlayer";
 	
 	//////////////////// Constants ////////////////////
-	static final int[] defaultChipNums={1,1,0};
+	static final int[] defaultChipNums={0,0,0};
 	
 	public static final int DURATION_SEARCH_HOLDOFF = 2000;
 	static final int RECONNECT_INTERVAL = 3000;
 	
 	public static final int CONN_NONE = 0;
-	public static final int CONN_IDLE = 1;
-	public static final int CONN_SEARCH_HOLDOFF = 2;
-	public static final int CONN_SEARCHING = 3;
-	public static final int CONN_BUYIN = 4;
-	public static final int CONN_CONNECTING = 5;
-	public static final int CONN_CONNECTED = 6;
-	public static final int CONN_POLL_RECONNECT = 7;
-	public static final int CONN_CONNECTED_NO_WIFI = 8;
+	public static final int CONN_LOGIN = 1;
+	public static final int CONN_IDLE = 2;
+	public static final int CONN_SEARCH_HOLDOFF = 3;
+	public static final int CONN_SEARCHING = 4;
+	public static final int CONN_BUYIN = 5;
+	public static final int CONN_CONNECTING = 6;
+	public static final int CONN_CONNECTED = 7;
+	public static final int CONN_POLL_RECONNECT = 8;
+	public static final int CONN_CONNECTED_NO_WIFI = 9;
 	
 	//////////////////// State Variables ////////////////////
 	public boolean sendingJoinToken;
@@ -70,8 +70,8 @@ public class ThisPlayer {
 	float yDealerButtonOnscreen;
 	
 	//////////////////// Models ////////////////////
+	String playerName;
 	public DiscoveredTable connectingTable;
-	public DPCSprite plaque=new DPCSprite();
 	public DPCSprite joinToken=new DPCSprite();
 	public ChipStack[] mainStacks;
 	public ChipStack bettingStack;
@@ -84,7 +84,6 @@ public class ThisPlayer {
 	public Button checkButton;
 	
 	//////////////////// Text Labels ////////////////////
-	public TextField nameField;
 	
 	//////////////////// References ////////////////////
 	WorldLayer mWL;
@@ -107,8 +106,7 @@ public class ThisPlayer {
 		cancellingStack=new ChipStack();
 		cancelStack=new ChipStack();
 		pickedUpChip=null;
-		nameField=new TextField("",0,false,false);
-		nameField.label=new TextLabel("",0.01f,true,1,false);
+		playerName="";
 		connectionBlob.opacity=0;
 		connectionBlob.flashVisibleTime=100;
 		connectionBlob.flashInvisibleTime=0;
@@ -122,13 +120,7 @@ public class ThisPlayer {
 	
 	//////////////////// Scale & Layout ////////////////////
 	public void setDimensions(float worldWidth_,float worldHeight_) {
-		plaque.setDimensions((int)(worldWidth_*0.044f),(int)(worldHeight_*0.03f));
 		joinToken.setDimensions((int)(worldHeight_*0.0288f),(int)(worldHeight_*0.0288f));
-		nameField.setDimensions((int)(plaque.radiusX*0.8f),(int)(plaque.radiusY*0.9f));
-		String tmp_=nameField.label.getText();
-		nameField.label.setText(WorldLayer.NAME_MEASURE);
-		nameField.label.setTextSizeToMax();
-		nameField.label.setText(tmp_);
 		mainStacks[ChipCase.CHIP_A].setMaxRenderNum(20);
 		mainStacks[ChipCase.CHIP_A].scaleLabel();
 		mainStacks[ChipCase.CHIP_B].setMaxRenderNum(20);
@@ -143,9 +135,7 @@ public class ThisPlayer {
 	} // setDimensions(float width_,float height_)
 	
 	public void setPositions(float worldWidth_,float worldHeight_) {
-		plaque.setPosition(worldWidth_*0.5f,worldHeight_*0.165f);
 		joinToken.setPosition(worldWidth_*0.5f,worldHeight_*0.4f);
-		nameField.setPosition(plaque.x,plaque.y);
 		mainStacks[ChipCase.CHIP_A].setY(worldHeight_*0.25f);
 		mainStacks[ChipCase.CHIP_B].setY(mainStacks[ChipCase.CHIP_A].getY());
 		mainStacks[ChipCase.CHIP_C].setY(mainStacks[ChipCase.CHIP_A].getY());
@@ -168,8 +158,6 @@ public class ThisPlayer {
 	} // setPositions(float width_,float height_)
 	
 	public void scalePositions(float scaleX_,float scaleY_) {
-		plaque.scalePosition(scaleX_,scaleY_);
-		nameField.scalePosition(scaleX_,scaleY_);
 		mainStacks[ChipCase.CHIP_A].scalePosition(scaleX_,scaleY_);
 		mainStacks[ChipCase.CHIP_B].scalePosition(scaleX_,scaleY_);
 		mainStacks[ChipCase.CHIP_C].scalePosition(scaleX_,scaleY_);
@@ -493,7 +481,6 @@ public class ThisPlayer {
 		cancelMoveState();
 		setDealer(false);
 		waitingOnHost=false;
-		plaque.setTouchable(true);
 		mWL.game.mFL.reconnect1Label.fadeOut();
 		mWL.game.mFL.reconnect1Label.opacity=0;
 		mWL.game.mFL.reconnect2Label.fadeOut();
@@ -529,20 +516,22 @@ public class ThisPlayer {
 	}
 	
 	//////////////////// Input to Player Messages ////////////////////
-	public void nameDone() {
-		if (nameField.label.getText().equals("")) {
-			int num_=(int) (Math.random()*9+1);
-			nameField.setText("Player "+num_);
-		}
-		networkInterface.setName(nameField.getText());
-		mWL.sendCameraTo(mWL.camPosPlayer);
+	public void setPlayerName(String playerName) {
+		this.playerName=playerName;
+		networkInterface.setName(playerName);
 	}
 	
-	public void plaqueTouched() {
-		if (connectivityStatus==CONN_SEARCHING) {
-			stopSearchForGames();
+	public void playerLoginDone(String playerName,Texture tex) {
+		if (connectivityStatus==CONN_LOGIN) {
+			mWL.game.mFL.stopPlayerLoginDialog();
+			setPlayerName(playerName);
+			if (tex!=null) {
+				mWL.game.mFL.foregroundRenderer.setProfilePicTexture(tex);
+			}
+			mWL.game.mFL.startPlayerIDDialog(playerName);
+			connectivityStatus=CONN_IDLE;
+			//notifyReadyToSearch();
 		}
-		mWL.sendCameraTo(mWL.camPosPlayersName);
 	}
 	
 	public void buyinDialogDone(int[] chipNumbers) {
@@ -566,6 +555,11 @@ public class ThisPlayer {
 		if (actionCompleted&&hostBytes!=null) {
 			networkInterface.requestInvitation(hostBytes);
 		}
+	}
+	
+	public void playerLoginDone(boolean actionCompleted) {
+		mWL.game.mFL.stopPlayerLoginDialog();
+		mWL.sendCameraTo(mWL.camPosHome);
 	}
 	
 	public void leaveButtonPressed() {
@@ -667,11 +661,11 @@ public class ThisPlayer {
 	//////////////////// World to Player Messages ////////////////////
 	public void notifyAtPlayerPosition() {
 		mWL.game.mFL.notifyAtPlayerPosition();
-		if (nameField.label.getText().equals("")) {
-			mWL.sendCameraTo(mWL.camPosPlayersName);
+		if (playerName.equals("")) {
+			connectivityStatus=CONN_LOGIN;
+			mWL.game.mFL.startPlayerLoginDialog();
 		} else if (connectivityStatus==CONN_NONE) {
 			connectivityStatus=CONN_IDLE;
-			plaque.setTouchable(true);
 			if (wifiEnabled) {
 				notifyReadyToSearch();
 			} else {
@@ -689,23 +683,11 @@ public class ThisPlayer {
 		connectivityStatus=CONN_NONE;
 	}
 	
-	public void notifyAtNamePosition() {
-		mWL.game.mFL.startEnterPlayerName();
-		Gdx.input.setOnscreenKeyboardVisible(true);
-		mWL.input.setTypingFocus(WorldInput.TYPING_PLAYER_NAME);
-	}
-	
-	public void notifyLeftNamePosition() {
-		mWL.game.mFL.stopEnterPlayerName();
-		mWL.input.setTypingFocus(WorldInput.TYPING_NOTHING);
-		Gdx.input.setOnscreenKeyboardVisible(false);
-	}
-	
 	/** Notify the player to handle the back press
-	 * @return return true if the camera may leave the area
+	 * @return return true if back was handled
 	 */
 	public boolean backPressed() {
-		boolean playerFinished=true;
+		boolean backHandled=false;
 		if (connectivityStatus==CONN_NONE) {
 			
 		} else if (connectivityStatus==CONN_IDLE) {
@@ -715,18 +697,18 @@ public class ThisPlayer {
 		} else if (connectivityStatus==CONN_SEARCH_HOLDOFF) {
 			;
 		} else if (connectivityStatus==CONN_CONNECTING) {
-			playerFinished=false;
+			backHandled=true;
 		} else if (connectivityStatus==CONN_CONNECTED) {
 			doLeaveDialog();
-			playerFinished=false;
+			backHandled=true;
 		} else if (connectivityStatus==CONN_POLL_RECONNECT) {
 			leaveTable();
-			playerFinished=false;
+			backHandled=true;
 		} else if (connectivityStatus==CONN_CONNECTED_NO_WIFI) {
 			leaveTable();
-			playerFinished=false;
+			backHandled=true;
 		}
-		return playerFinished;
+		return backHandled;
 	}
 	
 	public void notifyReadyToSearch() {
@@ -813,15 +795,6 @@ public class ThisPlayer {
 	}
 	
 	//////////////////// Player to Table Messages ////////////////////
-	public void appendName(char character) {
-		if (character=='\b') {
-			nameField.backspace();
-		} else if (character=='\n') {
-			nameDone();
-		} else if ((int)(character)!=0) {
-			nameField.append(""+character);
-		}
-	}
 	
 	private void submitBet() {
 		Logger.log(LOG_TAG,"submitBet()");
@@ -918,7 +891,6 @@ public class ThisPlayer {
 		if (result) {
 			connectivityStatus=CONN_CONNECTED;
 			this.tableName=tableName;
-			plaque.setTouchable(false);
 			mWL.game.mFL.stopReconnect();
 			mWL.game.mFL.showTableStatusMenu(tableName);
 			waitingOnHost=false;

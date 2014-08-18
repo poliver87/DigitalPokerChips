@@ -1,6 +1,5 @@
 package com.bidjee.digitalpokerchips.c;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.m.ChipCase;
@@ -13,7 +12,6 @@ public class WorldInput implements InputProcessor {
 	public static final String LOG_TAG = "DPCInput";
 	
 	static final int TYPING_NOTHING = 0;
-	static final int TYPING_PLAYER_NAME = 1;
 	public static final int TYPING_TABLE_NAME = 2;
 	
 	WorldLayer mWL;
@@ -38,15 +36,13 @@ public class WorldInput implements InputProcessor {
 
 	@Override
 	public boolean keyTyped(char character) {
-		if (typingFocus==TYPING_PLAYER_NAME) {
-			mWL.thisPlayer.appendName(character);
-		} else if (typingFocus==TYPING_TABLE_NAME) {
+		if (typingFocus==TYPING_TABLE_NAME) {
 			if (character=='\b') {
-				mWL.table.tableNameField.backspace();
+				//mWL.table.tableNameField.backspace();
 			} else if (character=='\n') {
 				mWL.table.tableNameDone();
 			} else if ((int)(character)!=0) {
-				mWL.table.tableNameField.append(""+character);
+				//mWL.table.tableNameField.append(""+character);
 			}
 		}
 		return true;
@@ -60,7 +56,14 @@ public class WorldInput implements InputProcessor {
 			Logger.log(LOG_TAG,"touchDown("+touchX+","+touchY+")");
 			lastTouch.set(touchX,touchY);
 			if (mWL.cameraDestination==mWL.camPosHome) {
-				;
+				if (mWL.homeDeviceAnimation.hostSprite.getTouchable()&&
+						mWL.homeDeviceAnimation.hostSprite.pointContained(touchX, touchY)) {
+					mWL.homeDeviceAnimation.hostSprite.setIsTouched(true);
+				}
+				if (mWL.homeDeviceAnimation.p1Sprite.getTouchable()&&
+						mWL.homeDeviceAnimation.p1Sprite.pointContained(touchX, touchY)) {
+					mWL.homeDeviceAnimation.p1Sprite.setIsTouched(true);
+				}
 			} else if (mWL.cameraDestination==mWL.camPosPlayer) {
 				// check if chip stacks are touched
 				for (int chip=0;chip<ChipCase.CHIP_TYPES;chip++) {
@@ -82,21 +85,10 @@ public class WorldInput implements InputProcessor {
 						mWL.thisPlayer.betStack.getOpacity()==1) {
 					deltaTouch.y=touchY-mWL.thisPlayer.betStack.getY();
 					mWL.thisPlayer.betStack.get(0).isTouched=true;
-				} else if (mWL.thisPlayer.plaque.getTouchable()&&
-						mWL.thisPlayer.plaque.pointContained(touchX, touchY)) {
-					mWL.thisPlayer.plaqueTouched();
 				}
 				if (mWL.thisPlayer.checkButton.getTouchable()&&
 						mWL.thisPlayer.checkButton.pointContained(touchX, touchY)) {
 					mWL.thisPlayer.checkButton.setIsTouched(true);
-				}
-			} else if (mWL.cameraDestination==mWL.camPosPlayersName) {
-				if (mWL.thisPlayer.plaque.pointContained(touchX, touchY)) {
-					Gdx.input.setOnscreenKeyboardVisible(true);
-				}
-			} else if (mWL.cameraDestination==mWL.camPosTableName) {
-				if (mWL.table.tableNameField.pointContained(touchX, touchY)) {
-					Gdx.input.setOnscreenKeyboardVisible(true);
 				}
 			} else if (mWL.cameraDestination==mWL.camPosTable) {
 				if (mWL.table.gameState==Table.STATE_LOBBY) {
@@ -149,6 +141,14 @@ public class WorldInput implements InputProcessor {
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
 		if (pointer==0&&mWL.game.screenState==ScreenState.GAMEPLAY) {
+			if (mWL.homeDeviceAnimation.hostSprite.getIsTouched()) {
+				mWL.homeDeviceAnimation.hostSprite.setIsTouched(false);
+				mWL.hostSelected();
+			}
+			if (mWL.homeDeviceAnimation.p1Sprite.getIsTouched()) {
+				mWL.homeDeviceAnimation.p1Sprite.setIsTouched(false);
+				mWL.joinSelected();
+			}
 			if (mWL.thisPlayer.pickedUpChip!=null&&mWL.thisPlayer.pickedUpChip.isTouched) {
 				mWL.thisPlayer.pickedUpChip.isTouched=false;
 				mWL.thisPlayer.doPickedUpChipDropped();
@@ -193,6 +193,16 @@ public class WorldInput implements InputProcessor {
 			float touchX=mWL.worldRenderer.xTouchScreenToWorld(screenX);
 			float touchY=mWL.worldRenderer.yTouchScreenToWorld(screenY);
 			lastTouch.set(touchX,touchY);
+			if (mWL.homeDeviceAnimation.hostSprite.getIsTouched()) {
+				if (!mWL.homeDeviceAnimation.hostSprite.pointContained(touchX, touchY)) {
+					mWL.homeDeviceAnimation.hostSprite.setIsTouched(false);
+				}
+			}
+			if (mWL.homeDeviceAnimation.p1Sprite.getIsTouched()) {
+				if (!mWL.homeDeviceAnimation.p1Sprite.pointContained(touchX, touchY)) {
+					mWL.homeDeviceAnimation.p1Sprite.setIsTouched(false);
+				}
+			}
 			if (mWL.thisPlayer.pickedUpChip!=null&&mWL.thisPlayer.pickedUpChip.isTouched) {
 				mWL.thisPlayer.pickedUpChip.setDest(touchX-deltaTouch.x,touchY-deltaTouch.y,mWL.thisPlayer.pickedUpChip.getDestZ());
 			}

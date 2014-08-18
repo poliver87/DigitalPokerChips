@@ -172,7 +172,7 @@ public class HelpDialog extends Dialog {
 	@Override
 	public void start() {
 		opacity=1;
-		mFL.input.pushTouchFocus(ForegroundInput.TOUCH_HELP_DIALOG);
+		//mFL.input.pushTouchFocus(ForegroundInput.TOUCH_HELP_DIALOG);
 		currentSlide=0;
 		if (numSlidesCompleted>0) {
 			nextButton.fadeIn();
@@ -188,7 +188,7 @@ public class HelpDialog extends Dialog {
 	@Override
 	public void stop() {
 		opacity=0;
-		mFL.input.popTouchFocus(ForegroundInput.TOUCH_HELP_DIALOG);
+		//mFL.input.popTouchFocus(ForegroundInput.TOUCH_HELP_DIALOG);
 		closeButton.opacity=0;
 		closeButton.setTouchable(false);
 		nextButton.fadeOut();

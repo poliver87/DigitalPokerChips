@@ -25,8 +25,6 @@ public class TitleRenderer {
 	Texture logoTexture;
 	Texture blackRectangleTexture;
 	
-	Texture loadBarTexture;
-	
 	public TitleRenderer(TitleScreen mTS_) {
 		mTS=mTS_;
 		batch=new SpriteBatch(100);
@@ -49,9 +47,6 @@ public class TitleRenderer {
 		if (logoTexture!=null)
 			logoTexture.dispose();
 		logoTexture=null;
-		if (loadBarTexture!=null)
-			loadBarTexture.dispose();
-		loadBarTexture=null;
 
 		batch.dispose();
 		mTS=null;
@@ -69,47 +64,42 @@ public class TitleRenderer {
 		logoTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
 		blackRectangleTexture=new Texture(Gdx.files.internal("black.png"), Format.RGBA8888, true);
 		blackRectangleTexture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+		
 	}
 	
 	public void loadDemoTextures() {
 		Gdx.app.log("DPCLifecycle", "TitleRenderer - loadDemoTextures()");
-		if (loadBarTexture!=null)
-			loadBarTexture.dispose();
-		loadBarTexture=null;
-		loadBarTexture=new Texture(Gdx.files.internal("load_bar.png"),Format.RGBA8888,true);
-		loadBarTexture.setFilter(TextureFilter.Linear,TextureFilter.Linear);
+		mTS.loadingLabel.loadTexture();
 	}
 	
 	public void render() {
 		batch.begin();
-		
+		int x=0;
+		int y=0;
 		alphaShader=batch.getColor();
 		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mTS.screenOpacity);
 		batch.draw(blackRectangleTexture,0,0,screenWidth,screenHeight);
 		if (mTS.logo.opacity!=0) {
 			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mTS.logo.opacity);
-			batch.draw(logoTexture,
-					mTS.logo.x-mTS.logo.radiusX,mTS.logo.y-mTS.logo.radiusY,
+			x=(int) (mTS.logo.x-mTS.logo.radiusX);
+			y=(int) (mTS.logo.y-mTS.logo.radiusY);
+			batch.draw(logoTexture,x,y,
 					mTS.logo.radiusX*2,mTS.logo.radiusY*2,
 					0,0,980,550,false,false);
 	        alphaShader=batch.getColor();
 	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
-        if (mTS.loadBar.opacity!=0) {
+        if (mTS.loadingLabel.opacity!=0) {
         	alphaShader=batch.getColor();
-    		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mTS.loadBar.opacity);
-    		batch.draw(loadBarTexture,
-    				mTS.loadBar.x-mTS.loadBar.radiusX,mTS.loadBar.y-mTS.loadBar.radiusY,
-    				mTS.loadBar.radiusX*2,mTS.loadBar.radiusY*2,
-    				5,1,232,35,false,false);
-    		batch.draw(loadBarTexture,
-    				mTS.loadBar.x-mTS.loadBar.radiusX,mTS.loadBar.y-mTS.loadBar.radiusY,
-    				mTS.loadBar.radiusX*2*mTS.loadProgress,mTS.loadBar.radiusY*2,
-    				1,1,2,35,false,false);
-    		 alphaShader=batch.getColor();
-    		 batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+    		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mTS.loadingLabel.opacity);
+    		x=(int) (mTS.loadingLabel.x-mTS.loadingLabel.radiusX);
+    		y=(int) (mTS.loadingLabel.y-mTS.loadingLabel.radiusY);
+    		batch.draw(mTS.loadingLabel.texture,x,y,0,0,mTS.loadingLabel.radiusX*2,mTS.loadingLabel.radiusY*2);
+    		alphaShader=batch.getColor();
+    		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
         }
-       
+        
+        
         batch.end();
 	}
 	

@@ -10,5 +10,5 @@ public interface IActivity {
 	public IHostNetwork getIHostNetwork();
 	public ITableStore getITableStore();
 	public int getScreenOrientation();
-	
+	public void performFacebookClick();
 }

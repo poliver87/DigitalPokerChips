@@ -79,6 +79,7 @@ public class DPCGame extends Game {
 		freezeAnimation=true;
 		exitPending=false;
 		activity=activity_;
+		
 		Logger.loggingMasterOn=true;
 		Logger.loggingOn=true;
 	}
@@ -116,7 +117,7 @@ public class DPCGame extends Game {
 		landscape=width>height;
 		if (landscape) {
 			if (mTS!=null) {
-				mTS.resize(width,height);
+				//mTS.resize(width,height);
 			}
 			if (mWL!=null) {
 				mWL.resize(width,height);
@@ -215,7 +216,7 @@ public class DPCGame extends Game {
 			checkTransitionQueue();
 		}
 		if (fps!=null) {
-			//fps.log();
+			fps.log();
 		}
 	}
 
@@ -241,9 +242,9 @@ public class DPCGame extends Game {
 			}
 		}
 		resize(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
-		textFactory.dispose();
-		mFL.foregroundRenderer.loadLabels();
-		mWL.worldRenderer.loadLabels();
+		//textFactory.dispose();
+		//mFL.foregroundRenderer.loadLabels();
+		//mWL.worldRenderer.loadLabels();
 	}
 	
 	private void checkTransitionQueue() {
@@ -273,15 +274,10 @@ public class DPCGame extends Game {
 		tParam.format=Format.RGBA8888;
 		
 		if (resolutionSetting==RESOLUTION_LOW) {
-			manager.load("background_low_res.png",Texture.class,tParam);
+			manager.load("background.png",Texture.class,tParam);
 		} else if (resolutionSetting==RESOLUTION_MEDIUM||
 				resolutionSetting==RESOLUTION_HIGH) {
-			manager.load("background_lb.png",Texture.class,tParam);
-			manager.load("background_lt.png",Texture.class,tParam);
-			manager.load("background_mb.png",Texture.class,tParam);
-			manager.load("background_mt.png",Texture.class,tParam);
-			manager.load("background_rb.png",Texture.class,tParam);
-			manager.load("background_rt.png",Texture.class,tParam);
+			manager.load("background.png",Texture.class,tParam);
 		}
 		
 		manager.load("black_hole.png",Texture.class,tParam);
@@ -290,9 +286,17 @@ public class DPCGame extends Game {
 		manager.load("hand.png",Texture.class,tParam);
 		manager.load("table_button.png",Texture.class,tParam);
 		
+		manager.load("tablet_front.png",Texture.class,tParam);
+		manager.load("tablet_side.png",Texture.class,tParam);
+		manager.load("home_settings.png",Texture.class,tParam);
+		manager.load("home_help.png",Texture.class,tParam);
+		manager.load("home_shop.png",Texture.class,tParam);
+		manager.load("selection_orange.png",Texture.class,tParam);
+		
 		manager.load("ok_button.png",Texture.class,tParam);
+		manager.load("anon.jpeg",Texture.class,tParam);
+		
 		manager.load("cancel_button.png",Texture.class,tParam);
-		manager.load("chip_case.png",Texture.class,tParam);
 		manager.load("table_highlight.png",Texture.class,tParam);
 		manager.load("fold_button.png",Texture.class,tParam);
 		manager.load("dealer_chip.png",Texture.class,tParam);
@@ -326,7 +330,7 @@ public class DPCGame extends Game {
 		manager.load("cursor.png",Texture.class,tParam);
 		manager.load("ping.png",Texture.class,tParam);
 		manager.load("ping_hub.png",Texture.class,tParam);
-		manager.load("logo_dpc.png",Texture.class,tParam);
+		manager.load("dpc_logo.png",Texture.class,tParam);
 		manager.load("button_blue.png",Texture.class,tParam);
 		manager.load("back.png",Texture.class,tParam);
 		manager.load("connection_blob.png",Texture.class,tParam);
@@ -365,6 +369,11 @@ public class DPCGame extends Game {
 				mWL.wifiOff();
 			}
 		}
+	}
+	
+	public void performFacebookClick() {
+		// TODO might need to consider synch here because this runs on android UI thread
+		activity.performFacebookClick();
 	}
 	
 	public void launchSettings() {

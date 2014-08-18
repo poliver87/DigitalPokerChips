@@ -1,9 +1,8 @@
 package com.bidjee.digitalpokerchips.m;
 
 import com.badlogic.gdx.Gdx;
-import com.bidjee.digitalpokerchips.c.DPCGame;
 
-public class ChipCase extends DPCSprite {
+public class ChipCase {
 
 	public static final int CHIP_A=0;
 	public static final int CHIP_B=1;
@@ -19,67 +18,14 @@ public class ChipCase extends DPCSprite {
 	
 	public static int[] values=new int[CHIP_TYPES];
 	
-	public static TextLabel[] valueLabels=new TextLabel[CHIP_TYPES];
-	
-	private static int textSizeBig;
-	private static int textSizeSmall;
-	
 	public ChipCase(int[] values_) {
 		for (int i=0;i<values_.length;i++) {
 			values[i]=values_[i];
-			valueLabels[i]=new TextLabel(Integer.toString(values_[i]),0,false,1,false);
-		}
-	}
-	
-	@Override
-	public void setDimensions(int radiusX_,int radiusY_) {
-		super.setDimensions(radiusX_,radiusY_);
-		for (int i=0;i<CHIP_TYPES;i++) {
-			valueLabels[i].setMaxDimensions((int)(radiusX_*0.18f),(int)(radiusY_*0.2f));
-		}
-		String tmp_=valueLabels[0].getText();
-		valueLabels[0].setText("8000");
-		textSizeBig=DPCGame.textFactory.getMaxTextSize(valueLabels[0]);
-		valueLabels[0].setText("800000");
-		textSizeSmall=DPCGame.textFactory.getMaxTextSize(valueLabels[0]);
-		valueLabels[0].setText(tmp_);
-		for (int i=0;i<CHIP_TYPES;i++) {
-			if (valueLabels[i].getText().length()<=4) {
-				valueLabels[i].setTextSize(textSizeBig);
-			} else {
-				valueLabels[i].setTextSize(textSizeSmall);
-			}
-		}
-	}
-	
-	@Override
-	public void setPosition(float x_,float y_) {
-		super.setPosition(x_,y_);
-		float yLabelsRow_=y_-radiusY*0.75f;
-		float xLabelsColumnSpacing=radiusX*0.47f;
-		float xStart_=x_-xLabelsColumnSpacing;
-		for (int i=0;i<CHIP_TYPES;i++) {
-			valueLabels[i].setPosition(xStart_+i*xLabelsColumnSpacing,yLabelsRow_);
-		}
-	}
-	
-	@Override
-	public void scalePosition(float scaleX_,float scaleY_) {
-		super.scalePosition(scaleX_,scaleY_);
-		for (int i=0;i<CHIP_TYPES;i++) {
-			valueLabels[i].scalePosition(scaleX_,scaleY_);
 		}
 	}
 	
 	public static void setValue(int chipIndex_,int value_) {
 		values[chipIndex_]=value_;
-		valueLabels[chipIndex_].setText(Integer.toString(value_));
-		if (valueLabels[chipIndex_].getText().length()<=4) {
-			valueLabels[chipIndex_].setTextSize(textSizeBig);
-		} else {
-			valueLabels[chipIndex_].setTextSize(textSizeSmall);
-		}
-		valueLabels[chipIndex_].loadTexture();
 	}
 	
 	public void valueDown(int chipIndex_) {
