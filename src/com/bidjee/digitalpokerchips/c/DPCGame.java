@@ -228,7 +228,7 @@ public class DPCGame extends Game {
 		Logger.log(LOG_TAG, "loadSynchronous()");
 		if (mWL==null&&mFL==null) {
 			mWL=new WorldLayer(this,activity.getIPlayerNetwork(),activity.getIHostNetwork(),activity.getITableStore());
-			mFL=new ForegroundLayer(this);
+			mFL=new ForegroundLayer(this,activity.getHelpWebView());
 			im.addProcessor(mFL.gestureInput);
 			im.addProcessor(mFL.input);
 			im.addProcessor(mWL.gestureInput);

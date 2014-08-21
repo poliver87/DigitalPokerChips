@@ -18,6 +18,7 @@ public class ForegroundInput implements InputProcessor {
 	public static final String TOUCH_BUYIN = "TOUCH_BUYIN";
 	public static final String TOUCH_MANUAL_CONNECT = "TOUCH_MANUAL_CONNECT";
 	public static final String TOUCH_LEAVE_TABLE = "TOUCH_LEAVE_TABLE";
+	public static final String TOUCH_HELP_DIALOG = "TOUCH_HELP_DIALOG";
 	public static final String TOUCH_PLAYER_LOGIN = "TOUCH_PLAYER_LOGIN";
 	public static final String TOUCH_DESTROY_TABLE = "TOUCH_DESTROY_TABLE";
 	public static final String TOUCH_BOOT_DIALOG = "TOUCH_BOOT_DIALOG";
@@ -91,6 +92,8 @@ public class ForegroundInput implements InputProcessor {
 				mFL.game.mWL.thisPlayer.buyinDialogDone(null);
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				mFL.game.mWL.thisPlayer.manualConnectDialogDone(false);
+			} else if (getLastTouchFocus().equals(TOUCH_HELP_DIALOG)) {
+				mFL.game.mWL.helpDone();
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
 				mFL.game.mWL.thisPlayer.playerLoginDone(false);
 			} else if (getLastTouchFocus().equals(TOUCH_LEAVE_TABLE)) {
@@ -134,6 +137,10 @@ public class ForegroundInput implements InputProcessor {
 			if (getLastTouchFocus().equals(TOUCH_TUTORIAL_TABLE_NAME)) {
 				handled_=true;
 			} else if (getLastTouchFocus().equals(TOUCH_HOME)) {
+				if (mFL.homeUIAnimation.helpButton.pointContained(touchX, touchY)) {
+					handled_=true;
+					mFL.homeUIAnimation.helpButton.setIsTouched(true);
+				}
 				if (mFL.homeUIAnimation.hostButton.pointContained(touchX, touchY)) {
 					handled_=true;
 					mFL.homeUIAnimation.hostButton.setIsTouched(true);
@@ -366,6 +373,11 @@ public class ForegroundInput implements InputProcessor {
 	public boolean touchUp(int screenX,int screenY,int pointer,int button) {
 		boolean handled_=false;
 		if (pointer==0&&touchFocus.size()>0) {
+			if (mFL.homeUIAnimation.helpButton.getIsTouched()) {
+				handled_=true;
+				mFL.homeUIAnimation.helpButton.setIsTouched(false);
+				mFL.game.mWL.helpSelected();
+			}
 			if (mFL.homeUIAnimation.hostButton.getIsTouched()) {
 				handled_=true;
 				mFL.homeUIAnimation.hostButton.setIsTouched(false);
@@ -565,6 +577,12 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				if (!mFL.wifiButton.pointContained(touchX, touchY)) {
 					mFL.wifiButton.setIsTouched(false);
+				}
+			}
+			if (mFL.homeUIAnimation.helpButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.homeUIAnimation.helpButton.pointContained(touchX, touchY)) {
+					mFL.homeUIAnimation.helpButton.setIsTouched(false);
 				}
 			}
 			if (mFL.homeUIAnimation.hostButton.getIsTouched()) {

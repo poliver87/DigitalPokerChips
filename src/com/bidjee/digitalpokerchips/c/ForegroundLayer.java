@@ -3,6 +3,7 @@ package com.bidjee.digitalpokerchips.c;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
+import com.bidjee.digitalpokerchips.i.IDPCSprite;
 import com.bidjee.digitalpokerchips.m.AutosaveDialog;
 import com.bidjee.digitalpokerchips.m.BootDialog;
 import com.bidjee.digitalpokerchips.m.Button;
@@ -12,6 +13,7 @@ import com.bidjee.digitalpokerchips.m.ClosedDialog;
 import com.bidjee.digitalpokerchips.m.DestroyTableDialog;
 import com.bidjee.digitalpokerchips.m.DialogWindow;
 import com.bidjee.digitalpokerchips.m.GameLogic;
+import com.bidjee.digitalpokerchips.m.HelpDialog;
 import com.bidjee.digitalpokerchips.m.LeaveTableDialog;
 import com.bidjee.digitalpokerchips.m.ManualConnectDialog;
 import com.bidjee.digitalpokerchips.m.Player;
@@ -57,11 +59,12 @@ public class ForegroundLayer {
 	public DialogWindow dialogWindow;
 	public DialogWindow playerIDWindow;
 	public DialogWindow dialogWArrowWindow;
+	public ClosedDialog helpDialogSmall;
+	public HelpDialog helpDialog;
 	public ClosedDialog playerLoginDialogSmall;
 	public PlayerLoginDialog playerLoginDialog;
 	public ClosedDialog playerIDDialogSmall;
 	public PlayerIDDialog playerIDDialog;
-	public ClosedDialog helpDialogSmall;
 	public ClosedDialog loadDialogSmall;
 	private ClosedDialog buyinDialogSmall;
 	public ClosedDialog leaveTableDialogSmall;
@@ -128,7 +131,7 @@ public class ForegroundLayer {
 	public TextLabel azimuthLabel;
 	int secondTimer=0;
 	
-	public ForegroundLayer(DPCGame game) {		
+	public ForegroundLayer(DPCGame game,IDPCSprite helpWebView) {		
 		this.game=game;
 		foregroundRenderer=new ForegroundRenderer(this);
 		
@@ -223,6 +226,8 @@ public class ForegroundLayer {
 		splitCancelButton=new Button(true,0,"Cancel");
 		splitDoneButton=new Button(true,0,"Done");
 		
+		helpDialogSmall=new ClosedDialog(dialogWindow);
+		helpDialog=new HelpDialog(helpWebView);
 		playerLoginDialogSmall=new ClosedDialog(dialogWindow);
 		playerLoginDialog=new PlayerLoginDialog();
 		
@@ -340,6 +345,9 @@ public class ForegroundLayer {
 			valueUpArrows[i].setDimensions((int)(screenHeight*0.05f),(int)(screenHeight*0.05f));
 		}
 		
+		helpDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
+		helpDialogSmall.setDimensions(1,1);
+		
 		playerLoginDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
 		playerLoginDialogSmall.setDimensions(1,1);
 		
@@ -434,6 +442,8 @@ public class ForegroundLayer {
 			valueDownArrows[i].setPosition(xValueStart_+i*xValueSpacing_,screenHeight*0.2f);
 			valueUpArrows[i].setPosition(xValueStart_+i*xValueSpacing_,screenHeight*0.48f);
 		}
+		
+		helpDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		
 		playerLoginDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		playerLoginDialogSmall.setPosition(screenWidth*0.5f,screenHeight*0.95f);
@@ -597,6 +607,7 @@ public class ForegroundLayer {
 		dialogWindow.animate(delta);
 		playerIDWindow.animate(delta);
 		dialogWArrowWindow.animate(delta);
+		helpDialog.animate(delta);
 		playerLoginDialog.animate(delta);
 		playerIDDialog.animate(delta);
 		buyinDialog.animate(delta);
@@ -786,6 +797,23 @@ public class ForegroundLayer {
 		dialogWindow.remove();
 		leaveTableDialog.stop();
 		input.popTouchFocus(ForegroundInput.TOUCH_LEAVE_TABLE);
+	}
+	
+	public void startHelpDialog() {
+		Logger.log(LOG_TAG,"startPlayerLoginDialog()");
+		dialogWindow.setOpacity(1);
+		dialogWindow.setPosition(homeUIAnimation.helpButton.x,homeUIAnimation.helpButton.y);
+		dialogWindow.setDimensions(helpDialogSmall.radiusX,helpDialogSmall.radiusY);
+		dialogWindow.sendTo(helpDialog);
+		helpDialog.disappear();
+		input.pushTouchFocus(ForegroundInput.TOUCH_HELP_DIALOG);
+	}
+	
+	public void stopHelpDialog() {
+		Logger.log(LOG_TAG,"stopPlayerLoginDialog()");
+		dialogWindow.remove();
+		helpDialog.stop();
+		input.popTouchFocus(ForegroundInput.TOUCH_HELP_DIALOG);
 	}
 	
 	public void startPlayerLoginDialog() {

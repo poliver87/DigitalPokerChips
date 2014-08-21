@@ -277,5 +277,13 @@ public class WorldLayer implements Screen {
 	public void joinSelected() {
 		sendCameraTo(camPosPlayer);
 	}
+	
+	public void helpSelected() {
+		game.mFL.startHelpDialog();
+	}
+	
+	public void helpDone() {
+		game.mFL.stopHelpDialog();
+	}
 
 }

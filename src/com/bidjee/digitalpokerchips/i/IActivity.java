@@ -9,6 +9,7 @@ public interface IActivity {
 	public IPlayerNetwork getIPlayerNetwork();
 	public IHostNetwork getIHostNetwork();
 	public ITableStore getITableStore();
+	public IDPCSprite getHelpWebView();
 	public int getScreenOrientation();
 	public void performFacebookClick();
 }

@@ -358,6 +358,10 @@ public class ForegroundRenderer {
 			renderDialogWArrow();
 		}
 		
+		if (mFL.helpDialog.titleLabel.opacity!=0) {
+			renderHelpDialog();
+		}
+		
 		if (mFL.playerLoginDialog.guestTitleLabel.opacity!=0) {
 			renderPlayerLoginDialog();
 		}
@@ -496,11 +500,11 @@ public class ForegroundRenderer {
 	private void renderHome() {
 		int x=0;
 		int y=0;
-		if (mFL.homeUIAnimation.helpSprite.opacity!=0) {
-			x=(int) (mFL.homeUIAnimation.helpSprite.x-mFL.homeUIAnimation.helpSprite.radiusX);
-			y=(int) (mFL.homeUIAnimation.helpSprite.y-mFL.homeUIAnimation.helpSprite.radiusY);
+		if (mFL.homeUIAnimation.helpButton.opacity!=0) {
+			x=(int) (mFL.homeUIAnimation.helpButton.x-mFL.homeUIAnimation.helpButton.radiusX);
+			y=(int) (mFL.homeUIAnimation.helpButton.y-mFL.homeUIAnimation.helpButton.radiusY);
 			batch.draw(helpButtonTexture,x,y,
-					mFL.homeUIAnimation.helpSprite.radiusX*2,mFL.homeUIAnimation.helpSprite.radiusY*2,
+					mFL.homeUIAnimation.helpButton.radiusX*2,mFL.homeUIAnimation.helpButton.radiusY*2,
 					0,0,61,66,false,false);
 		}
 		if (mFL.homeUIAnimation.shopSprite.opacity!=0) {
@@ -654,6 +658,23 @@ public class ForegroundRenderer {
 		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 	}
 	
+	private void renderHelpDialog() {
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.playerLoginDialog.guestTitleLabel.opacity);
+        
+        if (mFL.helpDialog.titleLabel.texture==null) {
+        	mFL.helpDialog.titleLabel.loadTexture();
+        }
+		int x=(int) (mFL.helpDialog.titleLabel.x-mFL.helpDialog.titleLabel.radiusX);
+		int y=(int) (mFL.helpDialog.titleLabel.y-mFL.helpDialog.titleLabel.radiusY);
+		batch.draw(mFL.helpDialog.titleLabel.texture,x,y,
+				0,0,mFL.helpDialog.titleLabel.radiusX*2,
+				mFL.helpDialog.titleLabel.radiusY*2);
+		
+		batch.setColor(alphaShader);
+	}
+	
 	private void renderPlayerLoginDialog() {
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
@@ -740,6 +761,8 @@ public class ForegroundRenderer {
 		batch.draw(mFL.playerLoginDialog.facebookButton.getLabel().texture,x,y,
 				0,0,mFL.playerLoginDialog.facebookButton.getLabel().radiusX*2,
 				mFL.playerLoginDialog.facebookButton.getLabel().radiusY*2);
+		
+		batch.setColor(alphaShader);
 
 	}
 
