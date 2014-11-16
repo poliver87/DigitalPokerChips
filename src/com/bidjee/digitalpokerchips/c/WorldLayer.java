@@ -92,11 +92,11 @@ public class WorldLayer implements Screen {
 	public void setPositions(int worldWidth,int worldHeight) {
 		backgroundSprite.setPosition(worldWidth*0.5f,worldHeight*0.5f);
 		camPosHome.set(worldWidth*0.5f,worldHeight*0.5f,0.25f);
-		camPosPlayer.set(worldWidth*0.5f,worldHeight*0.3f,2.7f);
-		camPosTable.set(worldWidth*0.5f,worldHeight*0.49f,1.4f);
+		camPosPlayer.set(worldWidth*0.5f,worldHeight*0.42f,2.7f);
+		camPosTable.set(worldWidth*0.5f,worldHeight*0.62f,1.4f);
 		thisPlayer.setPositions(worldWidth,worldHeight);
 		table.setPositions(worldWidth,worldHeight);
-		homeDeviceAnimation.setPositions(worldWidth, worldHeight);
+		homeDeviceAnimation.setPositions(worldWidth, worldHeight,camPosTable.getY(),camPosPlayer.getY());
 	}
 	
 	public void scalePositions(float scaleX,float scaleY) {
@@ -182,12 +182,16 @@ public class WorldLayer implements Screen {
 	private void controlLogic() {
 		if (cameraDestination==camPosHome) {
 			if (homeDeviceAnimation.loopedOnce&&!game.mFL.homeUIAnimation.running ) {
-				game.mFL.startHome();
+				game.mFL.startHomeUI();
 				homeDeviceAnimation.pause();
 			}
 			if (game.mFL.homeUIAnimation.done&&homeDeviceAnimation.paused) {
 				homeDeviceAnimation.resume();
 				homeDeviceAnimation.setDevicesTouchable(true);
+			}
+			if (!game.mFL.homeForegroundAnimation.running&&
+					worldRenderer.camera.testZoomLessThan(0.2f*(camPosPlayer.getZoomFactor()+camPosHome.getZoomFactor()))) {
+				game.mFL.homeForegroundAnimation.begin(50);
 			}
 		}
 		thisPlayer.controlLogic();
@@ -201,7 +205,7 @@ public class WorldLayer implements Screen {
 		cameraDestination=camPos;
 		worldRenderer.camera.sendTo(camPos);
 		if (cameraDestination==camPosHome) {
-			;
+			homeDeviceAnimation.fadeInShine();
 		} else if (cameraDestination==camPosPlayer) {
 			;
 		} else if (cameraDestination==camPosTable) {
@@ -214,10 +218,12 @@ public class WorldLayer implements Screen {
 	
 	private void cameraLeftPosition(CameraPosition camPos) {
 		if (camPos==camPosHome) {
-			game.mFL.stopHome();
+			game.mFL.stopHomeUI();
+			game.mFL.stopHomeForeground();
 			homeDeviceAnimation.pause();
 			homeDeviceAnimation.resetChips();
 			homeDeviceAnimation.setDevicesTouchable(false);
+			homeDeviceAnimation.fadeOutShine();
 		} else if (camPos==camPosPlayer) {
 			thisPlayer.notifyLeftPlayerPosition();
 		} else if (camPos==camPosTable) {

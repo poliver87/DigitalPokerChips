@@ -3,8 +3,6 @@ package com.bidjee.digitalpokerchips.v;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import javax.xml.ws.handler.MessageContext.Scope;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
@@ -61,8 +59,12 @@ public class WorldRenderer {
 	public int screenHeight;
 	 // Textures //
 	Texture backgroundTexture;
-	Texture tabletFrontTexture;
-	Texture tabletSideTexture;
+	Texture devHostTexture;
+	Texture devHostShineTexture;
+	Texture devPlayer1Texture;
+	Texture devPlayer1ShineTexture;
+	Texture devPlayer2Texture;
+	Texture devPlayer3Texture;
 	
 	Texture tableHighlightTexture;
 	Texture dealerButtonTexture;
@@ -158,8 +160,12 @@ public class WorldRenderer {
 			backgroundTexture=manager_.get("background.png",Texture.class);
 		}
 		
-		tabletFrontTexture=manager_.get("tablet_front.png", Texture.class);
-		tabletSideTexture=manager_.get("tablet_side.png", Texture.class);
+		devHostTexture=manager_.get("dev_host.png", Texture.class);
+		devHostShineTexture=manager_.get("dev_host_shine.png", Texture.class);
+		devPlayer1Texture=manager_.get("dev_player1.png", Texture.class);
+		devPlayer1ShineTexture=manager_.get("dev_player1_shine.png", Texture.class);
+		devPlayer2Texture=manager_.get("dev_player2.png", Texture.class);
+		devPlayer3Texture=manager_.get("dev_player3.png", Texture.class);
 		tableHighlightTexture=manager_.get("table_highlight.png",Texture.class);
 		dealerButtonTexture=manager_.get("dealer_chip.png",Texture.class);
 		shadowTexture=manager_.get("shadow.png",Texture.class);
@@ -338,13 +344,6 @@ public class WorldRenderer {
 	}
 
 	private void renderConnectionStuff() {
-		alphaShader=batch.getColor();
-		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mWL.thisPlayer.joinToken.opacity);
-		batch.draw(joinTokenTexture, mWL.thisPlayer.joinToken.x-mWL.thisPlayer.joinToken.radiusX,
-				mWL.thisPlayer.joinToken.y-mWL.thisPlayer.joinToken.radiusY,
-				mWL.thisPlayer.joinToken.radiusX*2,mWL.thisPlayer.joinToken.radiusY*2,
-				0,0,309,311,false,false);
-		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		
 		alphaShader=batch.getColor();
 		batch.setColor(ColorPool.colors[mWL.thisPlayer.color].r,ColorPool.colors[mWL.thisPlayer.color].g,
@@ -370,26 +369,36 @@ public class WorldRenderer {
 					mWL.backgroundSprite.radiusX*2,mWL.backgroundSprite.radiusY*2);
 		}
 		
-		batch.draw(tabletFrontTexture,
-				mWL.homeDeviceAnimation.hostSprite.x-mWL.homeDeviceAnimation.hostSprite.radiusX,
-				mWL.homeDeviceAnimation.hostSprite.y-mWL.homeDeviceAnimation.hostSprite.radiusY,
-				mWL.homeDeviceAnimation.hostSprite.radiusX*2,mWL.homeDeviceAnimation.hostSprite.radiusY*2,
-				0,0,1500,940, false,false);
-		batch.draw(tabletFrontTexture,
-				mWL.homeDeviceAnimation.p1Sprite.x-mWL.homeDeviceAnimation.p1Sprite.radiusX,
-				mWL.homeDeviceAnimation.p1Sprite.y-mWL.homeDeviceAnimation.p1Sprite.radiusY,
-				mWL.homeDeviceAnimation.p1Sprite.radiusX*2,mWL.homeDeviceAnimation.p1Sprite.radiusY*2,
-				0,0,1500,940, false,false);
-		batch.draw(tabletSideTexture,
+		float radiusXScaled=mWL.homeDeviceAnimation.hostSprite.radiusX*(1+mWL.homeDeviceAnimation.hostSprite.z*Chip.perspectiveGradient);
+		float radiusYScaled=mWL.homeDeviceAnimation.hostSprite.radiusY*(1+mWL.homeDeviceAnimation.hostSprite.z*Chip.perspectiveGradient);
+		float zyOffset=Chip.Z_Y_OFFSET_RATIO*mWL.homeDeviceAnimation.hostSprite.radiusY*mWL.homeDeviceAnimation.hostSprite.z*
+				(1+0.5f*Chip.perspectiveGradient*(mWL.homeDeviceAnimation.hostSprite.z-1));
+		zyOffset=0;
+		batch.draw(devHostTexture,
+				mWL.homeDeviceAnimation.hostSprite.x-radiusXScaled,
+				mWL.homeDeviceAnimation.hostSprite.y-radiusYScaled+zyOffset,
+				radiusXScaled*2,radiusYScaled*2,
+				0,0,1200,553,false,false);
+		radiusXScaled=mWL.homeDeviceAnimation.p1Sprite.radiusX*(1+mWL.homeDeviceAnimation.p1Sprite.z*Chip.perspectiveGradient);
+		radiusYScaled=mWL.homeDeviceAnimation.p1Sprite.radiusY*(1+mWL.homeDeviceAnimation.p1Sprite.z*Chip.perspectiveGradient);
+		zyOffset=Chip.Z_Y_OFFSET_RATIO*mWL.homeDeviceAnimation.p1Sprite.radiusY*mWL.homeDeviceAnimation.p1Sprite.z*
+				(1+0.5f*Chip.perspectiveGradient*(mWL.homeDeviceAnimation.p1Sprite.z-1));
+		zyOffset=0;
+		batch.draw(devPlayer1Texture,
+				mWL.homeDeviceAnimation.p1Sprite.x-radiusXScaled,
+				mWL.homeDeviceAnimation.p1Sprite.y-radiusYScaled,
+				radiusXScaled*2,radiusYScaled*2,
+				0,0,1248,516, false,false);
+		batch.draw(devPlayer2Texture,
 				mWL.homeDeviceAnimation.p2Sprite.x-mWL.homeDeviceAnimation.p2Sprite.radiusX,
 				mWL.homeDeviceAnimation.p2Sprite.y-mWL.homeDeviceAnimation.p2Sprite.radiusY,
 				mWL.homeDeviceAnimation.p2Sprite.radiusX*2,mWL.homeDeviceAnimation.p2Sprite.radiusY*2,
-				0,0,1026,1446, false,false);
-		batch.draw(tabletSideTexture,
+				0,0,140,160, false,false);
+		batch.draw(devPlayer3Texture,
 				mWL.homeDeviceAnimation.p3Sprite.x-mWL.homeDeviceAnimation.p3Sprite.radiusX,
 				mWL.homeDeviceAnimation.p3Sprite.y-mWL.homeDeviceAnimation.p3Sprite.radiusY,
 				mWL.homeDeviceAnimation.p3Sprite.radiusX*2,mWL.homeDeviceAnimation.p3Sprite.radiusY*2,
-				0,0,1026,1446,true,false);
+				0,0,140,160,false,false);
 		
 		batch.flush();
 		batch.setColor(alphaShader.r,alphaShader.g,
@@ -420,10 +429,15 @@ public class WorldRenderer {
 			}
 			
 			if (ScissorStack.pushScissors(scissors)) {
+				radiusXScaled=mWL.homeDeviceAnimation.chip1Sprite.radiusX*(1+mWL.homeDeviceAnimation.chip1Sprite.z*Chip.perspectiveGradient);
+				radiusYScaled=mWL.homeDeviceAnimation.chip1Sprite.radiusY*(1+mWL.homeDeviceAnimation.chip1Sprite.z*Chip.perspectiveGradient);
+				zyOffset=Chip.Z_Y_OFFSET_RATIO*mWL.homeDeviceAnimation.chip1Sprite.radiusY*mWL.homeDeviceAnimation.chip1Sprite.z*
+						(1+0.5f*Chip.perspectiveGradient*(mWL.homeDeviceAnimation.chip1Sprite.z-1));
+				zyOffset=0;
 				batch.draw(chipTextures[0],
-						mWL.homeDeviceAnimation.chip1Sprite.x-mWL.homeDeviceAnimation.chip1Sprite.radiusX,
-						mWL.homeDeviceAnimation.chip1Sprite.y-mWL.homeDeviceAnimation.chip1Sprite.radiusY,
-						mWL.homeDeviceAnimation.chip1Sprite.radiusX*2,mWL.homeDeviceAnimation.chip1Sprite.radiusY*2,
+						mWL.homeDeviceAnimation.chip1Sprite.x-radiusXScaled,
+						mWL.homeDeviceAnimation.chip1Sprite.y-radiusYScaled,
+						radiusXScaled*2,radiusYScaled*2,
 						0,0,256,chip_img_height,false,false);
 				batch.draw(chipTextures[0],
 						mWL.homeDeviceAnimation.chip2Sprite.x-mWL.homeDeviceAnimation.chip2Sprite.radiusX,
@@ -439,7 +453,28 @@ public class WorldRenderer {
 				batch.flush();
 				ScissorStack.popScissors();
 			}
+			
 		}
+		
+		if (mWL.homeDeviceAnimation.hostShineSprite.opacity!=0) {
+			batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mWL.homeDeviceAnimation.hostShineSprite.opacity);
+			batch.draw(devHostShineTexture,
+					mWL.homeDeviceAnimation.hostShineSprite.x-mWL.homeDeviceAnimation.hostShineSprite.radiusX,
+					mWL.homeDeviceAnimation.hostShineSprite.y-mWL.homeDeviceAnimation.hostShineSprite.radiusY,
+					mWL.homeDeviceAnimation.hostShineSprite.radiusX*2,mWL.homeDeviceAnimation.hostShineSprite.radiusY*2,
+					0,0,1200,553, false,false);
+		}
+		if (mWL.homeDeviceAnimation.p1ShineSprite.opacity!=0) {
+			batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mWL.homeDeviceAnimation.p1ShineSprite.opacity);
+			batch.draw(devPlayer1ShineTexture,
+					mWL.homeDeviceAnimation.p1ShineSprite.x-mWL.homeDeviceAnimation.p1ShineSprite.radiusX,
+					mWL.homeDeviceAnimation.p1ShineSprite.y-mWL.homeDeviceAnimation.p1ShineSprite.radiusY,
+					mWL.homeDeviceAnimation.p1ShineSprite.radiusX*2,mWL.homeDeviceAnimation.p1ShineSprite.radiusY*2,
+					0,0,1248,516, false,false);
+		}
+		
 		batch.setColor(alphaShader.r,alphaShader.g,
         		alphaShader.b,1);
 		

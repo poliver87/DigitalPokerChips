@@ -20,6 +20,7 @@ public class ForegroundInput implements InputProcessor {
 	public static final String TOUCH_LEAVE_TABLE = "TOUCH_LEAVE_TABLE";
 	public static final String TOUCH_HELP_DIALOG = "TOUCH_HELP_DIALOG";
 	public static final String TOUCH_PLAYER_LOGIN = "TOUCH_PLAYER_LOGIN";
+	public static final String TOUCH_PLAYER_DASHBOARD = "TOUCH_PLAYER_DASHBOARD";
 	public static final String TOUCH_DESTROY_TABLE = "TOUCH_DESTROY_TABLE";
 	public static final String TOUCH_BOOT_DIALOG = "TOUCH_BOOT_DIALOG";
 	public static final String TOUCH_LOAD_DIALOG = "TOUCH_LOAD_DIALOG";
@@ -137,6 +138,10 @@ public class ForegroundInput implements InputProcessor {
 			if (getLastTouchFocus().equals(TOUCH_TUTORIAL_TABLE_NAME)) {
 				handled_=true;
 			} else if (getLastTouchFocus().equals(TOUCH_HOME)) {
+				if (mFL.homeUIAnimation.logoSprite.pointContained(touchX, touchY)) {
+					handled_=true;
+					mFL.homeUIAnimation.logoSprite.setIsTouched(true);
+				}
 				if (mFL.homeUIAnimation.helpButton.pointContained(touchX, touchY)) {
 					handled_=true;
 					mFL.homeUIAnimation.helpButton.setIsTouched(true);
@@ -144,6 +149,7 @@ public class ForegroundInput implements InputProcessor {
 				if (mFL.homeUIAnimation.hostButton.pointContained(touchX, touchY)) {
 					handled_=true;
 					mFL.homeUIAnimation.hostButton.setIsTouched(true);
+					mFL.game.mWL.homeDeviceAnimation.hostSprite.setIsTouched(true);
 				}
 				if (mFL.homeUIAnimation.joinButton.pointContained(touchX, touchY)) {
 					handled_=true;
@@ -204,24 +210,16 @@ public class ForegroundInput implements InputProcessor {
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_BUYIN)) {
 				handled_=true;
-				for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-					if (mFL.buyinDialog.upArrows[i].pointContained(touchX, touchY)) {
-						mFL.buyinDialog.upArrows[i].setIsTouched(true);
-					}
-					if (mFL.buyinDialog.downArrows[i].pointContained(touchX, touchY)) {
-						mFL.buyinDialog.downArrows[i].setIsTouched(true);
-					}
-				}
-				if (mFL.buyinDialog.okButton.getTouchable()&&
-						mFL.buyinDialog.okButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.okButton.setIsTouched(true);
-				} else if (mFL.buyinDialog.cancelButton.getTouchable()&&
-						mFL.buyinDialog.cancelButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.cancelButton.setIsTouched(true);
+				if (mFL.buyinDialog.closeButton.getTouchable()&&
+						mFL.buyinDialog.closeButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.closeButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
 				handled_=true;
-				if (mFL.playerLoginDialog.nameField.pointContained(touchX, touchY)) {
+				if (mFL.playerLoginDialog.closeButton.getTouchable()&&
+						mFL.playerLoginDialog.closeButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.closeButton.setIsTouched(true);
+				} else if (mFL.playerLoginDialog.nameField.pointContained(touchX, touchY)) {
 					mFL.playerLoginDialog.setFieldFocus(mFL.playerLoginDialog.nameField);
 				} else if (mFL.playerLoginDialog.guestOKButton.getTouchable()&&
 						mFL.playerLoginDialog.guestOKButton.pointContained(touchX, touchY)) {
@@ -229,6 +227,12 @@ public class ForegroundInput implements InputProcessor {
 				} else if (mFL.playerLoginDialog.facebookButton.getTouchable()&&
 						mFL.playerLoginDialog.facebookButton.pointContained(touchX, touchY)) {
 					mFL.playerLoginDialog.facebookButton.setIsTouched(true);
+				}
+			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_DASHBOARD)) {
+				handled_=true;
+				if (mFL.playerDashboard.backButton.getTouchable()&&
+						mFL.playerDashboard.backButton.pointContained(touchX, touchY)) {
+					mFL.playerDashboard.backButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				handled_=true;
@@ -278,11 +282,7 @@ public class ForegroundInput implements InputProcessor {
 					}
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER)) {
-				if (mFL.searchingAnimation.getTouchable()&&
-						mFL.searchingAnimation.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.searchingAnimation.setIsTouched(true);
-				} else if (mFL.tableStatusMenu.handle.getTouchable()&&
+				if (mFL.tableStatusMenu.handle.getTouchable()&&
 						mFL.tableStatusMenu.handle.pointContained(touchX, touchY)) {
 					handled_=true;
 					mFL.tableStatusMenu.handle.setIsTouched(true);
@@ -378,6 +378,11 @@ public class ForegroundInput implements InputProcessor {
 				mFL.homeUIAnimation.helpButton.setIsTouched(false);
 				mFL.game.mWL.helpSelected();
 			}
+			if (mFL.homeUIAnimation.logoSprite.getIsTouched()) {
+				handled_=true;
+				mFL.homeUIAnimation.logoSprite.setIsTouched(false);
+				mFL.homeUIAnimation.logoTapped();
+			}
 			if (mFL.homeUIAnimation.hostButton.getIsTouched()) {
 				handled_=true;
 				mFL.homeUIAnimation.hostButton.setIsTouched(false);
@@ -397,6 +402,21 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				mFL.playerLoginDialog.facebookButton.setIsTouched(false);
 				mFL.game.performFacebookClick();
+			}
+			if (mFL.playerLoginDialog.closeButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerLoginDialog.closeButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.playerLoginDone(false);
+			}
+			if (mFL.buyinDialog.closeButton.getIsTouched()) {
+				handled_=true;
+				mFL.buyinDialog.closeButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.buyinDialogDone(null);
+			}
+			if (mFL.playerDashboard.backButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerDashboard.backButton.setIsTouched(false);
+				mFL.game.mWL.navigateBack();
 			}
 			if (mFL.wifiButton.getIsTouched()) {
 				handled_=true;
@@ -430,28 +450,6 @@ public class ForegroundInput implements InputProcessor {
 						mFL.game.mWL.chipCase.valueUp(i);
 					}
 				}
-			}
-			for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-				if (mFL.buyinDialog.downArrows[i].getIsTouched()) {
-					handled_=true;
-					mFL.buyinDialog.downArrows[i].setIsTouched(false);
-					mFL.buyinDialog.amountDown(i);
-				}
-				if (mFL.buyinDialog.upArrows[i].getIsTouched()) {
-					handled_=true;
-					mFL.buyinDialog.upArrows[i].setIsTouched(false);
-					mFL.buyinDialog.amountUp(i);
-				}
-			}
-			if (mFL.buyinDialog.okButton.getIsTouched()) {
-				handled_=true;
-				mFL.buyinDialog.okButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.buyinDialogDone(mFL.buyinDialog.getStartBuild());
-			}
-			if (mFL.buyinDialog.cancelButton.getIsTouched()) {
-				handled_=true;
-				mFL.buyinDialog.cancelButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.buyinDialogDone(null);
 			}
 			if (mFL.manualConnectDialog.okButton.getIsTouched()) {
 				handled_=true;
@@ -528,11 +526,6 @@ public class ForegroundInput implements InputProcessor {
 				mFL.foldButton.setIsTouched(false);
 				mFL.game.mWL.thisPlayer.doFold();
 			}
-			if (mFL.searchingAnimation.getIsTouched()) {
-				handled_=true;
-				mFL.searchingAnimation.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.searchingAnimationClicked();
-			}
 			if (mFL.gotoGameButton.getIsTouched()) {
 				handled_=true;
 				mFL.gotoGameButton.setIsTouched(false);
@@ -579,6 +572,12 @@ public class ForegroundInput implements InputProcessor {
 					mFL.wifiButton.setIsTouched(false);
 				}
 			}
+			if (mFL.homeUIAnimation.logoSprite.getIsTouched()) {
+				handled_=true;
+				if (!mFL.homeUIAnimation.logoSprite.pointContained(touchX, touchY)) {
+					mFL.homeUIAnimation.logoSprite.setIsTouched(false);
+				}
+			}
 			if (mFL.homeUIAnimation.helpButton.getIsTouched()) {
 				handled_=true;
 				if (!mFL.homeUIAnimation.helpButton.pointContained(touchX, touchY)) {
@@ -586,13 +585,13 @@ public class ForegroundInput implements InputProcessor {
 				}
 			}
 			if (mFL.homeUIAnimation.hostButton.getIsTouched()) {
-				handled_=true;
+				handled_=false;
 				if (!mFL.homeUIAnimation.hostButton.pointContained(touchX, touchY)) {
 					mFL.homeUIAnimation.hostButton.setIsTouched(false);
 				}
 			}
 			if (mFL.homeUIAnimation.joinButton.getIsTouched()) {
-				handled_=true;
+				handled_=false;
 				if (!mFL.homeUIAnimation.joinButton.pointContained(touchX, touchY)) {
 					mFL.homeUIAnimation.joinButton.setIsTouched(false);
 				}
@@ -607,6 +606,24 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				if (!mFL.playerLoginDialog.facebookButton.pointContained(touchX, touchY)) {
 					mFL.playerLoginDialog.facebookButton.setIsTouched(false);
+				}
+			}
+			if (mFL.playerLoginDialog.closeButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.playerLoginDialog.closeButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.closeButton.setIsTouched(false);
+				}
+			}
+			if (mFL.buyinDialog.closeButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.buyinDialog.closeButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.closeButton.setIsTouched(false);
+				}
+			}
+			if (mFL.playerDashboard.backButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.playerDashboard.backButton.pointContained(touchX, touchY)) {
+					mFL.playerDashboard.backButton.setIsTouched(false);
 				}
 			}
 			if (mFL.enterNameDoneButton.getIsTouched()) {
@@ -645,34 +662,6 @@ public class ForegroundInput implements InputProcessor {
 							mFL.valueUpArrows[i].setIsTouched(false);
 						}
 					}
-				}
-			}
-			for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-				if (mFL.buyinDialog.downArrows[i].getIsTouched()) {
-					handled_=true;
-					if (!mFL.buyinDialog.downArrows[i].pointContained(touchX, touchY)) {
-						mFL.buyinDialog.downArrows[i].setIsTouched(false);
-					}
-				}
-			}
-			for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-				if (mFL.buyinDialog.downArrows[i].getIsTouched()) {
-					handled_=true;
-					if (!mFL.buyinDialog.upArrows[i].pointContained(touchX, touchY)) {
-						mFL.buyinDialog.upArrows[i].setIsTouched(false);
-					}
-				}
-			}
-			if (mFL.buyinDialog.okButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.buyinDialog.okButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.okButton.setIsTouched(false);
-				}
-			}
-			if (mFL.buyinDialog.cancelButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.buyinDialog.cancelButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.cancelButton.setIsTouched(false);
 				}
 			}
 			if (mFL.manualConnectDialog.okButton.getIsTouched()) {
@@ -760,12 +749,6 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				if (!mFL.tableStatusMenu.bellButton.pointContained(touchX, touchY)) {
 					mFL.tableStatusMenu.bellButton.setIsTouched(false);
-				}
-			}
-			if (mFL.searchingAnimation.getIsTouched()) {
-				handled_=true;
-				if (!mFL.searchingAnimation.pointContained(touchX, touchY)) {
-					mFL.searchingAnimation.setIsTouched(false);
 				}
 			}
 			if (mFL.foldButton.getIsTouched()) {

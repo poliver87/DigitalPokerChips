@@ -216,7 +216,7 @@ public class DPCGame extends Game {
 			checkTransitionQueue();
 		}
 		if (fps!=null) {
-			fps.log();
+			//fps.log();
 		}
 	}
 
@@ -280,21 +280,49 @@ public class DPCGame extends Game {
 			manager.load("background.png",Texture.class,tParam);
 		}
 		
+		
 		manager.load("black_hole.png",Texture.class,tParam);
 		manager.load("rectangle_rounded.png",Texture.class,tParam);
 		manager.load("black_circle.png",Texture.class,tParam);
 		manager.load("hand.png",Texture.class,tParam);
 		manager.load("table_button.png",Texture.class,tParam);
+		manager.load("base_login_popup.png",Texture.class,tParam);
+		manager.load("btn_close.png",Texture.class,tParam);
+		manager.load("btn_okay.png",Texture.class,tParam);
+		manager.load("btn_login_facebook.png",Texture.class,tParam);
 		
-		manager.load("tablet_front.png",Texture.class,tParam);
-		manager.load("tablet_side.png",Texture.class,tParam);
+		manager.load("envelope.png",Texture.class,tParam);
+		manager.load("buyin_frame.png",Texture.class,tParam);
+		manager.load("btn_plus.png",Texture.class,tParam);
+		manager.load("btn_minus.png",Texture.class,tParam);
+		manager.load("btn_okay_buyin.png",Texture.class,tParam);
+		manager.load("btn_cancel.png",Texture.class,tParam);
+		
+		manager.load("plant.png",Texture.class,tParam);
+		manager.load("lamp.png",Texture.class,tParam);
+		
+		manager.load("dev_host.png",Texture.class,tParam);
+		manager.load("dev_host_shine.png",Texture.class,tParam);
+		manager.load("dev_player1.png",Texture.class,tParam);
+		manager.load("dev_player1_shine.png",Texture.class,tParam);
+		manager.load("dev_player2.png",Texture.class,tParam);
+		manager.load("dev_player3.png",Texture.class,tParam);
 		manager.load("home_settings.png",Texture.class,tParam);
 		manager.load("home_help.png",Texture.class,tParam);
 		manager.load("home_shop.png",Texture.class,tParam);
 		manager.load("selection_orange.png",Texture.class,tParam);
+		manager.load("host_button.png",Texture.class,tParam);
+		manager.load("join_button.png",Texture.class,tParam);
 		
 		manager.load("ok_button.png",Texture.class,tParam);
 		manager.load("anon.jpeg",Texture.class,tParam);
+		
+		manager.load("dashboard.png",Texture.class,tParam);
+		manager.load("dashboard_id.png",Texture.class,tParam);
+		manager.load("dashboard_status.png",Texture.class,tParam);
+		manager.load("btn_back.png",Texture.class,tParam);
+		manager.load("searching.png",Texture.class,tParam);
+		manager.load("arrange.png",Texture.class,tParam);
 		
 		manager.load("cancel_button.png",Texture.class,tParam);
 		manager.load("table_highlight.png",Texture.class,tParam);
@@ -323,7 +351,6 @@ public class DPCGame extends Game {
 		manager.load("button_green.png",Texture.class,tParam);
 		manager.load("close_button.png",Texture.class,tParam);
 		manager.load("galaxy_frame.png",Texture.class,tParam);
-		manager.load("background_help.png",Texture.class,tParam);
 		manager.load("next_button.png",Texture.class,tParam);
 		manager.load("dialog_black_fill.png",Texture.class,tParam);
 		manager.load("dialog_black_corner.png",Texture.class,tParam);
@@ -331,6 +358,16 @@ public class DPCGame extends Game {
 		manager.load("ping.png",Texture.class,tParam);
 		manager.load("ping_hub.png",Texture.class,tParam);
 		manager.load("dpc_logo.png",Texture.class,tParam);
+		manager.load("dpc_logo_01.png",Texture.class,tParam);
+		manager.load("dpc_logo_02.png",Texture.class,tParam);
+		manager.load("dpc_logo_03.png",Texture.class,tParam);
+		manager.load("dpc_logo_04.png",Texture.class,tParam);
+		manager.load("dpc_logo_05.png",Texture.class,tParam);
+		manager.load("dpc_logo_06.png",Texture.class,tParam);
+		manager.load("dpc_logo_07.png",Texture.class,tParam);
+		manager.load("dpc_logo_08.png",Texture.class,tParam);
+		manager.load("dpc_logo_09.png",Texture.class,tParam);
+		manager.load("dpc_logo_10.png",Texture.class,tParam);
 		manager.load("button_blue.png",Texture.class,tParam);
 		manager.load("back.png",Texture.class,tParam);
 		manager.load("connection_blob.png",Texture.class,tParam);

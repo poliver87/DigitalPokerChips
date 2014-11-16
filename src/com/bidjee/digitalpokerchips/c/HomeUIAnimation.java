@@ -13,7 +13,6 @@ public class HomeUIAnimation {
 	public static final int STATE_LOGO = 2;
 	public static final int STATE_HOST_JOIN = 3;
 	public static final int STATE_CLEAR = 4;
-
 	
 	////////////////////State Variables ////////////////////
 	int animationState;
@@ -28,7 +27,7 @@ public class HomeUIAnimation {
 	int selectionsHoldoff;
 	boolean selectionsDestSet;
 
-	//////////////////// World Scale & Layout ////////////////////
+	//////////////////// World Scale & Layout ////////////////////	
 	Vector2 posLogoStart=new Vector2();
 	Vector2 posLogoStop=new Vector2();
 	
@@ -42,16 +41,17 @@ public class HomeUIAnimation {
 	Vector2 posJoinButtonStart=new Vector2();
 	Vector2 posJoinButtonStop=new Vector2();	
 
+	//////////////////// Sprites ////////////////////	
 	public DPCSprite logoSprite=new DPCSprite();
 	public DPCSprite settingsSprite=new DPCSprite();
 	public DPCSprite shopSprite=new DPCSprite();
 	public Button helpButton;
-	
 	public Button joinButton;
 	public Button hostButton;
 	
 	public HomeUIAnimation() {
 		logoSprite.opacity=1;
+		logoSprite.setFrameAnimation(10,50,false);
 		helpButton=new Button(true,1,"");
 		hostButton=new Button(true,1,"Host a Game");
 		hostButton.getLabel().outline=true;
@@ -68,19 +68,20 @@ public class HomeUIAnimation {
 		shopSprite.setMoveFunc(DPCSprite.MOVE_EASE_IN,screenHeight*0.004f,5,0,0);
 		helpButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
 		helpButton.setMoveFunc(DPCSprite.MOVE_EASE_IN,screenHeight*0.004f,5,0,0);
-		hostButton.setDimensions((int)(screenHeight*0.15f*2.43f),(int)(screenHeight*0.15f),0.8f,0.8f);
+		hostButton.setDimensions((int)(screenHeight*0.12f*1.8f),(int)(screenHeight*0.12f),0.8f,0.8f);
 		hostButton.yLabelOffset=0.22f;
 		hostButton.setMoveFunc(DPCSprite.MOVE_EASE_IN,screenHeight*0.004f,5,0,0);
-		joinButton.setDimensions((int)(screenHeight*0.1f*2.43f),(int)(screenHeight*0.1f),0.8f,0.8f);
+		joinButton.setDimensions((int)(screenHeight*0.12f*1.8f),(int)(screenHeight*0.12f),0.8f,0.8f);
 		joinButton.yLabelOffset=-0.22f;
 		joinButton.setMoveFunc(DPCSprite.MOVE_EASE_IN,screenHeight*0.004f,5,0,0);
 	}
 	
 	public void setPositions(float screenWidth,float screenHeight) {
+		
 		posLogoStart.x=screenWidth*0.13f;
 		posLogoStart.y=screenHeight+logoSprite.radiusY*1.6f;
 		posLogoStop.x=posLogoStart.x;
-		posLogoStop.y=screenHeight*0.77f;
+		posLogoStop.y=screenHeight*0.75f;
 		logoSprite.setPosition(posLogoStart);
 		
 		posButtonsStart.x=posLogoStart.x;
@@ -98,14 +99,14 @@ public class HomeUIAnimation {
 		settingsSprite.setPosition(posButtonsStart);
 		shopSprite.setPosition(posButtonsStart);
 		
-		posHostButtonStart.x=screenWidth*0.5f+hostButton.radiusX*1.05f;
+		posHostButtonStart.x=screenWidth*0.5f;
 		posHostButtonStart.y=screenHeight+hostButton.radiusY*3f;
 		posHostButtonStop.x=posHostButtonStart.x;
-		posHostButtonStop.y=screenHeight*0.7f;
-		posJoinButtonStart.x=screenWidth*0.5f+joinButton.radiusX*1.05f;
+		posHostButtonStop.y=screenHeight*0.8f;
+		posJoinButtonStart.x=screenWidth*0.5f;
 		posJoinButtonStart.y=0-joinButton.radiusY*3f;
 		posJoinButtonStop.x=posJoinButtonStart.x;
-		posJoinButtonStop.y=screenHeight*0.18f;
+		posJoinButtonStop.y=screenHeight*0.3f;
 		
 		hostButton.setPosition(posHostButtonStart);
 		joinButton.setPosition(posJoinButtonStart);
@@ -188,6 +189,10 @@ public class HomeUIAnimation {
 		shopSprite.setDest(posButtonsStart);
 		hostButton.setDest(posHostButtonStart);
 		joinButton.setDest(posJoinButtonStart);
+	}
+
+	public void logoTapped() {
+		logoSprite.startFrameAnimation();
 	}
 	
 }

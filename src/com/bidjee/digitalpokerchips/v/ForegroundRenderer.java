@@ -25,6 +25,8 @@ public class ForegroundRenderer {
 	public static final Color greyColor=new Color(0.7f,0.7f,0.7f,1);
 	public static final Color darkBlueColor=new Color(0.0f,0.0f,0.5f,1);
 	
+	AssetManager textureManager;
+	
 	SpriteBatch batch;
 	final Matrix4 viewMatrix=new Matrix4();
 	Color alphaShader;
@@ -36,14 +38,21 @@ public class ForegroundRenderer {
 	
 	Texture blackTexture;
 	
-	Texture logoDPCTexture;
+	Texture plantTexture;
+	Texture lampTexture;
+	
+	Texture[] logoDPCTextures;
 	Texture helpButtonTexture;
 	Texture settingsButtonTexture;
 	Texture shopButtonTexture;
 	
 	Texture selectionTexture;
+	Texture hostButtonTexture;
+	Texture joinButtonTexture;
 	
 	Texture buttonBlueTexture;
+	Texture buttonOkTexture;
+	Texture buttonLoginFacebookTexture;
 	
 	Texture textFieldTexture;
 	
@@ -52,6 +61,18 @@ public class ForegroundRenderer {
 	Texture backTexture;
 	
 	Texture cursorTexture;
+	
+	Texture envelopeTexture;
+	Texture buyinFrameTexture;
+	Texture buttonPlusTexture;
+	Texture buttonMinusTexture;
+	Texture buttonOkayTextureBuyin;
+	Texture buttonCancelTextureBuyin;
+	
+	Texture playerDashboardTexture;
+	Texture dashboardIdTexture;
+	Texture dashboardStatusTexture;
+	Texture backButtonTexture;
 	
 	TextureRegion blackRegion;
 	TextureRegion blackHoleRegion;
@@ -71,13 +92,9 @@ public class ForegroundRenderer {
 	
 	Texture closeButtonTexture;
 	Texture deviceFrameTexture;
-	Texture backgroundHelpTexture;
 	Texture nextButtonTexture;
 	
 	TextureRegion[] blackDialogRegions=new TextureRegion[9];
-	
-	Texture pingTexture;
-	Texture pingHubTexture;
 	
 	Texture buttonRedTexture;
 
@@ -97,10 +114,13 @@ public class ForegroundRenderer {
 	
 	Texture profilePicTexture;
 	
+	Texture dialogTexture;
+	
 	public ForegroundRenderer(ForegroundLayer mFL) {
 		this.mFL=mFL;
 		batch=new SpriteBatch(200);
 		chipTextures=new Texture[ChipCase.CHIP_TYPES*Chip.CHIP_ROTATION_N];
+		logoDPCTextures=new Texture[10];
 	}
 	
 	public void resize(int width,int height) {
@@ -118,54 +138,81 @@ public class ForegroundRenderer {
 		mFL=null;
 	}
 	
-	public void loadTextures(AssetManager manager_) {
+	public void loadTextures(AssetManager manager) {
 		Gdx.app.log("DPCLifecycle", "ForegroundRenderer - loadTextures()");
-		logoDPCTexture=manager_.get("dpc_logo.png",Texture.class);
-		shopButtonTexture=manager_.get("home_shop.png",Texture.class);
-		settingsButtonTexture=manager_.get("home_settings.png",Texture.class);
-		helpButtonTexture=manager_.get("home_help.png",Texture.class);
-		selectionTexture=manager_.get("selection_orange.png",Texture.class);
+		this.textureManager=manager;
+		plantTexture=manager.get("plant.png",Texture.class);
+		lampTexture=manager.get("lamp.png",Texture.class);
+		logoDPCTextures[0]=manager.get("dpc_logo_01.png",Texture.class);
+		logoDPCTextures[1]=manager.get("dpc_logo_02.png",Texture.class);
+		logoDPCTextures[2]=manager.get("dpc_logo_03.png",Texture.class);
+		logoDPCTextures[3]=manager.get("dpc_logo_04.png",Texture.class);
+		logoDPCTextures[4]=manager.get("dpc_logo_05.png",Texture.class);
+		logoDPCTextures[5]=manager.get("dpc_logo_06.png",Texture.class);
+		logoDPCTextures[6]=manager.get("dpc_logo_07.png",Texture.class);
+		logoDPCTextures[7]=manager.get("dpc_logo_08.png",Texture.class);
+		logoDPCTextures[8]=manager.get("dpc_logo_09.png",Texture.class);
+		logoDPCTextures[9]=manager.get("dpc_logo_10.png",Texture.class);
+		shopButtonTexture=manager.get("home_shop.png",Texture.class);
+		settingsButtonTexture=manager.get("home_settings.png",Texture.class);
+		helpButtonTexture=manager.get("home_help.png",Texture.class);
+		selectionTexture=manager.get("selection_orange.png",Texture.class);
+		hostButtonTexture=manager.get("host_button.png",Texture.class);
+		joinButtonTexture=manager.get("join_button.png",Texture.class);
 		
-		textFieldTexture=manager_.get("text_field.png",Texture.class);
-		cursorTexture=manager_.get("cursor.png",Texture.class);
+		textFieldTexture=manager.get("text_field.png",Texture.class);
+		cursorTexture=manager.get("cursor.png",Texture.class);
 		
-		buttonBlueTexture=manager_.get("button_blue.png",Texture.class);
-		wifiRedTexture=manager_.get("wifi_red.png",Texture.class);
-		backTexture=manager_.get("back.png",Texture.class);
+		envelopeTexture=manager.get("envelope.png",Texture.class);
+		buyinFrameTexture=manager.get("buyin_frame.png",Texture.class);
+		buttonPlusTexture=manager.get("btn_plus.png",Texture.class);
+		buttonMinusTexture=manager.get("btn_minus.png",Texture.class);
+		buttonOkayTextureBuyin=manager.get("btn_okay_buyin.png",Texture.class);
+		buttonCancelTextureBuyin=manager.get("btn_cancel.png",Texture.class);
 		
-		blackTexture=manager_.get("black_hole.png",Texture.class);
+		playerDashboardTexture=manager.get("dashboard.png",Texture.class);
+		dashboardIdTexture=manager.get("dashboard_id.png",Texture.class);
+		dashboardStatusTexture=manager.get("dashboard_status.png",Texture.class);
+		backButtonTexture=manager.get("btn_back.png",Texture.class);
+		
+		buttonBlueTexture=manager.get("button_blue.png",Texture.class);
+		buttonOkTexture=manager.get("btn_okay.png",Texture.class);
+		buttonLoginFacebookTexture=manager.get("btn_login_facebook.png",Texture.class);
+		wifiRedTexture=manager.get("wifi_red.png",Texture.class);
+		backTexture=manager.get("back.png",Texture.class);
+		
+		blackTexture=manager.get("black_hole.png",Texture.class);
 		blackHoleRegion=new TextureRegion(blackTexture,0,0,463,243);
 		blackRegion=new TextureRegion(blackTexture,1,1,2,2);
-		Texture blackRectangleRoundedTexture_=manager_.get("rectangle_rounded.png",Texture.class);
+		Texture blackRectangleRoundedTexture_=manager.get("rectangle_rounded.png",Texture.class);
 		blackRectangleRoundedRegion=new TextureRegion(blackRectangleRoundedTexture_,0,0,747,246);
-		Texture blackCircleTexture_=manager_.get("black_circle.png",Texture.class);
+		Texture blackCircleTexture_=manager.get("black_circle.png",Texture.class);
 		blackCircleRegion=new TextureRegion(blackCircleTexture_,0,0,128,128);
 		
-		handTexture=manager_.get("hand.png",Texture.class);
+		handTexture=manager.get("hand.png",Texture.class);
 		
-		arrowTexture=manager_.get("arrow.png",Texture.class);
-		okButtonTexture=manager_.get("ok_button.png",Texture.class);
-		cancelButtonTexture=manager_.get("cancel_button.png",Texture.class);
+		arrowTexture=manager.get("arrow.png",Texture.class);
+		okButtonTexture=manager.get("ok_button.png",Texture.class);
+		cancelButtonTexture=manager.get("cancel_button.png",Texture.class);
 		
-		foldButtonTexture=manager_.get("fold_button.png",Texture.class);
+		foldButtonTexture=manager.get("fold_button.png",Texture.class);
 		
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("chip_0_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("chip_0_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("chip_0_2.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("chip_1_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("chip_1_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("chip_1_2.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("chip_2_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("chip_2_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("chip_2_2.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_0_0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_0_1.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_0_2.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_1_0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_1_1.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_1_2.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_2_0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_2_1.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_2_2.png",Texture.class);
 		
-		closeButtonTexture=manager_.get("close_button.png",Texture.class);
-		deviceFrameTexture=manager_.get("galaxy_frame.png",Texture.class);
-		backgroundHelpTexture=manager_.get("background_help.png",Texture.class);
-		nextButtonTexture=manager_.get("next_button.png",Texture.class);
+		closeButtonTexture=manager.get("btn_close.png",Texture.class);
+		deviceFrameTexture=manager.get("galaxy_frame.png",Texture.class);
+		nextButtonTexture=manager.get("next_button.png",Texture.class);
 		
-		Texture dialogBlackFillTexture=manager_.get("dialog_black_fill.png",Texture.class);
-		Texture dialogBlackCornerTexture=manager_.get("dialog_black_corner.png",Texture.class);
+		Texture dialogBlackFillTexture=manager.get("dialog_black_fill.png",Texture.class);
+		Texture dialogBlackCornerTexture=manager.get("dialog_black_corner.png",Texture.class);
 		TextureRegion dialogBlackFillRegion=new TextureRegion(dialogBlackFillTexture,0,0,16,16);
 		
 		blackDialogRegions[0]=new TextureRegion(dialogBlackCornerTexture,200,200);
@@ -178,29 +225,29 @@ public class ForegroundRenderer {
 		blackDialogRegions[7]=dialogBlackFillRegion;
 		blackDialogRegions[8]=new TextureRegion(dialogBlackCornerTexture,200,200,-200,-200);
 		
-		tableButtonTexture=manager_.get("table_button.png",Texture.class);
+		tableButtonTexture=manager.get("table_button.png",Texture.class);
+
+		buttonRedTexture=manager.get("button_red.png",Texture.class);
 		
-		pingTexture=manager_.get("ping.png",Texture.class);
-		pingHubTexture=manager_.get("ping_hub.png",Texture.class);
-		buttonRedTexture=manager_.get("button_red.png",Texture.class);
+		arrowHanddrawnTexture=manager.get("arrow_handdrawn.png",Texture.class);
 		
-		arrowHanddrawnTexture=manager_.get("arrow_handdrawn.png",Texture.class);
+		buttonBellRed=manager.get("button_bell_red.png",Texture.class);
+		arrowPotTexture=manager.get("arrow_pot.png",Texture.class);
+		splitButtonTexture=manager.get("split_button.png",Texture.class);
 		
-		buttonBellRed=manager_.get("button_bell_red.png",Texture.class);
-		arrowPotTexture=manager_.get("arrow_pot.png",Texture.class);
-		splitButtonTexture=manager_.get("split_button.png",Texture.class);
+		saveSlotHighlightTexture=manager.get("connection_blob.png",Texture.class);
+		tableSlotTexture=manager.get("table_slot.png",Texture.class);
+		playGameTexture=manager.get("table_slot.png",Texture.class);
+		dialogWArrowTexture=manager.get("dialog_w_arrow.png",Texture.class);
 		
-		saveSlotHighlightTexture=manager_.get("connection_blob.png",Texture.class);
-		tableSlotTexture=manager_.get("table_slot.png",Texture.class);
-		playGameTexture=manager_.get("table_slot.png",Texture.class);
-		dialogWArrowTexture=manager_.get("dialog_w_arrow.png",Texture.class);
+		mFL.manualConnectDialog.ipQuads[0].texture=manager.get("speech_bubble_gold.png",Texture.class);
+		mFL.manualConnectDialog.ipQuads[1].texture=manager.get("speech_bubble_gold.png",Texture.class);
+		mFL.manualConnectDialog.ipQuads[2].texture=manager.get("speech_bubble_gold.png",Texture.class);
+		mFL.manualConnectDialog.ipQuads[3].texture=manager.get("speech_bubble_gold.png",Texture.class);
 		
-		mFL.manualConnectDialog.ipQuads[0].texture=manager_.get("speech_bubble_gold.png",Texture.class);
-		mFL.manualConnectDialog.ipQuads[1].texture=manager_.get("speech_bubble_gold.png",Texture.class);
-		mFL.manualConnectDialog.ipQuads[2].texture=manager_.get("speech_bubble_gold.png",Texture.class);
-		mFL.manualConnectDialog.ipQuads[3].texture=manager_.get("speech_bubble_gold.png",Texture.class);
+		profilePicTexture=manager.get("anon.jpeg",Texture.class);
 		
-		profilePicTexture=manager_.get("anon.jpeg",Texture.class);
+		dialogTexture=manager.get("base_login_popup.png",Texture.class);
 	}
 	
 	public void loadLabels() {
@@ -209,7 +256,6 @@ public class ForegroundRenderer {
 		mFL.enterName2Label.loadTexture(whiteColor,blackColor);
 		mFL.enterTableName1Label.loadTexture(whiteColor,blackColor);
 		mFL.enterTableName2Label.loadTexture(whiteColor,blackColor);
-		mFL.searchingLabel.loadTexture(greyColor,blackColor);
 		mFL.wifiLabel.loadTexture(greyColor,blackColor);
 		mFL.reconnect1Label.loadTexture(greyColor,blackColor);
 		mFL.reconnect2Label.loadTexture(greyColor,blackColor);
@@ -225,12 +271,6 @@ public class ForegroundRenderer {
 		mFL.bootDialog.bootButton.getLabel().loadTexture();
 		mFL.bootDialog.sitOutButton.getLabel().loadTexture();
 		mFL.waitNextHandLabel.loadTexture();
-		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-			mFL.buyinDialog.chipStacks[i].totalLabel.setText(Integer.toString(mFL.buyinDialog.chipStacks[i].value()));
-			mFL.buyinDialog.chipStacks[i].totalLabel.loadTexture(whiteColor,blackColor);
-		}
-		mFL.buyinDialog.instrLabel.loadTexture(whiteColor,blackColor);
-		mFL.buyinDialog.totalLabel.loadTexture(whiteColor,blackColor);
 		
 		if (!mFL.playerPrompt.getText().equals("")) {
 			mFL.playerPrompt.loadTexture();
@@ -241,12 +281,6 @@ public class ForegroundRenderer {
 		if (!mFL.winLabel.getText().equals("")) {
 			mFL.winLabel.loadTexture();
 		}
-		if (!mFL.buyinDialog.totalNumberLabel.getText().equals("")) {
-			mFL.buyinDialog.totalNumberLabel.loadTexture();
-		}
-		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-			mFL.buyinDialog.chipStacks[i].totalLabel.loadTexture();
-		}
 		if (!mFL.tableStatusMenu.tableName.getText().equals("")) {
 			mFL.tableStatusMenu.tableName.loadTexture();
 		}
@@ -254,7 +288,6 @@ public class ForegroundRenderer {
 			mFL.tableStatusMenu.playerList.get(i).name.loadTexture();
 			mFL.tableStatusMenu.playerList.get(i).amount.loadTexture();
 		}
-		// TODO marker for load labels
 	}
 	
 	public float yViewToWorld(float yView_) {return screenHeight-yView_;}
@@ -277,8 +310,6 @@ public class ForegroundRenderer {
         //}
         
         renderHome();
-        
-        renderSearching();
         
         renderPlayerPrompts();
         if (mFL.enterNameDoneButton.opacity!=0) {
@@ -345,14 +376,6 @@ public class ForegroundRenderer {
 			alphaShader=batch.getColor();
             batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
-		if (mFL.playerIDWindow.opacity!=0) {
-			alphaShader=batch.getColor();
-            batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mFL.playerIDWindow.opacity);
-			renderRectangleRounded(blackDialogRegions,(int)mFL.playerIDWindow.x,(int)mFL.playerIDWindow.y,
-					mFL.playerIDWindow.radiusX,mFL.playerIDWindow.radiusY);
-			alphaShader=batch.getColor();
-            batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
 		
 		if (mFL.dialogWArrowWindow.opacity!=0) {
 			renderDialogWArrow();
@@ -366,12 +389,12 @@ public class ForegroundRenderer {
 			renderPlayerLoginDialog();
 		}
 		
-		if (mFL.playerIDDialog.nameLabel.opacity!=0) {
-			renderPlayerIDDialog();
+		if (mFL.buyinDialog.closeButton.opacity!=0) {
+			renderBuyinDialog();
 		}
 		
-		if (mFL.buyinDialog.titleLabel.opacity!=0) {
-			renderBuyinDialog();
+		if (mFL.playerDashboard!=null) {
+			renderPlayerDashboard();
 		}
 		
 		if (mFL.manualConnectDialog.titleLabel.opacity!=0) {
@@ -444,16 +467,6 @@ public class ForegroundRenderer {
 					0,0,mFL.stateChangePrompt.radiusX*2,mFL.stateChangePrompt.radiusY*2,false,false);
 	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
-		if (mFL.searchingLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mFL.searchingLabel.opacity);
-			batch.draw(mFL.searchingLabel.texture,
-					mFL.searchingLabel.x-mFL.searchingLabel.radiusX,
-					mFL.searchingLabel.y-mFL.searchingLabel.radiusY,
-					mFL.searchingLabel.radiusX*2,mFL.searchingLabel.radiusY*2,
-					0,0,mFL.searchingLabel.radiusX*2,mFL.searchingLabel.radiusY*2,false,false);
-			 batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
 		if (mFL.reconnect1Label.opacity!=0) {
 			alphaShader=batch.getColor();
 	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mFL.reconnect1Label.opacity);
@@ -500,40 +513,62 @@ public class ForegroundRenderer {
 	private void renderHome() {
 		int x=0;
 		int y=0;
+		if (mFL.homeForegroundAnimation.treeSprite.opacity!=0) {
+			x=(int) (mFL.homeForegroundAnimation.treeSprite.x-mFL.homeForegroundAnimation.treeSprite.radiusX);
+			y=(int) (mFL.homeForegroundAnimation.treeSprite.y-mFL.homeForegroundAnimation.treeSprite.radiusY);
+			batch.draw(plantTexture,x,y,
+					mFL.homeForegroundAnimation.treeSprite.radiusX*2,mFL.homeForegroundAnimation.treeSprite.radiusY*2,
+					0,0,220,364,false,false);
+		}
+		if (mFL.homeForegroundAnimation.lightLeftSprite.opacity!=0) {
+			x=(int) (mFL.homeForegroundAnimation.lightLeftSprite.x-mFL.homeForegroundAnimation.lightLeftSprite.radiusX);
+			y=(int) (mFL.homeForegroundAnimation.lightLeftSprite.y-mFL.homeForegroundAnimation.lightLeftSprite.radiusY);
+			batch.draw(lampTexture,x,y,
+					mFL.homeForegroundAnimation.lightLeftSprite.radiusX*2,mFL.homeForegroundAnimation.lightLeftSprite.radiusY*2,
+					0,0,400,360,false,false);
+		}
+		if (mFL.homeForegroundAnimation.lightRightSprite.opacity!=0) {
+			x=(int) (mFL.homeForegroundAnimation.lightRightSprite.x-mFL.homeForegroundAnimation.lightRightSprite.radiusX);
+			y=(int) (mFL.homeForegroundAnimation.lightRightSprite.y-mFL.homeForegroundAnimation.lightRightSprite.radiusY);
+			batch.draw(lampTexture,x,y,
+					mFL.homeForegroundAnimation.lightRightSprite.radiusX*2,mFL.homeForegroundAnimation.lightRightSprite.radiusY*2,
+					0,0,400,360,false,false);
+		}
 		if (mFL.homeUIAnimation.helpButton.opacity!=0) {
 			x=(int) (mFL.homeUIAnimation.helpButton.x-mFL.homeUIAnimation.helpButton.radiusX);
 			y=(int) (mFL.homeUIAnimation.helpButton.y-mFL.homeUIAnimation.helpButton.radiusY);
 			batch.draw(helpButtonTexture,x,y,
 					mFL.homeUIAnimation.helpButton.radiusX*2,mFL.homeUIAnimation.helpButton.radiusY*2,
-					0,0,61,66,false,false);
+					0,0,81,81,false,false);
 		}
 		if (mFL.homeUIAnimation.shopSprite.opacity!=0) {
 			x=(int) (mFL.homeUIAnimation.shopSprite.x-mFL.homeUIAnimation.shopSprite.radiusX);
 			y=(int) (mFL.homeUIAnimation.shopSprite.y-mFL.homeUIAnimation.shopSprite.radiusY);
 			batch.draw(shopButtonTexture,x,y,
 					mFL.homeUIAnimation.shopSprite.radiusX*2,mFL.homeUIAnimation.shopSprite.radiusY*2,
-					0,0,92,86,false,false);
+					0,0,81,80,false,false);
 		}
 		if (mFL.homeUIAnimation.settingsSprite.opacity!=0) {
 			x=(int) (mFL.homeUIAnimation.settingsSprite.x-mFL.homeUIAnimation.settingsSprite.radiusX);
 			y=(int) (mFL.homeUIAnimation.settingsSprite.y-mFL.homeUIAnimation.settingsSprite.radiusY);
 			batch.draw(settingsButtonTexture,x,y,
 					mFL.homeUIAnimation.settingsSprite.radiusX*2,mFL.homeUIAnimation.settingsSprite.radiusY*2,
-					0,0,76,73,false,false);
+					0,0,81,81,false,false);
 		}
 		if (mFL.homeUIAnimation.logoSprite.opacity!=0) {
 			x=(int) (mFL.homeUIAnimation.logoSprite.x-mFL.homeUIAnimation.logoSprite.radiusX);
 			y=(int) (mFL.homeUIAnimation.logoSprite.y-mFL.homeUIAnimation.logoSprite.radiusY);
-			batch.draw(logoDPCTexture,x,y,
+			batch.draw(logoDPCTextures[mFL.homeUIAnimation.logoSprite.frame],x,y,
 					mFL.homeUIAnimation.logoSprite.radiusX*2,mFL.homeUIAnimation.logoSprite.radiusY*2,
-					0,0,631,649,false,false);
+					0,0,615,631,false,false);
 		}
 		if (mFL.homeUIAnimation.hostButton.opacity!=0) {
 			x=(int) (mFL.homeUIAnimation.hostButton.x-mFL.homeUIAnimation.hostButton.radiusX);
 			y=(int) (mFL.homeUIAnimation.hostButton.y-mFL.homeUIAnimation.hostButton.radiusY);
-			batch.draw(selectionTexture,x,y,
+			batch.draw(hostButtonTexture,x,y,
 					mFL.homeUIAnimation.hostButton.radiusX*2,mFL.homeUIAnimation.hostButton.radiusY*2,
-					0,0,770,317,false,false);
+					0,0,250,136,false,false);
+			/*
 			if (mFL.homeUIAnimation.hostButton.getLabel().texture==null) {
 				mFL.homeUIAnimation.hostButton.getLabel().loadTexture(whiteColor,darkBlueColor);
 			}
@@ -542,13 +577,15 @@ public class ForegroundRenderer {
 			batch.draw(mFL.homeUIAnimation.hostButton.getLabel().texture,x,y,
 					0,0,mFL.homeUIAnimation.hostButton.getLabel().radiusX*2,
 					mFL.homeUIAnimation.hostButton.getLabel().radiusY*2);
+					*/
 		}
 		if (mFL.homeUIAnimation.joinButton.opacity!=0) {
 			x=(int) (mFL.homeUIAnimation.joinButton.x-mFL.homeUIAnimation.joinButton.radiusX);
 			y=(int) (mFL.homeUIAnimation.joinButton.y-mFL.homeUIAnimation.joinButton.radiusY);
-			batch.draw(selectionTexture,x,y,
+			batch.draw(joinButtonTexture,x,y,
 					mFL.homeUIAnimation.joinButton.radiusX*2,mFL.homeUIAnimation.joinButton.radiusY*2,
-					0,0,770,317,false,true);
+					0,0,250,136,false,false);
+			/*
 			if (mFL.homeUIAnimation.joinButton.getLabel().texture==null) {
 				mFL.homeUIAnimation.joinButton.getLabel().loadTexture(whiteColor,darkBlueColor);
 			}
@@ -557,26 +594,7 @@ public class ForegroundRenderer {
 			batch.draw(mFL.homeUIAnimation.joinButton.getLabel().texture,x,y,
 					0,0,mFL.homeUIAnimation.joinButton.getLabel().radiusX*2,
 					mFL.homeUIAnimation.joinButton.getLabel().radiusY*2);
-		}
-	}
-	
-	private void renderSearching() {
-		if (mFL.searchingAnimation.opacity!=0) {
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.searchingAnimation.opacity);
-			batch.draw(pingTexture,
-					mFL.searchingAnimation.ping.x-mFL.searchingAnimation.ping.radiusX,
-					mFL.searchingAnimation.ping.y,
-					mFL.searchingAnimation.ping.radiusX*2,mFL.searchingAnimation.ping.radiusY*2,
-					0,0,640,320,false,false);
-			batch.draw(pingHubTexture,
-					mFL.searchingAnimation.x-mFL.searchingAnimation.radiusX,
-					mFL.searchingAnimation.y-mFL.searchingAnimation.radiusY,
-					mFL.searchingAnimation.radiusX*2,mFL.searchingAnimation.radiusY*2,
-					0,0,100,100,false,false);
-			
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
+					*/
 		}
 	}
 	
@@ -679,29 +697,33 @@ public class ForegroundRenderer {
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
         		alphaShader.b,mFL.playerLoginDialog.guestTitleLabel.opacity);
+        
+        batch.draw(dialogTexture,
+				mFL.playerLoginDialog.x-mFL.playerLoginDialog.radiusX,
+				mFL.playerLoginDialog.y-mFL.playerLoginDialog.radiusY,
+				mFL.playerLoginDialog.radiusX*2,mFL.playerLoginDialog.radiusY*2,
+				0,0,582,396,false,false);
+        batch.draw(closeButtonTexture,
+				mFL.playerLoginDialog.closeButton.x-mFL.playerLoginDialog.closeButton.radiusX,
+				mFL.playerLoginDialog.closeButton.y-mFL.playerLoginDialog.closeButton.radiusY,
+				mFL.playerLoginDialog.closeButton.radiusX*2,mFL.playerLoginDialog.closeButton.radiusY*2,
+				0,0,54,54,false,false);
+        // title and text field left anchored
         if (mFL.playerLoginDialog.guestTitleLabel.texture==null) {
-        	mFL.playerLoginDialog.guestTitleLabel.loadTexture();
+        	mFL.playerLoginDialog.guestTitleLabel.loadTexture(new Color(0.88f,0.62f,0.09f,1),new Color(0,0,0.3f,1));
         }
 		int x=(int) (mFL.playerLoginDialog.guestTitleLabel.x-mFL.playerLoginDialog.guestTitleLabel.radiusX);
 		int y=(int) (mFL.playerLoginDialog.guestTitleLabel.y-mFL.playerLoginDialog.guestTitleLabel.radiusY);
 		batch.draw(mFL.playerLoginDialog.guestTitleLabel.texture,x,y,
 				0,0,mFL.playerLoginDialog.guestTitleLabel.radiusX*2,
 				mFL.playerLoginDialog.guestTitleLabel.radiusY*2);
-		if (mFL.playerLoginDialog.nameLabel.texture==null) {
-        	mFL.playerLoginDialog.nameLabel.loadTexture();
-        }
-		x=(int) (mFL.playerLoginDialog.nameLabel.x-mFL.playerLoginDialog.nameLabel.radiusX);
-		y=(int) (mFL.playerLoginDialog.nameLabel.y-mFL.playerLoginDialog.nameLabel.radiusY);
-		batch.draw(mFL.playerLoginDialog.nameLabel.texture,x,y,
-				0,0,mFL.playerLoginDialog.nameLabel.radiusX*2,
-				mFL.playerLoginDialog.nameLabel.radiusY*2);
 		
 		x=(int) (mFL.playerLoginDialog.nameField.x-mFL.playerLoginDialog.nameField.radiusX);
 		y=(int) (mFL.playerLoginDialog.nameField.y-mFL.playerLoginDialog.nameField.radiusY);
 		batch.draw(textFieldTexture,x,y,
 				mFL.playerLoginDialog.nameField.radiusX*2,
 				mFL.playerLoginDialog.nameField.radiusY*2,
-				0,0,512,64,false,false);
+				0,0,366,54,false,false);
 		if (mFL.playerLoginDialog.nameField.label.texture!=null) {
 			x=(int) (mFL.playerLoginDialog.nameField.label.x-mFL.playerLoginDialog.nameField.label.radiusX);
 			y=(int) (mFL.playerLoginDialog.nameField.label.y-mFL.playerLoginDialog.nameField.label.radiusY);
@@ -724,12 +746,13 @@ public class ForegroundRenderer {
 		
 		x=(int) (mFL.playerLoginDialog.guestOKButton.x-mFL.playerLoginDialog.guestOKButton.radiusX);
 		y=(int) (mFL.playerLoginDialog.guestOKButton.y-mFL.playerLoginDialog.guestOKButton.radiusY);
-		batch.draw(buttonBlueTexture,x,y,
+		batch.draw(buttonOkTexture,x,y,
 				mFL.playerLoginDialog.guestOKButton.radiusX*2,
 				mFL.playerLoginDialog.guestOKButton.radiusY*2,
-				0,0,600,126,false,false);
+				0,0,126,54,false,false);
+		
 		if (mFL.playerLoginDialog.guestOKButton.getLabel().texture==null) {
-        	mFL.playerLoginDialog.guestOKButton.getLabel().loadTexture();
+        	mFL.playerLoginDialog.guestOKButton.getLabel().loadTexture(whiteColor,new Color(0,0.4f,0,1));
         }
 		x=(int) (mFL.playerLoginDialog.guestOKButton.getLabel().x-mFL.playerLoginDialog.guestOKButton.getLabel().radiusX);
 		y=(int) (mFL.playerLoginDialog.guestOKButton.getLabel().y-mFL.playerLoginDialog.guestOKButton.getLabel().radiusY);
@@ -739,7 +762,7 @@ public class ForegroundRenderer {
 		
 		
 		if (mFL.playerLoginDialog.orLabel.texture==null) {
-        	mFL.playerLoginDialog.orLabel.loadTexture();
+        	mFL.playerLoginDialog.orLabel.loadTexture(new Color(0.88f,0.62f,0.09f,1),new Color(0,0,0.3f,1));
         }
 		x=(int) (mFL.playerLoginDialog.orLabel.x-mFL.playerLoginDialog.orLabel.radiusX);
 		y=(int) (mFL.playerLoginDialog.orLabel.y-mFL.playerLoginDialog.orLabel.radiusY);
@@ -749,12 +772,12 @@ public class ForegroundRenderer {
 		
 		x=(int) (mFL.playerLoginDialog.facebookButton.x-mFL.playerLoginDialog.facebookButton.radiusX);
 		y=(int) (mFL.playerLoginDialog.facebookButton.y-mFL.playerLoginDialog.facebookButton.radiusY);
-		batch.draw(buttonBlueTexture,x,y,
+		batch.draw(buttonLoginFacebookTexture,x,y,
 				mFL.playerLoginDialog.facebookButton.radiusX*2,
 				mFL.playerLoginDialog.facebookButton.radiusY*2,
-				0,0,600,126,false,false);
+				0,0,502,54,false,false);
 		if (mFL.playerLoginDialog.facebookButton.getLabel().texture==null) {
-        	mFL.playerLoginDialog.facebookButton.getLabel().loadTexture();
+        	mFL.playerLoginDialog.facebookButton.getLabel().loadTexture(whiteColor,new Color(0,0,0.4f,1));
         }
 		x=(int) (mFL.playerLoginDialog.facebookButton.getLabel().x-mFL.playerLoginDialog.facebookButton.getLabel().radiusX);
 		y=(int) (mFL.playerLoginDialog.facebookButton.getLabel().y-mFL.playerLoginDialog.facebookButton.getLabel().radiusY);
@@ -765,75 +788,80 @@ public class ForegroundRenderer {
 		batch.setColor(alphaShader);
 
 	}
-
-	private void renderPlayerIDDialog() {
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,mFL.playerIDDialog.nameLabel.opacity);
-		int x=(int) (mFL.playerIDDialog.nameLabel.x-mFL.playerIDDialog.nameLabel.radiusX);
-		int y=(int) (mFL.playerIDDialog.nameLabel.y-mFL.playerIDDialog.nameLabel.radiusY);
-		batch.draw(mFL.playerIDDialog.nameLabel.texture,x,y,
-				0,0,mFL.playerIDDialog.nameLabel.radiusX*2,
-				mFL.playerIDDialog.nameLabel.radiusY*2);
-		if (profilePicTexture!=null) {
-			x=(int) (mFL.playerIDDialog.profilePic.x-mFL.playerIDDialog.profilePic.radiusX);
-			y=(int) (mFL.playerIDDialog.profilePic.y-mFL.playerIDDialog.profilePic.radiusY);
-			batch.draw(profilePicTexture,x,y,
-					mFL.playerIDDialog.profilePic.radiusX*2,mFL.playerIDDialog.profilePic.radiusY*2);
-		}
-	}
 	
 	private void renderBuyinDialog() {
+        
+        batch.draw(dialogTexture,
+				mFL.buyinDialog.x-mFL.buyinDialog.radiusX,
+				mFL.buyinDialog.y-mFL.buyinDialog.radiusY,
+				mFL.buyinDialog.radiusX*2,mFL.buyinDialog.radiusY*2,
+				0,0,582,396,false,false);
+        batch.draw(envelopeTexture,
+				mFL.buyinDialog.envelope.x-mFL.buyinDialog.envelope.radiusX,
+				mFL.buyinDialog.envelope.y-mFL.buyinDialog.envelope.radiusY,
+				mFL.buyinDialog.envelope.radiusX*2,mFL.buyinDialog.envelope.radiusY*2,
+				0,0,110,70,false,false);
+	}
+
+	private void renderPlayerDashboard() {
+		batch.draw(playerDashboardTexture,mFL.playerDashboard.x-mFL.playerDashboard.radiusX,
+				mFL.playerDashboard.y-mFL.playerDashboard.radiusY,
+				mFL.playerDashboard.radiusX*2,mFL.playerDashboard.radiusY*2,
+				0,0,1142,110,false,false);
 		
-		if (mFL.buyinDialog.okButton.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.buyinDialog.okButton.opacity);
-	        
-	        batch.draw(mFL.buyinDialog.titleLabel.texture,mFL.buyinDialog.titleLabel.x-mFL.buyinDialog.titleLabel.radiusX,
-					mFL.buyinDialog.titleLabel.y-mFL.buyinDialog.titleLabel.radiusY,
-					mFL.buyinDialog.titleLabel.radiusX*2,mFL.buyinDialog.titleLabel.radiusY*2,0,0,
-					mFL.buyinDialog.titleLabel.radiusX*2,mFL.buyinDialog.titleLabel.radiusY*2,false,false);
-	        batch.draw(okButtonTexture,mFL.buyinDialog.okButton.x-mFL.buyinDialog.okButton.radiusX,
-					mFL.buyinDialog.okButton.y-mFL.buyinDialog.okButton.radiusY,
-					mFL.buyinDialog.okButton.radiusX*2,mFL.buyinDialog.okButton.radiusY*2,
-					0,0,214,214,false,false);
-			batch.draw(cancelButtonTexture,mFL.buyinDialog.cancelButton.x-mFL.buyinDialog.cancelButton.radiusX,
-					mFL.buyinDialog.cancelButton.y-mFL.buyinDialog.cancelButton.radiusY,
-					mFL.buyinDialog.cancelButton.radiusX*2,mFL.buyinDialog.cancelButton.radiusY*2,
-					0,0,300,300,false,false);
-	        
-			if (mFL.buyinDialog.instrLabel.opacity!=0) {
-				for (int chipIndex_=0;chipIndex_<mFL.buyinDialog.upArrows.length;chipIndex_++) {
-		        	renderChipStack(chipIndex_);
-	        		batch.draw(arrowTexture,
-	        				mFL.buyinDialog.upArrows[chipIndex_].x-mFL.buyinDialog.upArrows[chipIndex_].radiusX,
-	        				mFL.buyinDialog.upArrows[chipIndex_].y-mFL.buyinDialog.upArrows[chipIndex_].radiusY,
-	        				mFL.buyinDialog.upArrows[chipIndex_].radiusX*2,mFL.buyinDialog.upArrows[chipIndex_].radiusY*2,
-	        				0,0,128,128,false,false);
-	        		batch.draw(arrowTexture,
-	        				mFL.buyinDialog.downArrows[chipIndex_].x-mFL.buyinDialog.downArrows[chipIndex_].radiusX,
-	        				mFL.buyinDialog.downArrows[chipIndex_].y-mFL.buyinDialog.downArrows[chipIndex_].radiusY,
-	        				mFL.buyinDialog.downArrows[chipIndex_].radiusX*2,mFL.buyinDialog.downArrows[chipIndex_].radiusY*2,
-	        				0,0,128,128,false,true);
-	        		
-	        	}
-				batch.draw(mFL.buyinDialog.instrLabel.texture,mFL.buyinDialog.instrLabel.x-mFL.buyinDialog.instrLabel.radiusX,
-						mFL.buyinDialog.instrLabel.y-mFL.buyinDialog.instrLabel.radiusY,
-						mFL.buyinDialog.instrLabel.radiusX*2,mFL.buyinDialog.instrLabel.radiusY*2,0,0,
-						mFL.buyinDialog.instrLabel.radiusX*2,mFL.buyinDialog.instrLabel.radiusY*2,false,false);
-				batch.draw(mFL.buyinDialog.totalLabel.texture,mFL.buyinDialog.totalLabel.x-mFL.buyinDialog.totalLabel.radiusX,
-						mFL.buyinDialog.totalLabel.y-mFL.buyinDialog.totalLabel.radiusY,
-						mFL.buyinDialog.totalLabel.radiusX*2,mFL.buyinDialog.totalLabel.radiusY*2,0,0,
-						mFL.buyinDialog.totalLabel.radiusX*2,mFL.buyinDialog.totalLabel.radiusY*2,false,false);			
-				batch.draw(mFL.buyinDialog.totalNumberLabel.texture,mFL.buyinDialog.totalNumberLabel.x-mFL.buyinDialog.totalNumberLabel.radiusX,
-						mFL.buyinDialog.totalNumberLabel.y-mFL.buyinDialog.totalNumberLabel.radiusY,
-						mFL.buyinDialog.totalNumberLabel.radiusX*2,mFL.buyinDialog.totalNumberLabel.radiusY*2,0,0,
-						mFL.buyinDialog.totalNumberLabel.radiusX*2,mFL.buyinDialog.totalNumberLabel.radiusY*2,false,false);	
-			}
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		batch.draw(dashboardStatusTexture,mFL.playerDashboard.statusBackground.x-mFL.playerDashboard.statusBackground.radiusX,
+				mFL.playerDashboard.statusBackground.y-mFL.playerDashboard.statusBackground.radiusY,
+				mFL.playerDashboard.statusBackground.radiusX*2,mFL.playerDashboard.statusBackground.radiusY*2,
+				0,0,640,88,false,false);
+		if (mFL.playerDashboard.profilePic.texture!=null) {
+			profilePicTexture=mFL.playerDashboard.profilePic.texture;
 		}
+		int x=(int) (mFL.playerDashboard.profilePic.x-mFL.playerDashboard.profilePic.radiusX);
+		int y=(int) (mFL.playerDashboard.profilePic.y-mFL.playerDashboard.profilePic.radiusY);
+		batch.draw(profilePicTexture,x,y,
+				mFL.playerDashboard.profilePic.radiusX*2,mFL.playerDashboard.profilePic.radiusY*2);
+		batch.draw(dashboardIdTexture,mFL.playerDashboard.idBackground.x-mFL.playerDashboard.idBackground.radiusX,
+				mFL.playerDashboard.idBackground.y-mFL.playerDashboard.idBackground.radiusY,
+				mFL.playerDashboard.idBackground.radiusX*2,mFL.playerDashboard.idBackground.radiusY*2,
+				0,0,232,88,false,false);
+		if (mFL.playerDashboard.nameLabel.texture!=null) {
+			x=(int) (mFL.playerDashboard.nameLabel.x);
+			y=(int) (mFL.playerDashboard.nameLabel.y-mFL.playerDashboard.nameLabel.radiusY);
+			batch.draw(mFL.playerDashboard.nameLabel.texture,x,y,
+					0,0,mFL.playerDashboard.nameLabel.radiusX*2,
+					mFL.playerDashboard.nameLabel.radiusY*2);
+		}
+		if (mFL.playerDashboard.amountLabel.texture!=null) {
+			x=(int) (mFL.playerDashboard.amountLabel.x);
+			y=(int) (mFL.playerDashboard.amountLabel.y-mFL.playerDashboard.amountLabel.radiusY);
+			batch.draw(mFL.playerDashboard.amountLabel.texture,x,y,
+					0,0,mFL.playerDashboard.amountLabel.radiusX*2,
+					mFL.playerDashboard.amountLabel.radiusY*2);
+		}
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.playerDashboard.statusMessage.opacity);
+		if (!mFL.playerDashboard.statusIconTexture.equals("")) {
+			x=(int) (mFL.playerDashboard.statusIcon.x-mFL.playerDashboard.statusIcon.radiusX);
+			y=(int) (mFL.playerDashboard.statusIcon.y-mFL.playerDashboard.statusIcon.radiusY);
+			batch.draw(textureManager.get(mFL.playerDashboard.statusIconTexture,Texture.class),
+					mFL.playerDashboard.statusIcon.x-mFL.playerDashboard.statusIcon.radiusX,
+					mFL.playerDashboard.statusIcon.y-mFL.playerDashboard.statusIcon.radiusY,
+					mFL.playerDashboard.statusIcon.radiusX*2,mFL.playerDashboard.statusIcon.radiusY*2,
+					0,0,62,62,false,false);
+		}
+		if (mFL.playerDashboard.statusMessage.texture!=null) {
+			x=(int) (mFL.playerDashboard.statusMessage.x-mFL.playerDashboard.statusMessage.radiusX);
+			y=(int) (mFL.playerDashboard.statusMessage.y-mFL.playerDashboard.statusMessage.radiusY);
+			batch.draw(mFL.playerDashboard.statusMessage.texture,x,y,
+					0,0,mFL.playerDashboard.statusMessage.radiusX*2,
+					mFL.playerDashboard.statusMessage.radiusY*2);
+		}
+		batch.setColor(alphaShader);
+		batch.draw(backButtonTexture,mFL.playerDashboard.backButton.x-mFL.playerDashboard.backButton.radiusX,
+				mFL.playerDashboard.backButton.y-mFL.playerDashboard.backButton.radiusY,
+				mFL.playerDashboard.backButton.radiusX*2,mFL.playerDashboard.backButton.radiusY*2,
+				0,0,238,94,false,false);
 	}
 	
 	private void renderManualConnectDialog() {
@@ -1323,37 +1351,6 @@ public class ForegroundRenderer {
 		}
 	}
 	
-	private void renderChipStack(int chip_) {
-		float yStack_=mFL.buyinDialog.chipStacks[chip_].getY();
-		int radiusX0_=mFL.buyinDialog.chipStacks[chip_].radiusX;
-		int radiusY0_=mFL.buyinDialog.chipStacks[chip_].radiusY;
-		float perspectiveGradient_=Chip.perspectiveGradient;
-		float zyOffsetRatio_=Chip.Z_Y_OFFSET_RATIO;
-		float xStack_=mFL.buyinDialog.chipStacks[chip_].getX();
-		int numStack_=mFL.buyinDialog.chipStacks[chip_].renderSize();
-		ChipStack stack_=mFL.buyinDialog.chipStacks[chip_];
-		if (numStack_>0) {
-			float zyOffset_=0;
-			int N;
-			for (N=0;N<numStack_;N++) {
-				float radiusXChip_=radiusX0_*(1+N*perspectiveGradient_);
-				float radiusYChip_=radiusY0_*(1+N*perspectiveGradient_);
-				zyOffset_=zyOffsetRatio_*radiusY0_*N*(1+0.5f*perspectiveGradient_*(N-1));
-				batch.draw(chipTextures[chip_*Chip.CHIP_ROTATION_N+stack_.get(N).imgRotation],
-						xStack_-radiusXChip_,
-						yStack_-radiusYChip_+zyOffset_,
-						radiusXChip_*2,radiusYChip_*2,
-						0,0,256,252,false,false);
-			}
-			batch.draw(mFL.buyinDialog.chipStacks[chip_].totalLabel.texture,
-					mFL.buyinDialog.chipStacks[chip_].getX()-mFL.buyinDialog.chipStacks[chip_].totalLabel.radiusX,
-					mFL.buyinDialog.chipStacks[chip_].getTopY(mFL.buyinDialog.chipStacks[chip_].radiusY)-mFL.buyinDialog.chipStacks[chip_].totalLabel.radiusY,
-					mFL.buyinDialog.chipStacks[chip_].totalLabel.radiusX*2,mFL.buyinDialog.chipStacks[chip_].totalLabel.radiusY*2,
-					0,0,mFL.buyinDialog.chipStacks[chip_].totalLabel.radiusX*2,mFL.buyinDialog.chipStacks[chip_].totalLabel.radiusY*2,false,false);
-		}
-		
-	}
-	
 	private void renderHighlightDarkened(DPCSprite highlight_,TextureRegion highlightRegion_) {
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
@@ -1421,8 +1418,5 @@ public class ForegroundRenderer {
 		}
 	}
 
-	public void setProfilePicTexture(Texture tex) {
-		profilePicTexture=tex;
-	}
 	
 }

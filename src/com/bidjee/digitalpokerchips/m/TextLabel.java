@@ -36,7 +36,7 @@ public class TextLabel extends DPCSprite {
 		opacity=opacity_;
 		textSize=5;
 		fontFace=null;
-		bodyColor=greyColor;
+		bodyColor=whiteColor;
 		outlineColor=blackColor;
 	}
 	

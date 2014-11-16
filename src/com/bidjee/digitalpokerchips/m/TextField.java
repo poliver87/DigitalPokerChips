@@ -14,24 +14,20 @@ public class TextField extends DPCSprite {
 	
 	private boolean clearOnAction;
 
-	public TextField(String defaultText_,int maxLength_,boolean onlyNumerals_,boolean outline_) {
+	public TextField(int maxLength_,boolean onlyNumerals_,boolean outline_) {
 		super();
-		label=new TextLabel(defaultText_,0,false,1,false);
+		label=new TextLabel("",0,false,1,false);
 		maxLength=maxLength_;
 		onlyNumerals=onlyNumerals_;
 		cursor=new DPCSprite();
 		cursor.opacity=0;
-		defaultText=defaultText_;
 		label.outline=outline_;
-		if (!defaultText_.equals("")) {
-			clearOnAction=true;
-		}
 	}
 	
 	@Override
 	public void setDimensions(int radiusX,int radiusY) {
 		super.setDimensions(radiusX,radiusY);
-		label.setMaxDimensions((int)(radiusX*0.9f),(int)(radiusY*1.5f));
+		label.setMaxDimensions((int)(radiusX*0.9f),(int)(radiusY*0.8f));
 		cursor.setDimensions((int)(radiusY*0.6f*0.05f),(int)(radiusY*0.6f));
 	}
 	
@@ -58,6 +54,7 @@ public class TextField extends DPCSprite {
 		super.setIsTouched(t_);
 		if (t_) {
 			Gdx.input.setOnscreenKeyboardVisible(true);
+			
 		}
 	}
 	
@@ -70,6 +67,10 @@ public class TextField extends DPCSprite {
 	
 	public void setFocus(boolean focus) {
 		if (focus) {
+			if (clearOnAction) {
+				clearOnAction=false;
+				setText("");
+			}
 			cursor.setPosition(label.x+label.radiusX+cursor.radiusX,y+radiusY*0.0f);
 			cursor.startFlashing();
 		} else {
@@ -97,22 +98,15 @@ public class TextField extends DPCSprite {
 	
 
 	public void append(String text_) {
-		if (clearOnAction) {
-			clearOnAction=false;
-			label.setText("");
-		}
+		
 		String newText=label.getText()+text_;
 		setText(newText);
 	}
 	
 	public void backspace() {
-		if (clearOnAction) {
-			setText("");
-		} else {
-			int len=label.getText().length();
-			if (len>0) {
-				setText(label.getText().substring(0,len-1));
-			}
+		int len=label.getText().length();
+		if (len>0) {
+			setText(label.getText().substring(0,len-1));
 		}
 	}
 	
@@ -128,6 +122,10 @@ public class TextField extends DPCSprite {
 
 	public void setTextSizeToMax() {
 		label.setTextSizeToMax();
+	}
+	
+	public void setTextSizeToMax(String maxString) {
+		label.setTextSizeToMax(maxString);
 	}
 
 	public String getText() {

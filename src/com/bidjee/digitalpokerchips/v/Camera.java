@@ -228,5 +228,13 @@ public class Camera {
 		return (isOnScreen(new Vector2(left,top))||isOnScreen(new Vector2(right,top))||
 				isOnScreen(new Vector2(left,bottom))||isOnScreen(new Vector2(left,bottom)));
 	}
+
+	public boolean testZoomLessThan(float zoomTest) {
+		if (zoom<zoomTest) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	
 }

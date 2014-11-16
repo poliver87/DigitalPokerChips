@@ -9,6 +9,7 @@ public class DPCSprite {
 	public static final int MOVE_EASE_IN = 1;
 	public static final int MOVE_LINEAR = 2;
 	public static final int MOVE_BOUNCE = 3;
+	public static final int MOVE_SINE = 4;
 	
 	public Texture texture;
 	public float x;
@@ -17,7 +18,7 @@ public class DPCSprite {
 	public int radiusY;
 	protected boolean isTouched;
 	private boolean touchable;
-	private float touchAreaMultiplier;
+	protected float touchAreaMultiplier;
 	public float opacity;
 	public float maxOpacity;
 	public float rotation;
@@ -26,12 +27,14 @@ public class DPCSprite {
 	public int radiusXDest;
 	public int radiusYDest;
 	public boolean atDest;
-	Vector2 velocity=new Vector2();
 	private float gravityAcceleration;
 	private float elasticity;
 	private float flightTime;
+	private float x0;
 	private float y0;
 	private float v0;
+	private float xSineAmp;
+	private float ySineAmp;
 	public float distanceMargin;
 	int moveHoldoffTimer;
 	int moveHoldoffDuration;
@@ -50,6 +53,8 @@ public class DPCSprite {
 	private int frameElapsed;
 	int frameDuration;
 	public int numFrames;
+	private boolean frameAnimationRunning;
+	private boolean frameAnimationLoop;
 	
 	public int flashVisibleTime;
 	public int flashInvisibleTime;
@@ -82,6 +87,7 @@ public class DPCSprite {
 		flashInvisibleTime=300;
 		moveFunction=MOVE_EASE_IN;
 		distanceMargin=2;
+		texture=null;
 	}
 	
 	public DPCSprite(DPCSprite copyFrom) {
@@ -142,7 +148,10 @@ public class DPCSprite {
 		this.yDest=yDest;
 		flightTime=0;
 		y0=y;
+		x0=x;
 		v0=0;
+		xSineAmp=xDest-x;
+		ySineAmp=yDest-y;
 		moveHoldoffTimer=0;
 		moveHoldoffDuration=holdoff;
 		atDest=false;
@@ -172,14 +181,19 @@ public class DPCSprite {
 		this.setMoveFunc(moveFunc,this.distanceMargin,this.moveSpeed,this.gravityAcceleration,this.elasticity);
 	}
 	
-	public void setAnimation(int numFrames_,int frameDuration_) {
-		frameDuration=frameDuration_;
-		numFrames=numFrames_;
+	public void setFrameAnimation(int numFrames,int frameDuration,boolean loop) {
+		this.frameDuration=frameDuration;
+		this.numFrames=numFrames;
+		this.frameAnimationLoop=loop;
 		frame=0;
 	}
 	
-	public void stopAnimation() {
-		numFrames=0;
+	public void startFrameAnimation() {
+		frameAnimationRunning=true;
+	}
+	
+	public void stopFrameAnimation() {
+		frameAnimationRunning=false;
 	}
 	
 	public boolean getIsTouched() { return isTouched;}
@@ -295,7 +309,7 @@ public class DPCSprite {
 			opacity=1;
 			fadeState=FADE_WAIT_VISIBLE;
 		}
-		if (numFrames>0) {
+		if (frameAnimationRunning) {
 			frameElapsed+=(int)(delta*1000f);
 			if (frameElapsed>frameDuration) {
 				frame++;
@@ -303,6 +317,9 @@ public class DPCSprite {
 			}
 			if (frame==numFrames) {
 				frame=0;
+				if (!frameAnimationLoop) {
+					frameAnimationRunning=false;
+				}
 			}
 		}
 		if (!atDest) {
@@ -344,6 +361,17 @@ public class DPCSprite {
 						}
 					}
 					this.setPosition(x,yNew);
+				} else if (moveFunction==MOVE_SINE) {
+					flightTime+=delta;
+					float timeFactor = flightTime*moveSpeed*6.283f;
+					if (timeFactor>=1.5708) {
+						atDest=true;
+					} else {
+						
+						yNew=(float) (ySineAmp*Math.sin(timeFactor)+y0);
+						xNew=(float) (xSineAmp*Math.sin(timeFactor)+x0);
+						this.setPosition(xNew,yNew);
+					}
 				}
 			} else {
 				moveHoldoffTimer+=delta*1000;

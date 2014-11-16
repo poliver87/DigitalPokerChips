@@ -59,10 +59,12 @@ public class WorldInput implements InputProcessor {
 				if (mWL.homeDeviceAnimation.hostSprite.getTouchable()&&
 						mWL.homeDeviceAnimation.hostSprite.pointContained(touchX, touchY)) {
 					mWL.homeDeviceAnimation.hostSprite.setIsTouched(true);
+					mWL.game.mFL.homeUIAnimation.hostButton.setIsTouched(true);
 				}
 				if (mWL.homeDeviceAnimation.p1Sprite.getTouchable()&&
 						mWL.homeDeviceAnimation.p1Sprite.pointContained(touchX, touchY)) {
 					mWL.homeDeviceAnimation.p1Sprite.setIsTouched(true);
+					mWL.game.mFL.homeUIAnimation.joinButton.setIsTouched(true);
 				}
 			} else if (mWL.cameraDestination==mWL.camPosPlayer) {
 				// check if chip stacks are touched
@@ -143,11 +145,9 @@ public class WorldInput implements InputProcessor {
 		if (pointer==0&&mWL.game.screenState==ScreenState.GAMEPLAY) {
 			if (mWL.homeDeviceAnimation.hostSprite.getIsTouched()) {
 				mWL.homeDeviceAnimation.hostSprite.setIsTouched(false);
-				mWL.hostSelected();
 			}
 			if (mWL.homeDeviceAnimation.p1Sprite.getIsTouched()) {
 				mWL.homeDeviceAnimation.p1Sprite.setIsTouched(false);
-				mWL.joinSelected();
 			}
 			if (mWL.thisPlayer.pickedUpChip!=null&&mWL.thisPlayer.pickedUpChip.isTouched) {
 				mWL.thisPlayer.pickedUpChip.isTouched=false;
@@ -194,13 +194,21 @@ public class WorldInput implements InputProcessor {
 			float touchY=mWL.worldRenderer.yTouchScreenToWorld(screenY);
 			lastTouch.set(touchX,touchY);
 			if (mWL.homeDeviceAnimation.hostSprite.getIsTouched()) {
-				if (!mWL.homeDeviceAnimation.hostSprite.pointContained(touchX, touchY)) {
+				if (!mWL.game.mFL.homeUIAnimation.hostButton.getIsTouched()&&
+						!mWL.homeDeviceAnimation.hostSprite.pointContained(touchX, touchY)) {
 					mWL.homeDeviceAnimation.hostSprite.setIsTouched(false);
+					mWL.game.mFL.homeUIAnimation.hostButton.setIsTouched(false);
+				} else {
+					mWL.game.mFL.homeUIAnimation.hostButton.setIsTouched(true);
 				}
 			}
 			if (mWL.homeDeviceAnimation.p1Sprite.getIsTouched()) {
-				if (!mWL.homeDeviceAnimation.p1Sprite.pointContained(touchX, touchY)) {
+				if (!mWL.game.mFL.homeUIAnimation.joinButton.getIsTouched()&&
+						!mWL.homeDeviceAnimation.p1Sprite.pointContained(touchX, touchY)) {
 					mWL.homeDeviceAnimation.p1Sprite.setIsTouched(false);
+					mWL.game.mFL.homeUIAnimation.joinButton.setIsTouched(false);
+				} else {
+					mWL.game.mFL.homeUIAnimation.joinButton.setIsTouched(true);
 				}
 			}
 			if (mWL.thisPlayer.pickedUpChip!=null&&mWL.thisPlayer.pickedUpChip.isTouched) {

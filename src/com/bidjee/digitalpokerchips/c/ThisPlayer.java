@@ -72,7 +72,6 @@ public class ThisPlayer {
 	//////////////////// Models ////////////////////
 	String playerName;
 	public DiscoveredTable connectingTable;
-	public DPCSprite joinToken=new DPCSprite();
 	public ChipStack[] mainStacks;
 	public ChipStack bettingStack;
 	public ChipStack betStack;
@@ -95,7 +94,6 @@ public class ThisPlayer {
 		networkInterface.setPlayer(this);
 		showStackTotals=false;
 		connectivityStatus=CONN_NONE;
-		joinToken.opacity=0;
 		mainStacks=new ChipStack[ChipCase.CHIP_TYPES];
 		for (int chip_=ChipCase.CHIP_A;chip_<ChipCase.CHIP_TYPES;chip_++) {
 			mainStacks[chip_]=new ChipStack();
@@ -120,7 +118,6 @@ public class ThisPlayer {
 	
 	//////////////////// Scale & Layout ////////////////////
 	public void setDimensions(float worldWidth_,float worldHeight_) {
-		joinToken.setDimensions((int)(worldHeight_*0.0288f),(int)(worldHeight_*0.0288f));
 		mainStacks[ChipCase.CHIP_A].setMaxRenderNum(20);
 		mainStacks[ChipCase.CHIP_A].scaleLabel();
 		mainStacks[ChipCase.CHIP_B].setMaxRenderNum(20);
@@ -135,7 +132,6 @@ public class ThisPlayer {
 	} // setDimensions(float width_,float height_)
 	
 	public void setPositions(float worldWidth_,float worldHeight_) {
-		joinToken.setPosition(worldWidth_*0.5f,worldHeight_*0.4f);
 		mainStacks[ChipCase.CHIP_A].setY(worldHeight_*0.25f);
 		mainStacks[ChipCase.CHIP_B].setY(mainStacks[ChipCase.CHIP_A].getY());
 		mainStacks[ChipCase.CHIP_C].setY(mainStacks[ChipCase.CHIP_A].getY());
@@ -187,16 +183,10 @@ public class ThisPlayer {
 				reconnectTimer=0;
 			}
 		}
-		joinToken.animate(delta);
 		connectionBlob.animate(delta);
 		checkButton.animate(delta);
 		if (sendingJoinToken) {
-			if (Math.abs(joinToken.y-joinTokenStop.y)<2) {
-				
-			} else {
-				float deltaY_=delta*4*(joinToken.y-joinTokenStop.y);
-				joinToken.y-=deltaY_;
-			}
+			
 		}
 		
 		if (isDealer) {
@@ -312,12 +302,12 @@ public class ThisPlayer {
 	
 	public void collisionDetector() {
 		if (sendingJoinToken) {
-			if (joinToken.y>=limYBetStackTop) {
-				joinToken.opacity=0;
-				sendingJoinToken=false;
-				connectivityStatus=CONN_CONNECTING;
-				networkInterface.requestConnect(connectingTable,mWL.game.calculateAzimuth(),chipNumbers);
-			}
+			// TODO add logic to connect once buyin dialog offscreen
+			//if (joinToken.y>=limYBetStackTop) {
+				//sendingJoinToken=false;
+				//connectivityStatus=CONN_CONNECTING;
+				//networkInterface.requestConnect(connectingTable,mWL.game.calculateAzimuth(),chipNumbers);
+			//}
 		}
 		if (betStack.size()>0) {
 			if (betStack.getY()>=limYBetStackTop) {
@@ -521,16 +511,22 @@ public class ThisPlayer {
 		networkInterface.setName(playerName);
 	}
 	
+	public void setPlayerAmount(int amount) {
+		chipAmount=amount;
+		mWL.game.mFL.playerDashboard.setAmount(amount);
+	}
+	
 	public void playerLoginDone(String playerName,Texture tex) {
 		if (connectivityStatus==CONN_LOGIN) {
 			mWL.game.mFL.stopPlayerLoginDialog();
 			setPlayerName(playerName);
+			setPlayerAmount(0);
 			if (tex!=null) {
-				mWL.game.mFL.foregroundRenderer.setProfilePicTexture(tex);
+				mWL.game.mFL.playerDashboard.setProfilePicTexture(tex);
 			}
-			mWL.game.mFL.startPlayerIDDialog(playerName);
+			mWL.game.mFL.showPlayerDashboard(playerName);
 			connectivityStatus=CONN_IDLE;
-			//notifyReadyToSearch();
+			notifyReadyToSearch();
 		}
 	}
 	
@@ -539,8 +535,6 @@ public class ThisPlayer {
 		if (chipNumbers!=null) {
 			sendJoinToken(chipNumbers);
 		} else {
-			joinToken.fadeOut();
-			joinToken.opacity=0;
 			searchHoldoff();
 		}
 	}
@@ -666,6 +660,7 @@ public class ThisPlayer {
 			mWL.game.mFL.startPlayerLoginDialog();
 		} else if (connectivityStatus==CONN_NONE) {
 			connectivityStatus=CONN_IDLE;
+			mWL.game.mFL.showPlayerDashboard(playerName);
 			if (wifiEnabled) {
 				notifyReadyToSearch();
 			} else {
@@ -707,6 +702,9 @@ public class ThisPlayer {
 		} else if (connectivityStatus==CONN_CONNECTED_NO_WIFI) {
 			leaveTable();
 			backHandled=true;
+		}
+		if (!backHandled) {
+			mWL.game.mFL.hidePlayerDashboard();
 		}
 		return backHandled;
 	}
@@ -875,8 +873,6 @@ public class ThisPlayer {
 			if (!connectNow) {
 				connectivityStatus=CONN_BUYIN;
 				clearAllStacks();
-				joinToken.fadeIn();
-				joinToken.setPosition(joinTokenStart);
 				mWL.game.mFL.startBuyin(table.getName());
 			} else {
 				connectivityStatus=CONN_CONNECTING;
@@ -1056,7 +1052,6 @@ public class ThisPlayer {
 	}
 	
 	private void cancelBuyin() {
-		joinToken.fadeOut();
 		connectivityStatus=CONN_IDLE;
 		searchHoldoff();
 		mWL.game.mFL.stopBuyin();

@@ -1,6 +1,7 @@
 package com.bidjee.digitalpokerchips.c;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.i.IDPCSprite;
@@ -17,9 +18,8 @@ import com.bidjee.digitalpokerchips.m.HelpDialog;
 import com.bidjee.digitalpokerchips.m.LeaveTableDialog;
 import com.bidjee.digitalpokerchips.m.ManualConnectDialog;
 import com.bidjee.digitalpokerchips.m.Player;
-import com.bidjee.digitalpokerchips.m.PlayerIDDialog;
+import com.bidjee.digitalpokerchips.m.PlayerDashboard;
 import com.bidjee.digitalpokerchips.m.PlayerLoginDialog;
-import com.bidjee.digitalpokerchips.m.SearchingAnimation;
 import com.bidjee.digitalpokerchips.m.TableStatusMenu;
 import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.digitalpokerchips.v.ForegroundRenderer;
@@ -28,6 +28,13 @@ import com.bidjee.util.Logger;
 public class ForegroundLayer {
 	
 	public static final String LOG_TAG = "DPCUILayer";
+	
+	public static final Color whiteColor=new Color(1,1,1,1);
+	public static final Color goldColor=new Color(0.88f,0.62f,0.09f,1);
+	public static final Color navyBlueColor=new Color(0.1f,0.23f,0.32f,1);
+	public static final Color darkGreenColor=new Color(0,0.4f,0,1);
+	public static final Color darkBlueColor=new Color(0,0,0.4f,1);
+	public static final Color darkRedColor=new Color(0.4f,0,0,1);
 	
 	//////////////////// Constants ////////////////////
 	static final String WIN_TEXT = " Wins Dealer!";
@@ -53,24 +60,21 @@ public class ForegroundLayer {
 	GestureDetector gestureInput;
 	public ForegroundInput input;
 	public HomeUIAnimation homeUIAnimation=new HomeUIAnimation();
+	public HomeForegroundAnimation homeForegroundAnimation=new HomeForegroundAnimation();
 	public TutorialArrangement tutorialArrangement;
 	
 	//////////////////// Models ////////////////////
 	public DialogWindow dialogWindow;
-	public DialogWindow playerIDWindow;
 	public DialogWindow dialogWArrowWindow;
 	public ClosedDialog helpDialogSmall;
 	public HelpDialog helpDialog;
-	public ClosedDialog playerLoginDialogSmall;
 	public PlayerLoginDialog playerLoginDialog;
-	public ClosedDialog playerIDDialogSmall;
-	public PlayerIDDialog playerIDDialog;
+	public BuyinDialog buyinDialog;
+	public PlayerDashboard playerDashboard;
 	public ClosedDialog loadDialogSmall;
-	private ClosedDialog buyinDialogSmall;
 	public ClosedDialog leaveTableDialogSmall;
 	public ClosedDialog destroyTableDialogSmall;
 	public ClosedDialog bootDialogSmall;
-	public BuyinDialog buyinDialog;
 	public LeaveTableDialog leaveTableDialog;
 	public DestroyTableDialog destroyTableDialog;
 	public BootDialog bootDialog;
@@ -81,7 +85,6 @@ public class ForegroundLayer {
 	public ManualConnectDialog manualConnectDialog;
 	
 	public TableStatusMenu tableStatusMenu;
-	public SearchingAnimation searchingAnimation;
 	
 	//////////////////// Sprites ////////////////////
 	public Button wifiButton;
@@ -106,7 +109,6 @@ public class ForegroundLayer {
 	public TextLabel enterName2Label;
 	public TextLabel enterTableName1Label;
 	public TextLabel enterTableName2Label;
-	public TextLabel searchingLabel;
 	public TextLabel setValuesLabel;
 	public TextLabel selectingDealerLabel;
 	public TextLabel winLabel;
@@ -165,9 +167,6 @@ public class ForegroundLayer {
 		enterTableName2Label.setFontFace("segoe_print.ttf");
 		enterTableNameDoneButton=new Button(true,0,"");
 		
-		searchingLabel=new TextLabel("Searching for Tables",0,true,0,false);
-		searchingLabel.setFontFace("segoe_print.ttf");
-		
 		setValuesLabel=new TextLabel("Set Chip Values",0,true,0,false);
 		setValuesLabel.setFontFace("segoe_print.ttf");
 		setValuesOkButton=new Button(true,0,"");
@@ -183,14 +182,8 @@ public class ForegroundLayer {
 		divisibilityDialog=new DivisibilityDialog();
 		dialogWindow=new DialogWindow();
 		dialogWindow.opacity=0;
-		playerIDWindow=new DialogWindow();
-		playerIDWindow.opacity=0;
 		dialogWArrowWindow=new DialogWindow();
 		dialogWArrowWindow.opacity=0;
-		buyinDialog=new BuyinDialog();
-		buyinDialog.opacity=0;
-		buyinDialogSmall=new ClosedDialog(dialogWindow);
-		buyinDialogSmall.opacity=0;
 		manualConnectDialog=new ManualConnectDialog();
 		manualConnectDialog.opacity=0;
 		leaveTableDialog=new LeaveTableDialog();
@@ -212,9 +205,6 @@ public class ForegroundLayer {
 		tableStatusMenu=new TableStatusMenu(this);
 		tableStatusMenu.opacity=0;
 		
-		searchingAnimation=new SearchingAnimation();
-		searchingAnimation.opacity=0;
-		
 		gotoGameButton=new Button(true,0,"Play Game");
 		gotoGameButton.opacity=0;
 		gotoGameButton.getLabel().outline=true;
@@ -228,11 +218,10 @@ public class ForegroundLayer {
 		
 		helpDialogSmall=new ClosedDialog(dialogWindow);
 		helpDialog=new HelpDialog(helpWebView);
-		playerLoginDialogSmall=new ClosedDialog(dialogWindow);
 		playerLoginDialog=new PlayerLoginDialog();
+		buyinDialog=new BuyinDialog();
 		
-		playerIDDialogSmall=new ClosedDialog(playerIDWindow);
-		playerIDDialog=new PlayerIDDialog();
+		playerDashboard=new PlayerDashboard();
 		
 		helpDialogSmall=new ClosedDialog(dialogWindow);
 		helpDialogSmall.opacity=0;
@@ -272,6 +261,7 @@ public class ForegroundLayer {
 	
 	public void dispose() {
 		foregroundRenderer.dispose();
+		playerDashboard.dispose();
 		game=null;
 	}
 	
@@ -298,6 +288,7 @@ public class ForegroundLayer {
 	private void setDimensions(int screenWidth,int screenHeight) {
 		limFlingVelocity=screenHeight*0.2f;
 		homeUIAnimation.setDimensions(screenWidth,screenHeight);
+		homeForegroundAnimation.setDimensions(screenWidth,screenHeight);
 		wifiButton.setDimensions((int)(screenHeight*0.08f),(int)(screenHeight*0.08f));
 		foldButton.setDimensions((int)(screenHeight*0.15f),(int)(screenHeight*0.15f));
 		playerPrompt.setMaxDimensions((int)(screenWidth*0.20f),(int)(screenHeight*0.04f));
@@ -322,17 +313,15 @@ public class ForegroundLayer {
 		enterTableName1Label.setTextSize(textSize);
 		enterTableName2Label.setTextSize(textSize);
 		enterTableNameDoneButton.setDimensions((int)(screenHeight*0.08f),(int)(screenHeight*0.08f));
-		searchingLabel.setMaxDimensions((int)(screenWidth*0.24f),(int)(screenHeight*0.1f));
 		wifiLabel.setMaxDimensions((int)(screenWidth*0.24f),(int)(screenHeight*0.1f));
 		reconnect1Label.setMaxDimensions((int)(screenWidth*0.24f),(int)(screenHeight*0.1f));
 		reconnect2Label.setMaxDimensions((int)(screenWidth*0.24f),(int)(screenHeight*0.1f));
 		waitNextHandLabel.setMaxDimensions((int)(screenWidth*0.24f),(int)(screenHeight*0.1f));
-		textSize=Math.min(DPCGame.textFactory.getMaxTextSize(searchingLabel),
+		textSize=Math.min(100000,
 				DPCGame.textFactory.getMaxTextSize(wifiLabel));
 		textSize=Math.min(textSize,DPCGame.textFactory.getMaxTextSize(reconnect1Label));
 		textSize=Math.min(textSize,DPCGame.textFactory.getMaxTextSize(reconnect2Label));
 		textSize=Math.min(textSize,DPCGame.textFactory.getMaxTextSize(waitNextHandLabel));
-		searchingLabel.setTextSize(textSize);
 		wifiLabel.setTextSize(textSize);
 		reconnect1Label.setTextSize(textSize);
 		reconnect2Label.setTextSize(textSize);
@@ -349,14 +338,12 @@ public class ForegroundLayer {
 		helpDialogSmall.setDimensions(1,1);
 		
 		playerLoginDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
-		playerLoginDialogSmall.setDimensions(1,1);
+		buyinDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
 		
-		playerIDDialog.setDimensions((int)(screenHeight*0.3f),(int)(screenHeight*0.13f));
+		playerDashboard.setDimensions((int)(screenWidth*0.5f),(int)(screenHeight*0.09f));
 		
 		divisibilityDialog.setDimensions((int)(screenWidth*0.3f),(int)(screenHeight*0.06f));
 		tutorialArrangement.setDimensions(screenWidth,screenHeight);
-		buyinDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
-		buyinDialogSmall.setDimensions(1,1);
 		manualConnectDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
 		leaveTableDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
 		leaveTableDialogSmall.setDimensions(1,1);
@@ -378,7 +365,6 @@ public class ForegroundLayer {
 		splitButton.setLabelDims(0.6f,0.6f);
 		splitCancelButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
 		splitDoneButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
-		searchingAnimation.setDimensions((int)(screenHeight*0.04f),(int)(screenHeight*0.04f));
 		int radiusXHostPrompts=(int)(screenWidth*0.3f);
 		int radiusYHostPrompts=(int)(screenHeight*0.1f);
 		selectingDealerLabel.setMaxDimensions(radiusXHostPrompts,radiusYHostPrompts);
@@ -418,6 +404,7 @@ public class ForegroundLayer {
 	
 	private void setPositions(float screenWidth,float screenHeight) {
 		homeUIAnimation.setPositions(screenWidth,screenHeight);
+		homeForegroundAnimation.setPositions(screenWidth,screenHeight);
 		wifiButton.setPosition(screenWidth*0.5f,screenHeight*0.85f);
 		foldButton.setPosition(screenWidth*0.1f,screenHeight*0.76f);
 		posPlayerPromptOffscreen.set(screenWidth*0.8f,screenHeight+playerPrompt.maxRadiusY*1.2f);
@@ -429,7 +416,6 @@ public class ForegroundLayer {
 		enterTableName1Label.setPosition(screenWidth*0.14f,screenHeight*0.77f);
 		enterTableName2Label.setPosition(screenWidth*0.14f,screenHeight*0.69f);
 		enterTableNameDoneButton.setPosition(screenWidth*0.8f,screenHeight*0.73f);
-		searchingLabel.setPosition(screenWidth*0.5f,screenHeight*0.7f);
 		wifiLabel.setPosition(screenWidth*0.5f,screenHeight*0.7f);
 		reconnect1Label.setPosition(screenWidth*0.5f,screenHeight*0.7f+reconnect1Label.maxRadiusY);
 		reconnect2Label.setPosition(screenWidth*0.5f,screenHeight*0.7f);
@@ -445,16 +431,12 @@ public class ForegroundLayer {
 		
 		helpDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		
-		playerLoginDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
-		playerLoginDialogSmall.setPosition(screenWidth*0.5f,screenHeight*0.95f);
+		playerLoginDialog.setPositions(screenWidth*0.5f,-screenHeight*0.5f,screenWidth*0.5f,screenHeight*0.5f);
+		buyinDialog.setPositions(screenWidth*0.5f,screenHeight*1.5f,screenWidth*0.5f,screenHeight*0.5f);
 		
-		float padding=screenHeight*0.03f;
-		playerIDDialog.setPosition(0+playerIDDialog.radiusX+padding,0+playerIDDialog.radiusY+padding);
-		playerIDDialogSmall.setPosition(playerIDDialog.x,0-playerIDDialog.radiusY*1.1f);
+		playerDashboard.setPositions(screenWidth*0.5f,-playerDashboard.radiusY*2,screenWidth*0.5f,playerDashboard.radiusY);
 		
 		divisibilityDialog.setPosition(screenWidth*0.5f,screenHeight*0.08f);
-		buyinDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
-		buyinDialogSmall.setPosition(screenWidth*0.5f,screenHeight*0.95f);
 		manualConnectDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		leaveTableDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		leaveTableDialogSmall.setPosition(screenWidth*0.5f,screenHeight*0.95f);
@@ -464,7 +446,6 @@ public class ForegroundLayer {
 		autosaveDialogSmall.setPosition(screenWidth*0.5f,screenHeight*0.95f);
 		loadDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		tableStatusMenu.setPosition(screenWidth-tableStatusMenu.radiusX,screenHeight*0.445f);
-		searchingAnimation.setPosition(screenWidth*0.5f,screenHeight*0.85f);
 		tutorialArrangement.setPositions(screenWidth,screenHeight);
 		float xHostPrompts=screenWidth*0.5f;
 		float yHostPrompts=screenHeight*0.65f;
@@ -495,7 +476,6 @@ public class ForegroundLayer {
 		enterTableName1Label.scalePosition(scaleX,scaleY);
 		enterTableName2Label.scalePosition(scaleX,scaleY);
 		enterTableNameDoneButton.scalePosition(scaleX,scaleY);
-		searchingLabel.scalePosition(scaleX,scaleY);
 		wifiLabel.scalePosition(scaleX,scaleY);
 		reconnect1Label.scalePosition(scaleX,scaleY);
 		reconnect2Label.scalePosition(scaleX,scaleY);
@@ -509,13 +489,11 @@ public class ForegroundLayer {
 		divisibilityDialog.scalePosition(scaleX,scaleY);
 		dialogWindow.scalePosition(scaleX,scaleY);
 		dialogWArrowWindow.scalePosition(scaleX,scaleY);
-		buyinDialog.scalePosition(scaleX,scaleY);
 		manualConnectDialog.scalePosition(scaleX,scaleY);
 		leaveTableDialog.scalePosition(scaleX,scaleY);
 		destroyTableDialog.scalePosition(scaleX,scaleY);
 		bootDialog.scalePosition(scaleX,scaleY);
 		tableStatusMenu.scalePosition(scaleX,scaleY);
-		searchingAnimation.scalePosition(scaleX, scaleY);
 		gotoGameButton.scalePosition(scaleX,scaleY);
 		tutorialArrangement.scalePositions(scaleX,scaleY);
 		selectingDealerLabel.scalePosition(scaleX,scaleY);
@@ -544,13 +522,13 @@ public class ForegroundLayer {
 		if (openHelpOnStartup) {
 			openHelpOnStartup=false;
 			openHelp();
-			stopHome();
+			stopHomeUI();
 		}
 	}
 	
 	public void animate(float delta) {
 		homeUIAnimation.animate(delta);
-		
+		homeForegroundAnimation.animate(delta);
 		selectingDealerLabel.animate(delta);
 		winLabel.animate(delta);
 		blindsInLabel.animate(delta);
@@ -586,12 +564,7 @@ public class ForegroundLayer {
 		enterTableName1Label.animate(delta);
 		enterTableName2Label.animate(delta);
 		enterTableNameDoneButton.animate(delta);
-		
-		searchingLabel.animate(delta);
-		searchingAnimation.animate(delta);
-		if (searchingLabel.getIsFlashing()&&searchingLabel.opacity==0) {
-			searchingAnimation.ping();
-		}
+
 		wifiLabel.animate(delta);
 		reconnect1Label.animate(delta);
 		reconnect2Label.animate(delta);
@@ -605,12 +578,11 @@ public class ForegroundLayer {
 		}
 		
 		dialogWindow.animate(delta);
-		playerIDWindow.animate(delta);
 		dialogWArrowWindow.animate(delta);
 		helpDialog.animate(delta);
 		playerLoginDialog.animate(delta);
-		playerIDDialog.animate(delta);
 		buyinDialog.animate(delta);
+		playerDashboard.animate(delta);
 		manualConnectDialog.animate(delta);
 		leaveTableDialog.animate(delta);
 		destroyTableDialog.animate(delta);
@@ -632,7 +604,7 @@ public class ForegroundLayer {
 		foldButton.animate(delta);
 		
 		secondTimer+=delta*1000;
-		if (secondTimer>=300) {
+		if (DPCGame.debugMode&&secondTimer>=300) {
 			secondTimer=0;
 			azimuthLabel.setText(Integer.toString(game.calculateAzimuth()));
 			azimuthLabel.loadTexture();
@@ -640,16 +612,24 @@ public class ForegroundLayer {
 	}
 
 	//////////////////// Instructions from World ////////////////////
-	public void startHome() {
-		Logger.log(LOG_TAG,"startHome()");
-		Gdx.app.log("HomeUIAnimation", "startHome");
+	public void startHomeForeground() {
+		Logger.log(LOG_TAG,"startHomeForeground()");
+		homeForegroundAnimation.begin(0);
+	}
+	
+	public void stopHomeForeground() {
+		Logger.log(LOG_TAG,"startHomeForeground()");
+		homeForegroundAnimation.end();
+	}
+	
+	public void startHomeUI() {
+		Logger.log(LOG_TAG,"startHomeUI()");
 		input.pushTouchFocus(ForegroundInput.TOUCH_HOME);
 		homeUIAnimation.begin(0);
 	}
 	
-	public void stopHome() {
-		Logger.log(LOG_TAG,"stopHome()");
-		Gdx.app.log("HomeUIAnimation", "stopHome");
+	public void stopHomeUI() {
+		Logger.log(LOG_TAG,"stopHomeUI()");
 		input.popTouchFocus(ForegroundInput.TOUCH_HOME);
 		homeUIAnimation.end();
 	}
@@ -697,18 +677,18 @@ public class ForegroundLayer {
 			int loadSlot=loadDialog.getSelectedSlot()+1;
 			game.mWL.table.loadTable(loadSlot);
 		} else {
-			startHome();
+			startHomeUI();
 		}
 		closeLoadDialog();
 	}
 	
 	public void howSelected() {
-		stopHome();
+		stopHomeUI();
 		openHelp();
 	}
 	
 	public void loadSelected() {
-		stopHome();
+		stopHomeUI();
 		openLoadDialog();
 	}
 	
@@ -731,42 +711,19 @@ public class ForegroundLayer {
 	
 	public void startSearchForGames() {
 		Logger.log(LOG_TAG,"startSearchForGames()");
-		searchingLabel.startFlashing();
-		searchingAnimation.ping();
-		searchingAnimation.setTouchable(true);
+		playerDashboard.setStatusMessage("SEARCHING FOR GAMES");
 	}
 	
 	public void stopSearchForGames() {
 		Logger.log(LOG_TAG,"stopSearchForGames()");
-		searchingAnimation.stop();
-		searchingLabel.stopFlashing();
-		searchingLabel.opacity=0;
-		searchingAnimation.setTouchable(false);
+		playerDashboard.setStatusMessage("");
 	}
 	
-	public void startBuyin(String tableName) {
-		Logger.log(LOG_TAG,"stopSearchForGames()");
-		dialogWindow.setOpacity(1);
-		dialogWindow.setPosition(buyinDialogSmall.x,buyinDialogSmall.y);
-		dialogWindow.setDimensions(buyinDialogSmall.radiusX,buyinDialogSmall.radiusY);
-		dialogWindow.sendTo(buyinDialog);
-		buyinDialog.disappear();
-		buyinDialog.setTableName(tableName);
-		input.pushTouchFocus(ForegroundInput.TOUCH_BUYIN);
-	}
-	
-	public void stopBuyin() {
-		Logger.log(LOG_TAG,"stopBuyin()");
-		dialogWindow.remove();
-		buyinDialog.stop();
-		input.popTouchFocus(ForegroundInput.TOUCH_BUYIN);
-	}
+
 	
 	public void startManualConnectDialog() {
 		Logger.log(LOG_TAG,"startManualConnectDialog()");
 		dialogWindow.setOpacity(1);
-		dialogWindow.setPosition(buyinDialogSmall.x,buyinDialogSmall.y);
-		dialogWindow.setDimensions(buyinDialogSmall.radiusX,buyinDialogSmall.radiusY);
 		dialogWindow.sendTo(manualConnectDialog);
 		manualConnectDialog.disappear();
 		input.pushTouchFocus(ForegroundInput.TOUCH_MANUAL_CONNECT);
@@ -818,35 +775,40 @@ public class ForegroundLayer {
 	
 	public void startPlayerLoginDialog() {
 		Logger.log(LOG_TAG,"startPlayerLoginDialog()");
-		dialogWindow.setOpacity(1);
-		dialogWindow.setPosition(playerLoginDialogSmall.x,playerLoginDialogSmall.y);
-		dialogWindow.setDimensions(playerLoginDialogSmall.radiusX,playerLoginDialogSmall.radiusY);
-		dialogWindow.sendTo(playerLoginDialog);
-		playerLoginDialog.disappear();
+		playerLoginDialog.show();
 		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER_LOGIN);
 	}
 	
 	public void stopPlayerLoginDialog() {
 		Logger.log(LOG_TAG,"stopPlayerLoginDialog()");
-		dialogWindow.remove();
-		playerLoginDialog.stop();
+		playerLoginDialog.hide();
+		Gdx.input.setOnscreenKeyboardVisible(false);
 		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_LOGIN);
 	}
 	
-	public void startPlayerIDDialog(String playerName) {
-		Logger.log(LOG_TAG,"startPlayerIDDialog()");
-		playerIDWindow.setOpacity(1);
-		playerIDWindow.setPosition(playerIDDialogSmall.x,playerIDDialogSmall.y);
-		playerIDWindow.setDimensions(playerIDDialog.radiusX,playerIDDialog.radiusY);
-		playerIDWindow.sendTo(playerIDDialog);
-		playerIDDialog.disappear();
-		playerIDDialog.setPlayerName(playerName);
+	public void startBuyin(String tableName) {
+		Logger.log(LOG_TAG,"startBuyin()");
+		buyinDialog.show();
+		input.pushTouchFocus(ForegroundInput.TOUCH_BUYIN);
 	}
 	
-	public void stopPlayerIDDialog() {
+	public void stopBuyin() {
+		Logger.log(LOG_TAG,"stopBuyin()");
+		buyinDialog.hide();
+		input.popTouchFocus(ForegroundInput.TOUCH_BUYIN);
+	}
+	
+	public void showPlayerDashboard(String playerName) {
+		Logger.log(LOG_TAG,"startPlayerIDDialog()");
+		playerDashboard.setName(playerName);
+		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER_DASHBOARD);
+		playerDashboard.show();
+	}
+	
+	public void hidePlayerDashboard() {
 		Logger.log(LOG_TAG,"stopPlayerIDDialog()");
-		playerIDWindow.remove();
-		playerIDDialog.stop();
+		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_DASHBOARD);
+		playerDashboard.hide();
 	}
 	
 	public void startDestroyTableDialog(String tableName) {

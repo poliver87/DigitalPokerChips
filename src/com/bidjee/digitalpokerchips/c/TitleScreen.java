@@ -1,6 +1,7 @@
 package com.bidjee.digitalpokerchips.c;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.digitalpokerchips.v.TitleRenderer;
@@ -38,7 +39,9 @@ public class TitleScreen {
 		game=game_;
 		titleRenderer=new TitleRenderer(this);
 		logo=new DPCSprite();
-		loadingLabel=new TextLabel("- Loading -",0,true,0,false);
+		loadingLabel=new TextLabel("Loading",0,false,0,false);
+		loadingLabel.setFontFace("coolvetica_rg.ttf");
+		loadingLabel.bodyColor=new Color(1f,0.94f,0.77f,1);
 		screenLaidOut=false;
 	}
 	
@@ -69,7 +72,7 @@ public class TitleScreen {
 	private void setDimensions(int screenWidth,int screenHeight) {
 		Gdx.app.log("DPCLifecycle", "TitleScreen - setDimensions("+screenWidth+","+screenHeight+")");
 		logo.setDimensions((int)(screenHeight*0.89f),(int)(screenHeight*0.5f));
-		loadingLabel.setMaxDimensions((int) (screenHeight*0.3f),(int) (screenHeight*0.03f));
+		loadingLabel.setMaxDimensions((int) (screenWidth*0.4f),(int) (screenHeight*0.05f));
 		loadingLabel.setTextSizeToMax();
 	}
 	

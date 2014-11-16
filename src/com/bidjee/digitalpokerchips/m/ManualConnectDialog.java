@@ -21,13 +21,13 @@ public class ManualConnectDialog extends Dialog {
 		okButton.opacity=0;
 		cancelButton=new Button(true,0,"");
 		cancelButton.opacity=0;
-		ipQuads[0]=new TextField("192",3,true,false);
+		ipQuads[0]=new TextField(3,true,false);
 		ipQuads[0].label.bodyColor=ForegroundRenderer.blackColor;
-		ipQuads[1]=new TextField("168",3,true,false);
+		ipQuads[1]=new TextField(3,true,false);
 		ipQuads[1].label.bodyColor=ForegroundRenderer.blackColor;
-		ipQuads[2]=new TextField("1",3,true,false);
+		ipQuads[2]=new TextField(3,true,false);
 		ipQuads[2].label.bodyColor=ForegroundRenderer.blackColor;
-		ipQuads[3]=new TextField("1",3,true,false);
+		ipQuads[3]=new TextField(3,true,false);
 		ipQuads[3].label.bodyColor=ForegroundRenderer.blackColor;
 	}
 	
