@@ -644,6 +644,7 @@ public class Table {
 			}
 			gameCanStart=false;
 		} else if (gameState==STATE_SELECTING_DEALER) {
+			networkInterface.selectDealer();
 			mWL.game.mFL.startDealerSelect();
 			dealerButton.fadeIn();
 			dealerButton.setPosition(posDealerButtonStart);
@@ -1052,6 +1053,9 @@ public class Table {
 		if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
 			setConnectionShowing(player,true);
 			player.name.fadeIn();
+			if (countPlayers()==2) {
+				networkInterface.arrange();
+			}
 		}
 		if (gameState==STATE_GAME) {
 			if (allPlayersSetup()) {
@@ -1100,10 +1104,8 @@ public class Table {
 		Logger.log(LOG_TAG,"setConnectionShowing()");
 		if (showing) {
 			player.setConnectionShowing(true);
-			networkInterface.showConnection(player.name.getText());
 		} else {
 			player.setConnectionShowing(false);
-			networkInterface.hideConnection(player.name.getText());
 		}
 	}
 	
