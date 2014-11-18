@@ -4,7 +4,7 @@ import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.TextLabel;
 
 public class DivisibilityDialog extends DPCSprite {
-	
+	//
 	public static final int DURATION_DISPLAY = 3000;
 	public TextLabel messageLabel;
 	int displayTimer;
