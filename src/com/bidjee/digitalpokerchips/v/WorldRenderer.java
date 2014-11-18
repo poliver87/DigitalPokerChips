@@ -89,6 +89,9 @@ public class WorldRenderer {
 	
 	Texture cardTexture;
 	
+	Texture[] connectingTextures;
+	Texture[] connectedTextures;
+	
 	public WorldRenderer(WorldLayer mWL_) {
 		mWL=mWL_;
 		batch=new SpriteBatch();
@@ -97,6 +100,8 @@ public class WorldRenderer {
 		mWL=mWL_;
 		chipTextures=new Texture[ChipCase.CHIP_TYPES*Chip.CHIP_ROTATION_N];
 		suitsTextures=new Texture[4];
+		connectingTextures=new Texture[27];
+		connectedTextures=new Texture[26];
 	}
 	
 	public void resize(int width,int height) {
@@ -200,6 +205,13 @@ public class WorldRenderer {
 		suitsTextures[Card.HEARTS]=manager_.get("suit_hearts.png",Texture.class);
 		
 		cardTexture=manager_.get("card_back.png",Texture.class);
+		
+		for (int i=0;i<27;i++) {
+			connectingTextures[i]=manager_.get("connecting/connecting_"+String.format("%02d",i)+".png",Texture.class);
+		}
+		for (int i=0;i<26;i++) {
+			connectedTextures[i]=manager_.get("connected/connected_"+String.format("%02d",i)+".png",Texture.class);
+		}
 	}
 	
 	public void loadLabels() {
@@ -344,15 +356,29 @@ public class WorldRenderer {
 	}
 
 	private void renderConnectionStuff() {
+		if (mWL.thisPlayer.connectionSprite.opacity!=0) {
+			alphaShader=batch.getColor();
+			batch.setColor(ColorPool.colors[mWL.thisPlayer.color].r,ColorPool.colors[mWL.thisPlayer.color].g,
+	        		ColorPool.colors[mWL.thisPlayer.color].b,mWL.thisPlayer.connectionSprite.opacity);
+			batch.draw(connectingTextures[mWL.thisPlayer.connectionSprite.frame],
+					mWL.thisPlayer.connectionSprite.x-mWL.thisPlayer.connectionSprite.radiusX,
+					mWL.thisPlayer.connectionSprite.y-mWL.thisPlayer.connectionSprite.radiusY,
+					mWL.thisPlayer.connectionSprite.radiusX*2,mWL.thisPlayer.connectionSprite.radiusY*2,
+					0,0,400,250,false,false);
+			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+		if (mWL.thisPlayer.connectedSprite.opacity!=0) {
+			alphaShader=batch.getColor();
+			batch.setColor(ColorPool.colors[mWL.thisPlayer.color].r,ColorPool.colors[mWL.thisPlayer.color].g,
+	        		ColorPool.colors[mWL.thisPlayer.color].b,mWL.thisPlayer.connectedSprite.opacity);
+			batch.draw(connectedTextures[mWL.thisPlayer.connectedSprite.frame],
+					mWL.thisPlayer.connectedSprite.x-mWL.thisPlayer.connectedSprite.radiusX,
+					mWL.thisPlayer.connectedSprite.y-mWL.thisPlayer.connectedSprite.radiusY,
+					mWL.thisPlayer.connectedSprite.radiusX*2,mWL.thisPlayer.connectedSprite.radiusY*2,
+					0,0,400,250,false,false);
+			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
 		
-		alphaShader=batch.getColor();
-		batch.setColor(ColorPool.colors[mWL.thisPlayer.color].r,ColorPool.colors[mWL.thisPlayer.color].g,
-        		ColorPool.colors[mWL.thisPlayer.color].b,mWL.thisPlayer.connectionBlob.opacity);
-		batch.draw(connectionBlobTexture, mWL.thisPlayer.connectionBlob.x-mWL.thisPlayer.connectionBlob.radiusX,
-				mWL.thisPlayer.connectionBlob.y-mWL.thisPlayer.connectionBlob.radiusY,
-				mWL.thisPlayer.connectionBlob.radiusX*2,mWL.thisPlayer.connectionBlob.radiusY*2,
-				0,0,312,192,false,false);
-		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 	}
 
 	private void renderBackground () {

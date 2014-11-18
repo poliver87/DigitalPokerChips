@@ -292,7 +292,7 @@ public class DPCGame extends Game {
 		manager.load("btn_login_facebook.png",Texture.class,tParam);
 		
 		manager.load("envelope.png",Texture.class,tParam);
-		manager.load("buyin_frame.png",Texture.class,tParam);
+		manager.load("buyin_box.png",Texture.class,tParam);
 		manager.load("btn_plus.png",Texture.class,tParam);
 		manager.load("btn_minus.png",Texture.class,tParam);
 		manager.load("btn_okay_buyin.png",Texture.class,tParam);
@@ -368,6 +368,12 @@ public class DPCGame extends Game {
 		manager.load("dpc_logo_08.png",Texture.class,tParam);
 		manager.load("dpc_logo_09.png",Texture.class,tParam);
 		manager.load("dpc_logo_10.png",Texture.class,tParam);
+		for (int i=0;i<27;i++) {
+			manager.load("connecting/connecting_"+String.format("%02d",i)+".png",Texture.class,tParam);
+		}
+		for (int i=0;i<26;i++) {
+			manager.load("connected/connected_"+String.format("%02d",i)+".png",Texture.class,tParam);
+		}
 		manager.load("button_blue.png",Texture.class,tParam);
 		manager.load("back.png",Texture.class,tParam);
 		manager.load("connection_blob.png",Texture.class,tParam);

@@ -50,10 +50,11 @@ public class DPCSprite {
 	public float moveSpeed;
 	
 	public int frame;
+	public int defaultFrame;
 	private int frameElapsed;
 	int frameDuration;
 	public int numFrames;
-	private boolean frameAnimationRunning;
+	public boolean frameAnimationRunning;
 	private boolean frameAnimationLoop;
 	
 	public int flashVisibleTime;
@@ -79,6 +80,7 @@ public class DPCSprite {
 		flashing=false;
 		moveSpeed=9;
 		frame=0;
+		defaultFrame=0;
 		touchAreaMultiplier=1;
 		maxOpacity=1;
 		fadeInSpeed=2f;
@@ -110,6 +112,7 @@ public class DPCSprite {
 		this.fadeInSpeed=copyFrom.fadeInSpeed;
 		this.fadeOutSpeed=copyFrom.fadeOutSpeed;
 		this.frame=copyFrom.frame;
+		this.defaultFrame=copyFrom.defaultFrame;
 		this.frameElapsed=copyFrom.frameElapsed;
 		this.frameDuration=copyFrom.frameDuration;
 		this.numFrames=copyFrom.numFrames;
@@ -181,7 +184,7 @@ public class DPCSprite {
 		this.setMoveFunc(moveFunc,this.distanceMargin,this.moveSpeed,this.gravityAcceleration,this.elasticity);
 	}
 	
-	public void setFrameAnimation(int numFrames,int frameDuration,boolean loop) {
+	public void setFrameAnimation(int numFrames,int frameDuration,boolean loop,int defaultFrame) {
 		this.frameDuration=frameDuration;
 		this.numFrames=numFrames;
 		this.frameAnimationLoop=loop;
@@ -192,8 +195,11 @@ public class DPCSprite {
 		frameAnimationRunning=true;
 	}
 	
-	public void stopFrameAnimation() {
+	public void stopFrameAnimation(boolean resetToStart) {
 		frameAnimationRunning=false;
+		if (resetToStart) {
+			frame = 0;
+		}
 	}
 	
 	public boolean getIsTouched() { return isTouched;}
@@ -316,9 +322,11 @@ public class DPCSprite {
 				frameElapsed=0;
 			}
 			if (frame==numFrames) {
-				frame=0;
-				if (!frameAnimationLoop) {
+				if (frameAnimationLoop) {
+					frame = 0;
+				} else {
 					frameAnimationRunning=false;
+					frame=defaultFrame;
 				}
 			}
 		}

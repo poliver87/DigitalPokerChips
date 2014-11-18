@@ -788,7 +788,7 @@ public class ForegroundLayer {
 	
 	public void startBuyin(String tableName) {
 		Logger.log(LOG_TAG,"startBuyin()");
-		buyinDialog.show();
+		buyinDialog.show(tableName,ChipCase.values);
 		input.pushTouchFocus(ForegroundInput.TOUCH_BUYIN);
 	}
 	
@@ -796,6 +796,14 @@ public class ForegroundLayer {
 		Logger.log(LOG_TAG,"stopBuyin()");
 		buyinDialog.hide();
 		input.popTouchFocus(ForegroundInput.TOUCH_BUYIN);
+	}
+	
+	public boolean checkBuyinOffscreen() {
+		boolean offscreen=false;
+		if (buyinDialog.y-buyinDialog.radiusY>screenHeight) {
+			offscreen=true;
+		}
+		return offscreen;
 	}
 	
 	public void showPlayerDashboard(String playerName) {

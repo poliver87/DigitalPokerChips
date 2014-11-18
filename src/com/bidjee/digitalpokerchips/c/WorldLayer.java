@@ -81,12 +81,14 @@ public class WorldLayer implements Screen {
 		int backgroundRadiusX=(int)(Math.max(worldWidth,worldHeight*0.89f)+1);
 		backgroundRadiusX=(int) (worldWidth*0.5f);
 		backgroundSprite.setDimensions(backgroundRadiusX,(int)(worldHeight*0.5f)+1);
-		Chip.radiusX=(int) (worldWidth*0.02f);
-		Chip.radiusY=(int) (Chip.radiusX*0.98f);
-		limChipFlingVel=(int) (worldHeight*0.15f);
-		thisPlayer.setDimensions(worldWidth,worldHeight);
-		table.setDimensions(worldWidth,worldHeight);
 		homeDeviceAnimation.setDimensions(worldWidth, worldHeight);
+		Chip.radiusY=(int) (homeDeviceAnimation.p1Sprite.radiusY*0.26f);
+		Chip.radiusX=(int) (Chip.radiusY*1.02f);
+		limChipFlingVel=(int) (worldHeight*0.15f);
+		
+		table.setDimensions(worldWidth,worldHeight);
+		
+		thisPlayer.setDimensions(homeDeviceAnimation.p1Sprite.radiusX,homeDeviceAnimation.p1Sprite.radiusY);
 	}
 	
 	public void setPositions(int worldWidth,int worldHeight) {
@@ -94,9 +96,10 @@ public class WorldLayer implements Screen {
 		camPosHome.set(worldWidth*0.5f,worldHeight*0.5f,0.25f);
 		camPosPlayer.set(worldWidth*0.5f,worldHeight*0.42f,2.7f);
 		camPosTable.set(worldWidth*0.5f,worldHeight*0.62f,1.4f);
-		thisPlayer.setPositions(worldWidth,worldHeight);
-		table.setPositions(worldWidth,worldHeight);
 		homeDeviceAnimation.setPositions(worldWidth, worldHeight,camPosTable.getY(),camPosPlayer.getY());
+		thisPlayer.setPositions(homeDeviceAnimation.posP1Stop.x,homeDeviceAnimation.posP1Stop.y);
+		table.setPositions(worldWidth,worldHeight);
+		
 	}
 	
 	public void scalePositions(float scaleX,float scaleY) {

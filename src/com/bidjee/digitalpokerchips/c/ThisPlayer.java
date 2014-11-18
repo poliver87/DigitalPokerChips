@@ -15,6 +15,7 @@ import com.bidjee.digitalpokerchips.m.DiscoveredTable;
 import com.bidjee.digitalpokerchips.m.GameLogic;
 import com.bidjee.digitalpokerchips.m.Move;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
+import com.bidjee.digitalpokerchips.m.PlayerDashboard;
 import com.bidjee.digitalpokerchips.m.PlayerEntry;
 import com.bidjee.util.Logger;
 
@@ -39,14 +40,20 @@ public class ThisPlayer {
 	public static final int CONN_POLL_RECONNECT = 8;
 	public static final int CONN_CONNECTED_NO_WIFI = 9;
 	
+	public static final int CONN_ANIM_NONE = 0;	
+	public static final int CONN_ANIM_FORMING = 1;
+	public static final int CONN_ANIM_FORMING_ACTIVE = 2;
+	public static final int CONN_ANIM_STATIC = 3;
+	public static final int CONN_ANIM_ACTIVE = 4;
+	public static final int CONN_ANIM_RECONNECTING = 5;
+	
 	//////////////////// State Variables ////////////////////
-	public boolean sendingJoinToken;
+	public boolean buyinPending;
 	public boolean showStackTotals;
 	private int connectivityStatus;
 	public boolean wifiEnabled;
 	public String tableName;
 	public int color;
-	public int[] chipNumbers;
 	public boolean isDealer;
 	private int searchHoldoffTimer;
 	private int reconnectTimer;
@@ -57,8 +64,13 @@ public class ThisPlayer {
 	public boolean foldEnabled;
 	public MovePrompt pendingMovePrompt;
 	int chipAmount;
+	int connectionAnimationState;
 		
 	//////////////////// Screen Scale & Layout ////////////////////
+	float x;
+	float y;
+	int radiusX;
+	int radiusY;
 	float limYBetStackTop;
 	float limYBetStackBottom;
 	float limYBetStackCancel;
@@ -78,7 +90,8 @@ public class ThisPlayer {
 	public ChipStack cancellingStack;
 	public ChipStack cancelStack;
 	public Chip pickedUpChip;
-	public DPCSprite connectionBlob=new DPCSprite();
+	public DPCSprite connectionSprite=new DPCSprite();
+	public DPCSprite connectedSprite=new DPCSprite();
 	public DPCSprite dealerButton=new DPCSprite();
 	public Button checkButton;
 	
@@ -105,11 +118,10 @@ public class ThisPlayer {
 		cancelStack=new ChipStack();
 		pickedUpChip=null;
 		playerName="";
-		connectionBlob.opacity=0;
-		connectionBlob.flashVisibleTime=100;
-		connectionBlob.flashInvisibleTime=0;
-		connectionBlob.setFadeInSpeed(1);
-		connectionBlob.setFadeOutSpeed(3);
+		connectionSprite.setFrameAnimation(27,50,false,0);
+		connectionSprite.opacity=0;
+		connectedSprite.setFrameAnimation(26,40,true,0);
+		connectedSprite.opacity=0;
 		dealerButton.opacity=0;
 		checkButton=new Button(true,0,"");
 		tableName="";
@@ -117,7 +129,9 @@ public class ThisPlayer {
 	}
 	
 	//////////////////// Scale & Layout ////////////////////
-	public void setDimensions(float worldWidth_,float worldHeight_) {
+	public void setDimensions(int radiusX,int radiusY) {
+		this.radiusX=radiusX;
+		this.radiusY=radiusY;
 		mainStacks[ChipCase.CHIP_A].setMaxRenderNum(20);
 		mainStacks[ChipCase.CHIP_A].scaleLabel();
 		mainStacks[ChipCase.CHIP_B].setMaxRenderNum(20);
@@ -126,31 +140,34 @@ public class ThisPlayer {
 		mainStacks[ChipCase.CHIP_C].scaleLabel();
 		betStack.setMaxRenderNum(20);
 		betStack.scaleLabel();
-		connectionBlob.setDimensions((int)(worldHeight_*0.08f),(int)(worldHeight_*0.024f));
-		dealerButton.setDimensions((int)(worldHeight_*0.022f),(int)(worldHeight_*0.022f));
-		checkButton.setDimensions((int)(worldHeight_*0.1f),(int)(worldHeight_*0.04f));
+		connectionSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
+		connectedSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
+		//dealerButton.setDimensions((int)(radiusY*0.022f),(int)(radiusY*0.022f));
+		//checkButton.setDimensions((int)(radiusY*0.1f),(int)(radiusY*0.04f));
 	} // setDimensions(float width_,float height_)
 	
-	public void setPositions(float worldWidth_,float worldHeight_) {
-		mainStacks[ChipCase.CHIP_A].setY(worldHeight_*0.25f);
+	public void setPositions(float x,float y) {
+		mainStacks[ChipCase.CHIP_A].setY(y-radiusY*0.2f);
 		mainStacks[ChipCase.CHIP_B].setY(mainStacks[ChipCase.CHIP_A].getY());
 		mainStacks[ChipCase.CHIP_C].setY(mainStacks[ChipCase.CHIP_A].getY());
-		mainStacks[ChipCase.CHIP_A].setX(worldWidth_*0.43f);
-		mainStacks[ChipCase.CHIP_B].setX(worldWidth_*0.5f);
-		mainStacks[ChipCase.CHIP_C].setX(worldWidth_*0.57f);
-		limYBetStackTop=mWL.camPosPlayer.getY()+mWL.worldRenderer.screenHeight*0.5f;
+		int stackSpacing = (int) (radiusX*0.36f);
+		mainStacks[ChipCase.CHIP_A].setX(x-stackSpacing);
+		mainStacks[ChipCase.CHIP_B].setX(x);
+		mainStacks[ChipCase.CHIP_C].setX(x+stackSpacing);
+		limYBetStackTop=y+radiusY*0.8f;
 		limYBetStackBottom=mainStacks[ChipCase.CHIP_B].getY()+Chip.radiusY*2f;
 		limYBetStackCancel=limYBetStackBottom+Chip.radiusY*0.2f;
-		betStackOrigin.set(worldWidth_*0.5f,limYBetStackCancel+Chip.radiusY);
+		betStackOrigin.set(x,limYBetStackCancel+Chip.radiusY*0.3f);
 		betStack.setPosition(betStackOrigin.x,betStackOrigin.y,0);
-		joinTokenStop.set(worldWidth_*0.5f,worldHeight_*0.5f);
-		joinTokenStart.set(worldWidth_*0.5f,worldHeight_*0.38f);
-		winStackOrigin.set(worldWidth_*0.5f,worldHeight_*0.63f);
-		connectionBlob.setPosition(worldWidth_*0.5f,worldHeight_*0.425f);
-		yDealerButtonOffscreen=worldHeight_*0.5f;
-		yDealerButtonOnscreen=worldHeight_*0.25f;
-		dealerButton.setPosition(worldWidth_*0.39f,yDealerButtonOffscreen);
-		checkButton.setPosition(worldWidth_*0.5f,worldHeight_*0.35f);
+		//joinTokenStop.set(worldWidth_*0.5f,worldHeight_*0.5f);
+		//joinTokenStart.set(worldWidth_*0.5f,worldHeight_*0.38f);
+		winStackOrigin.set(x,y+radiusY*1.1f);
+		connectionSprite.setPosition(x,y+radiusY*0.63f);
+		connectedSprite.setPosition(x,y+radiusY*0.63f);
+		//yDealerButtonOffscreen=worldHeight_*0.5f;  
+		//yDealerButtonOnscreen=worldHeight_*0.25f;
+		//dealerButton.setPosition(worldWidth_*0.39f,yDealerButtonOffscreen);
+		//checkButton.setPosition(worldWidth_*0.5f,worldHeight_*0.35f);
 	} // setPositions(float width_,float height_)
 	
 	public void scalePositions(float scaleX_,float scaleY_) {
@@ -162,7 +179,7 @@ public class ThisPlayer {
 		if (bettingStack.size()>0) {bettingStack.scalePosition(scaleX_,scaleY_);}
 		if (cancellingStack.size()>0) {cancellingStack.scalePosition(scaleX_,scaleY_);}
 		if (cancelStack.size()>0) {cancelStack.scalePosition(scaleX_,scaleY_);}
-		connectionBlob.scalePosition(scaleX_,scaleY_);
+		//connectionBlob.scalePosition(scaleX_,scaleY_);
 	} // scalePositions(float scaleX_,float scaleY_)
 	
 	//////////////////// Controllers ////////////////////
@@ -183,11 +200,18 @@ public class ThisPlayer {
 				reconnectTimer=0;
 			}
 		}
-		connectionBlob.animate(delta);
-		checkButton.animate(delta);
-		if (sendingJoinToken) {
-			
+		connectionSprite.animate(delta);
+		if (connectionAnimationState==CONN_ANIM_FORMING) {
+			if (!connectionSprite.frameAnimationRunning) {
+				setConnectionAnimationState(CONN_ANIM_STATIC);
+			}
+		} else if (connectionAnimationState==CONN_ANIM_FORMING_ACTIVE) {
+			if (!connectionSprite.frameAnimationRunning) {
+				setConnectionAnimationState(CONN_ANIM_ACTIVE);
+			}
 		}
+		connectedSprite.animate(delta);
+		checkButton.animate(delta);
 		
 		if (isDealer) {
 			if (Math.abs(dealerButton.y-yDealerButtonOnscreen)<2) {
@@ -301,13 +325,13 @@ public class ThisPlayer {
 	} // animate(float delta)
 	
 	public void collisionDetector() {
-		if (sendingJoinToken) {
-			// TODO add logic to connect once buyin dialog offscreen
-			//if (joinToken.y>=limYBetStackTop) {
-				//sendingJoinToken=false;
-				//connectivityStatus=CONN_CONNECTING;
-				//networkInterface.requestConnect(connectingTable,mWL.game.calculateAzimuth(),chipNumbers);
-			//}
+		if (buyinPending) {
+			if (mWL.game.mFL.checkBuyinOffscreen()) {
+				buyinPending=false;
+				connectivityStatus=CONN_CONNECTING;
+				int[] chipNumbers=calculateSimpleBuyin(mWL.game.mFL.buyinDialog.getAmount());
+				networkInterface.requestConnect(connectingTable,mWL.game.calculateAzimuth(),chipNumbers);
+			}
 		}
 		if (betStack.size()>0) {
 			if (betStack.getY()>=limYBetStackTop) {
@@ -478,13 +502,13 @@ public class ThisPlayer {
 		// TODO if table status menu open will hold touch focus!
 		mWL.game.mFL.tableStatusMenu.remove();
 		mWL.game.mFL.stopWaitNextHand();
+		setConnectionAnimationState(CONN_ANIM_NONE);
 	}
 	
 	private void cancelMoveState() {
 		Logger.log(LOG_TAG,"cancelMoveState()");
 		mWL.game.mFL.stateChangeACKed();
-		connectionBlob.fadeOut();
-		connectionBlob.opacity=0;
+		// TODO change connection sprite
 		disableBet();
 		disableCheck();
 		disableFold();
@@ -502,7 +526,7 @@ public class ThisPlayer {
 		cancellingStack.clear();
 		cancelStack.clear();
 		pickedUpChip=null;
-		chipAmount=0;
+		setPlayerAmount(0);
 	}
 	
 	//////////////////// Input to Player Messages ////////////////////
@@ -530,10 +554,10 @@ public class ThisPlayer {
 		}
 	}
 	
-	public void buyinDialogDone(int[] chipNumbers) {
+	public void buyinDialogDone(boolean actionCompleted) {
 		mWL.game.mFL.stopBuyin();
-		if (chipNumbers!=null) {
-			sendJoinToken(chipNumbers);
+		if (actionCompleted) {
+			buyinPending=true;
 		} else {
 			searchHoldoff();
 		}
@@ -633,11 +657,6 @@ public class ThisPlayer {
 		removeLastFromMainStack(chip_);
 	}
 	
-	public void sendJoinToken(int[] chipNumbers) {
-		this.chipNumbers=chipNumbers;
-		sendingJoinToken=true;
-	}
-	
 	public void toggleStackTotals() {
 		showStackTotals=!showStackTotals;
 	}
@@ -667,7 +686,7 @@ public class ThisPlayer {
 				wifiOff();
 			}
 		}
-		chipAmount=calculateChipAmount();
+		setPlayerAmount(calculateChipAmount());
 	}
 	
 	public void notifyLeftPlayerPosition() {
@@ -803,14 +822,14 @@ public class ThisPlayer {
 			moveType=GameLogic.MOVE_ALL_IN;
 		}
 		sendMove(new Move(moveType,betStack.toString()));
-		chipAmount-=betStack.value();
+		setPlayerAmount(chipAmount-betStack.value());
 		betStack.clear();
 		betStack.setPosition(betStackOrigin.x,betStackOrigin.y,0);
 		disableBet();
 		disableCheck();
 		disableFold();
 		mWL.game.mFL.hideTextMessage();
-		connectionBlob.fadeOut();
+		// TODO change connection sprite
 	}
 	
 	public void doCheck() {
@@ -821,7 +840,7 @@ public class ThisPlayer {
 			disableBet();
 			disableCheck();
 			disableFold();
-			connectionBlob.fadeOut();
+			// TODO change connection sprite
 			mWL.game.mFL.hideTextMessage();
 		}
 	}
@@ -834,7 +853,7 @@ public class ThisPlayer {
 			disableBet();
 			disableCheck();
 			disableFold();
-			connectionBlob.fadeOut();
+			// TODO change connection blob
 			mWL.game.mFL.hideTextMessage();
 		}
 	}
@@ -888,12 +907,51 @@ public class ThisPlayer {
 			connectivityStatus=CONN_CONNECTED;
 			this.tableName=tableName;
 			mWL.game.mFL.stopReconnect();
-			mWL.game.mFL.showTableStatusMenu(tableName);
+			setConnectionAnimationState(CONN_ANIM_FORMING);
+			mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_ARRANGE);
+			// TODO change back button to table menu button
 			waitingOnHost=false;
 		} else {
 			if (connectivityStatus==CONN_CONNECTING) {
 				cancelBuyin();
 			}
+		}
+	}
+	
+	public void setConnectionAnimationState(int state) {
+		Logger.log(LOG_TAG,"setConnectionAnimationState("+state+")");
+		this.connectionAnimationState=state;
+		if (state==CONN_ANIM_NONE) {
+			connectionSprite.opacity = 0;
+			connectionSprite.stopFrameAnimation(true);
+			connectedSprite.opacity = 0;
+			connectedSprite.stopFlashing();
+			connectedSprite.stopFrameAnimation(true);
+		} else if (state==CONN_ANIM_FORMING) {
+			connectedSprite.opacity = 0;
+			connectedSprite.stopFlashing();
+			connectedSprite.stopFrameAnimation(true);
+			connectionSprite.opacity = 1;
+			connectionSprite.startFrameAnimation();
+		} else if (state==CONN_ANIM_FORMING_ACTIVE) {
+			//
+		} else if (state==CONN_ANIM_ACTIVE) {
+			connectionSprite.opacity = 0;
+			connectionSprite.stopFrameAnimation(true);
+			connectedSprite.opacity = 1;
+			connectedSprite.stopFlashing();
+			connectedSprite.startFrameAnimation();
+		} else if (state==CONN_ANIM_STATIC) {
+			connectionSprite.opacity = 0;
+			connectionSprite.stopFrameAnimation(true);
+			connectedSprite.opacity = 1;
+			connectedSprite.stopFlashing();
+		} else if (state==CONN_ANIM_RECONNECTING) {
+			connectionSprite.opacity = 0;
+			connectionSprite.stopFrameAnimation(true);
+			connectedSprite.stopFrameAnimation(true);
+			connectedSprite.opacity = 1;
+			connectedSprite.startFlashing();
 		}
 	}
 	
@@ -946,7 +1004,7 @@ public class ThisPlayer {
 			stake=movePrompt.stake;
 			mWL.soundFX.bellSound.play();
 			textMessage(movePrompt.message);
-			connectionBlob.fadeIn();
+			// TODO change connection sprite
 		} else {
 			mWL.game.mFL.promptStateChange(movePrompt.messageStateChange);
 			movePrompt.messageStateChange="";
@@ -972,7 +1030,7 @@ public class ThisPlayer {
 			chipCount[winStack_.get(i).chipType]++;
 			cancellingStack.add(winStack_.get(i));
 		}
-		chipAmount+=cancellingStack.value();
+		setPlayerAmount(chipAmount+cancellingStack.value());
 		if (pickedUpChip!=null) {
 			float newZ_=mainStacks[pickedUpChip.chipType].renderSize()+cancellingStack.size();
 			if (newZ_>pickedUpChip.z) {
@@ -1015,12 +1073,16 @@ public class ThisPlayer {
 
 	public void showConnection() {
 		Logger.log(LOG_TAG,"showConnection()");
-		connectionBlob.fadeIn();
+		if (connectionAnimationState==CONN_ANIM_FORMING) {
+			setConnectionAnimationState(CONN_ANIM_FORMING_ACTIVE);
+		} else {
+			setConnectionAnimationState(CONN_ANIM_ACTIVE);
+		}
 	}
 	
 	public void hideConnection() {
 		Logger.log(LOG_TAG,"hideConnection()");
-		connectionBlob.fadeOut();
+		setConnectionAnimationState(CONN_ANIM_STATIC);
 	}
 	
 	public void syncChips(int chipAmount) {
@@ -1055,6 +1117,36 @@ public class ThisPlayer {
 		connectivityStatus=CONN_IDLE;
 		searchHoldoff();
 		mWL.game.mFL.stopBuyin();
+	}
+	
+	private int[] calculateSimpleBuyin(int amount) {
+		Logger.log(LOG_TAG,"calculateSimpleBuyin("+amount+")");
+		int[] simpleBuyin = ChipCase.calculateSimplestBuild(amount);
+		if (simpleBuyin[ChipCase.CHIP_A]==0) {
+			if (simpleBuyin[ChipCase.CHIP_B]>0) {
+				int numToGain=ChipCase.values[ChipCase.CHIP_B]/ChipCase.values[ChipCase.CHIP_A];
+				simpleBuyin[ChipCase.CHIP_B]--;
+				simpleBuyin[ChipCase.CHIP_A]+=numToGain;
+			} else if (simpleBuyin[ChipCase.CHIP_C]>0) {
+				int numToGain=ChipCase.values[ChipCase.CHIP_C]/ChipCase.values[ChipCase.CHIP_B];
+				simpleBuyin[ChipCase.CHIP_C]--;
+				simpleBuyin[ChipCase.CHIP_B]+=numToGain;
+				numToGain=ChipCase.values[ChipCase.CHIP_B]/ChipCase.values[ChipCase.CHIP_A];
+				simpleBuyin[ChipCase.CHIP_B]--;
+				simpleBuyin[ChipCase.CHIP_A]+=numToGain;
+			}
+		}
+		if (simpleBuyin[ChipCase.CHIP_B]==0) {
+			if (simpleBuyin[ChipCase.CHIP_C]>0) {
+				int numToGain=ChipCase.values[ChipCase.CHIP_C]/ChipCase.values[ChipCase.CHIP_B];
+				simpleBuyin[ChipCase.CHIP_C]--;
+				simpleBuyin[ChipCase.CHIP_B]+=numToGain;
+			}
+		}
+		Logger.log(LOG_TAG," a: "+simpleBuyin[ChipCase.CHIP_A]+
+							" b: "+simpleBuyin[ChipCase.CHIP_B]+
+							" c: "+simpleBuyin[ChipCase.CHIP_C]);
+		return simpleBuyin;
 	}
 	
 }

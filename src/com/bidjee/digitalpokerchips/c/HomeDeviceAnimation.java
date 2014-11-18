@@ -32,7 +32,7 @@ public class HomeDeviceAnimation {
 	Vector3 posHostStart=new Vector3();
 	Vector3 posHostStop=new Vector3();
 	Vector3 posP1Start=new Vector3();
-	Vector3 posP1Stop=new Vector3();
+	public Vector3 posP1Stop=new Vector3();
 	Vector2 posP2Start=new Vector2();
 	Vector2 posP2Stop=new Vector2();
 	Vector2 posP3Start=new Vector2();

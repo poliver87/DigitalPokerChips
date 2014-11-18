@@ -51,7 +51,7 @@ public class HomeUIAnimation {
 	
 	public HomeUIAnimation() {
 		logoSprite.opacity=1;
-		logoSprite.setFrameAnimation(10,50,false);
+		logoSprite.setFrameAnimation(10,50,false,0);
 		helpButton=new Button(true,1,"");
 		hostButton=new Button(true,1,"Host a Game");
 		hostButton.getLabel().outline=true;

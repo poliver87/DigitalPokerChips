@@ -4,6 +4,7 @@ import java.util.Stack;
 
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
+import com.bidjee.digitalpokerchips.m.BuyinDialog;
 import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.util.Logger;
 
@@ -90,7 +91,7 @@ public class ForegroundInput implements InputProcessor {
 		if (touchFocus.size()>0) {
 			Logger.log(LOG_TAG,"backPressed() - touchFocus = "+getLastTouchFocus());
 			if (getLastTouchFocus().equals(TOUCH_BUYIN)) {
-				mFL.game.mWL.thisPlayer.buyinDialogDone(null);
+				mFL.game.mWL.thisPlayer.buyinDialogDone(false);
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				mFL.game.mWL.thisPlayer.manualConnectDialogDone(false);
 			} else if (getLastTouchFocus().equals(TOUCH_HELP_DIALOG)) {
@@ -213,6 +214,18 @@ public class ForegroundInput implements InputProcessor {
 				if (mFL.buyinDialog.closeButton.getTouchable()&&
 						mFL.buyinDialog.closeButton.pointContained(touchX, touchY)) {
 					mFL.buyinDialog.closeButton.setIsTouched(true);
+				} else if (mFL.buyinDialog.minusButton.getTouchable()&&
+						mFL.buyinDialog.minusButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.minusButton.setIsTouched(true);
+				} else if (mFL.buyinDialog.plusButton.getTouchable()&&
+						mFL.buyinDialog.plusButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.plusButton.setIsTouched(true);
+				} else if (mFL.buyinDialog.cancelButton.getTouchable()&&
+						mFL.buyinDialog.cancelButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.cancelButton.setIsTouched(true);
+				} else if (mFL.buyinDialog.okayButton.getTouchable()&&
+						mFL.buyinDialog.okayButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.okayButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
 				handled_=true;
@@ -229,10 +242,10 @@ public class ForegroundInput implements InputProcessor {
 					mFL.playerLoginDialog.facebookButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_DASHBOARD)) {
-				handled_=true;
 				if (mFL.playerDashboard.backButton.getTouchable()&&
 						mFL.playerDashboard.backButton.pointContained(touchX, touchY)) {
 					mFL.playerDashboard.backButton.setIsTouched(true);
+					handled_=true;
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				handled_=true;
@@ -411,7 +424,27 @@ public class ForegroundInput implements InputProcessor {
 			if (mFL.buyinDialog.closeButton.getIsTouched()) {
 				handled_=true;
 				mFL.buyinDialog.closeButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.buyinDialogDone(null);
+				mFL.game.mWL.thisPlayer.buyinDialogDone(false);
+			}
+			if (mFL.buyinDialog.minusButton.getIsTouched()) {
+				handled_=true;
+				mFL.buyinDialog.minusButton.setIsTouched(false);
+				mFL.buyinDialog.decreaseAmount();
+			}
+			if (mFL.buyinDialog.plusButton.getIsTouched()) {
+				handled_=true;
+				mFL.buyinDialog.plusButton.setIsTouched(false);
+				mFL.buyinDialog.increaseAmount();
+			}
+			if (mFL.buyinDialog.cancelButton.getIsTouched()) {
+				handled_=true;
+				mFL.buyinDialog.cancelButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.buyinDialogDone(false);
+			}
+			if (mFL.buyinDialog.okayButton.getIsTouched()) {
+				handled_=true;
+				mFL.buyinDialog.okayButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.buyinDialogDone(true);
 			}
 			if (mFL.playerDashboard.backButton.getIsTouched()) {
 				handled_=true;
@@ -618,6 +651,30 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				if (!mFL.buyinDialog.closeButton.pointContained(touchX, touchY)) {
 					mFL.buyinDialog.closeButton.setIsTouched(false);
+				}
+			}
+			if (mFL.buyinDialog.minusButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.buyinDialog.minusButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.minusButton.setIsTouched(false);
+				}
+			}
+			if (mFL.buyinDialog.plusButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.buyinDialog.plusButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.plusButton.setIsTouched(false);
+				}
+			}
+			if (mFL.buyinDialog.cancelButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.buyinDialog.cancelButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.cancelButton.setIsTouched(false);
+				}
+			}
+			if (mFL.buyinDialog.okayButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.buyinDialog.okayButton.pointContained(touchX, touchY)) {
+					mFL.buyinDialog.okayButton.setIsTouched(false);
 				}
 			}
 			if (mFL.playerDashboard.backButton.getIsTouched()) {

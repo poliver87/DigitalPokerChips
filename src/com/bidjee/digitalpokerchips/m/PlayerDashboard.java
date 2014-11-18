@@ -110,6 +110,7 @@ public class PlayerDashboard extends DPCSprite {
 		statusMessage.setText(message);
 		statusMessage.loadTexture();
 		statusMessage.stopFlashing();
+		statusMessage.opacity=0;
 		if (message.equals(MESSAGE_SEARCHING)) {
 			statusIconTexture="searching.png";
 			statusMessage.startFlashing();

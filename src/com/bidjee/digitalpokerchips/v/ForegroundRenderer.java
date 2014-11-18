@@ -164,7 +164,7 @@ public class ForegroundRenderer {
 		cursorTexture=manager.get("cursor.png",Texture.class);
 		
 		envelopeTexture=manager.get("envelope.png",Texture.class);
-		buyinFrameTexture=manager.get("buyin_frame.png",Texture.class);
+		buyinFrameTexture=manager.get("buyin_box.png",Texture.class);
 		buttonPlusTexture=manager.get("btn_plus.png",Texture.class);
 		buttonMinusTexture=manager.get("btn_minus.png",Texture.class);
 		buttonOkayTextureBuyin=manager.get("btn_okay_buyin.png",Texture.class);
@@ -377,6 +377,10 @@ public class ForegroundRenderer {
             batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
 		
+		if (mFL.playerDashboard!=null) {
+			renderPlayerDashboard();
+		}
+		
 		if (mFL.dialogWArrowWindow.opacity!=0) {
 			renderDialogWArrow();
 		}
@@ -384,6 +388,7 @@ public class ForegroundRenderer {
 		if (mFL.helpDialog.titleLabel.opacity!=0) {
 			renderHelpDialog();
 		}
+		
 		
 		if (mFL.playerLoginDialog.guestTitleLabel.opacity!=0) {
 			renderPlayerLoginDialog();
@@ -393,9 +398,7 @@ public class ForegroundRenderer {
 			renderBuyinDialog();
 		}
 		
-		if (mFL.playerDashboard!=null) {
-			renderPlayerDashboard();
-		}
+		
 		
 		if (mFL.manualConnectDialog.titleLabel.opacity!=0) {
 			renderManualConnectDialog();
@@ -796,11 +799,86 @@ public class ForegroundRenderer {
 				mFL.buyinDialog.y-mFL.buyinDialog.radiusY,
 				mFL.buyinDialog.radiusX*2,mFL.buyinDialog.radiusY*2,
 				0,0,582,396,false,false);
+        batch.draw(closeButtonTexture,
+				mFL.buyinDialog.closeButton.x-mFL.buyinDialog.closeButton.radiusX,
+				mFL.buyinDialog.closeButton.y-mFL.buyinDialog.closeButton.radiusY,
+				mFL.buyinDialog.closeButton.radiusX*2,mFL.buyinDialog.closeButton.radiusY*2,
+				0,0,54,54,false,false);
         batch.draw(envelopeTexture,
 				mFL.buyinDialog.envelope.x-mFL.buyinDialog.envelope.radiusX,
 				mFL.buyinDialog.envelope.y-mFL.buyinDialog.envelope.radiusY,
 				mFL.buyinDialog.envelope.radiusX*2,mFL.buyinDialog.envelope.radiusY*2,
 				0,0,110,70,false,false);
+        if (mFL.buyinDialog.buyinLabel.texture==null) {
+        	mFL.buyinDialog.buyinLabel.loadTexture();
+        }
+		int x=(int) (mFL.buyinDialog.buyinLabel.x-mFL.buyinDialog.buyinLabel.radiusX);
+		int y=(int) (mFL.buyinDialog.buyinLabel.y-mFL.buyinDialog.buyinLabel.radiusY);
+		batch.draw(mFL.buyinDialog.buyinLabel.texture,x,y,
+				0,0,mFL.buyinDialog.buyinLabel.radiusX*2,
+				mFL.buyinDialog.buyinLabel.radiusY*2);
+        batch.draw(buyinFrameTexture,
+				mFL.buyinDialog.buyinFrameSprite.x-mFL.buyinDialog.buyinFrameSprite.radiusX,
+				mFL.buyinDialog.buyinFrameSprite.y-mFL.buyinDialog.buyinFrameSprite.radiusY,
+				mFL.buyinDialog.buyinFrameSprite.radiusX*2,mFL.buyinDialog.buyinFrameSprite.radiusY*2,
+				0,0,496,152,false,false);
+        if (mFL.buyinDialog.amountTitleLabel.texture==null) {
+        	mFL.buyinDialog.amountTitleLabel.loadTexture();
+        }
+		x=(int) (mFL.buyinDialog.amountTitleLabel.x-mFL.buyinDialog.amountTitleLabel.radiusX);
+		y=(int) (mFL.buyinDialog.amountTitleLabel.y-mFL.buyinDialog.amountTitleLabel.radiusY);
+		batch.draw(mFL.buyinDialog.amountTitleLabel.texture,x,y,
+				0,0,mFL.buyinDialog.amountTitleLabel.radiusX*2,
+				mFL.buyinDialog.amountTitleLabel.radiusY*2);
+		batch.draw(buttonMinusTexture,
+				mFL.buyinDialog.minusButton.x-mFL.buyinDialog.minusButton.radiusX,
+				mFL.buyinDialog.minusButton.y-mFL.buyinDialog.minusButton.radiusY,
+				mFL.buyinDialog.minusButton.radiusX*2,mFL.buyinDialog.minusButton.radiusY*2,
+				0,0,54,54,false,false);
+		batch.draw(buttonPlusTexture,
+				mFL.buyinDialog.plusButton.x-mFL.buyinDialog.plusButton.radiusX,
+				mFL.buyinDialog.plusButton.y-mFL.buyinDialog.plusButton.radiusY,
+				mFL.buyinDialog.plusButton.radiusX*2,mFL.buyinDialog.plusButton.radiusY*2,
+				0,0,54,54,false,false);
+		batch.draw(textFieldTexture,
+				mFL.buyinDialog.amountBackground.x-mFL.buyinDialog.amountBackground.radiusX,
+				mFL.buyinDialog.amountBackground.y-mFL.buyinDialog.amountBackground.radiusY,
+				mFL.buyinDialog.amountBackground.radiusX*2,mFL.buyinDialog.amountBackground.radiusY*2,
+				0,0,366,54,false,false);
+		if (mFL.buyinDialog.amountNumberLabel.texture==null) {
+        	mFL.buyinDialog.amountNumberLabel.loadTexture();
+        }
+		x=(int) (mFL.buyinDialog.amountNumberLabel.x-mFL.buyinDialog.amountNumberLabel.radiusX);
+		y=(int) (mFL.buyinDialog.amountNumberLabel.y-mFL.buyinDialog.amountNumberLabel.radiusY);
+		batch.draw(mFL.buyinDialog.amountNumberLabel.texture,x,y,
+				0,0,mFL.buyinDialog.amountNumberLabel.radiusX*2,
+				mFL.buyinDialog.amountNumberLabel.radiusY*2);
+		batch.draw(buttonCancelTextureBuyin,
+				mFL.buyinDialog.cancelButton.x-mFL.buyinDialog.cancelButton.radiusX,
+				mFL.buyinDialog.cancelButton.y-mFL.buyinDialog.cancelButton.radiusY,
+				mFL.buyinDialog.cancelButton.radiusX*2,mFL.buyinDialog.cancelButton.radiusY*2,
+				0,0,246,54,false,false);
+		if (mFL.buyinDialog.cancelButton.getLabel().texture==null) {
+        	mFL.buyinDialog.cancelButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.buyinDialog.cancelButton.getLabel().x-mFL.buyinDialog.cancelButton.getLabel().radiusX);
+		y=(int) (mFL.buyinDialog.cancelButton.getLabel().y-mFL.buyinDialog.cancelButton.getLabel().radiusY);
+		batch.draw(mFL.buyinDialog.cancelButton.getLabel().texture,x,y,
+				0,0,mFL.buyinDialog.cancelButton.getLabel().radiusX*2,
+				mFL.buyinDialog.cancelButton.getLabel().radiusY*2);
+		batch.draw(buttonOkayTextureBuyin,
+				mFL.buyinDialog.okayButton.x-mFL.buyinDialog.okayButton.radiusX,
+				mFL.buyinDialog.okayButton.y-mFL.buyinDialog.okayButton.radiusY,
+				mFL.buyinDialog.okayButton.radiusX*2,mFL.buyinDialog.okayButton.radiusY*2,
+				0,0,246,54,false,false);
+		if (mFL.buyinDialog.okayButton.getLabel().texture==null) {
+        	mFL.buyinDialog.okayButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.buyinDialog.okayButton.getLabel().x-mFL.buyinDialog.okayButton.getLabel().radiusX);
+		y=(int) (mFL.buyinDialog.okayButton.getLabel().y-mFL.buyinDialog.okayButton.getLabel().radiusY);
+		batch.draw(mFL.buyinDialog.okayButton.getLabel().texture,x,y,
+				0,0,mFL.buyinDialog.okayButton.getLabel().radiusX*2,
+				mFL.buyinDialog.okayButton.getLabel().radiusY*2);
 	}
 
 	private void renderPlayerDashboard() {

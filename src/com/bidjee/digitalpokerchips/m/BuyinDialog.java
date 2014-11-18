@@ -5,7 +5,7 @@ import com.bidjee.digitalpokerchips.c.ForegroundLayer;
 
 public class BuyinDialog extends DPCSprite {
 	
-	public static final String BUYIN_TITLE = "BUY-IN TO ";
+	static final String BUYIN_TITLE = "Buy-In to ";
 	
 	public Button closeButton;
 	public DPCSprite envelope=new DPCSprite();
@@ -23,6 +23,9 @@ public class BuyinDialog extends DPCSprite {
 	Vector2 posOnscreen;
 	int margin;
 	
+	private int amountInterval;
+	private int amount;
+	
 	public BuyinDialog() {
 		closeButton=new Button(true,0,"");
 		buyinLabel=new TextLabel("",0,true,0,false);
@@ -32,8 +35,10 @@ public class BuyinDialog extends DPCSprite {
 		amountTitleLabel.setFontFace("coolvetica_rg.ttf");
 		amountTitleLabel.bodyColor=ForegroundLayer.goldColor;
 		minusButton=new Button(true,1,"");
+		minusButton.setTouchAreaMultiplier(1.5f);
 		plusButton=new Button(true,1,"");
-		amountNumberLabel=new TextLabel("",0.03f,true,0,false);
+		plusButton.setTouchAreaMultiplier(1.5f);
+		amountNumberLabel=new TextLabel("",0,false,0,false);
 		amountNumberLabel.setFontFace("coolvetica_rg.ttf");
 		amountNumberLabel.bodyColor=ForegroundLayer.navyBlueColor;
 		cancelButton=new Button(true,1,"CANCEL");
@@ -54,21 +59,21 @@ public class BuyinDialog extends DPCSprite {
 		
 		closeButton.setDimensions((int)(radiusY*0.15f),(int)(radiusY*0.15f));
 		
-		envelope.setDimensions((int)(radiusY*0.2f),(int)(radiusY*0.13f));
-		buyinLabel.setMaxDimensions((int)(radiusX*0.6f),(int)(radiusY*0.11f));
+		envelope.setDimensions((int)(radiusY*0.18f*1.5f),(int)(radiusY*0.18f)); // 0.13 to 0.18
+		buyinLabel.setMaxDimensions((int)(radiusX*0.8f),(int)(radiusY*0.3f));
 		buyinLabel.setTextSizeToMax(BUYIN_TITLE+"THEBESTGAMEEVA");
 		
-		buyinFrameSprite.setDimensions((int)(radiusX*0.7f),(int)(radiusY*0.3f));
-		amountTitleLabel.setMaxDimensions((int)(radiusX*0.6f),(int)(radiusY*0.11f));
+		buyinFrameSprite.setDimensions((int)(radiusX*0.85f),(int)(radiusY*0.3f)); // 0.7 to 0.85
+		amountTitleLabel.setMaxDimensions((int)(radiusX*0.6f),(int)(radiusY*0.08f)); //0.1 to 0.08
 		amountTitleLabel.setTextSizeToMax();
 		minusButton.setDimensions((int)(radiusY*0.13f),(int)(radiusY*0.13f));
 		plusButton.setDimensions((int)(radiusY*0.13f),(int)(radiusY*0.13f));
-		amountBackground.setDimensions((int)(radiusX*0.5f),(int)(radiusY*0.13f));
-		amountNumberLabel.setMaxDimensions((int)(radiusX*0.4f),(int)(radiusY*0.13f));
-		amountNumberLabel.setTextSizeToMax("10000000");
+		amountBackground.setDimensions((int)(radiusX*0.53f),(int)(radiusY*0.13f)); // 0.5 to 0.53
+		amountNumberLabel.setMaxDimensions((int)(radiusX*0.4f),(int)(radiusY*0.1f));
+		amountNumberLabel.setTextSizeToMax("10000000000");
 		
-		cancelButton.setDimensions((int)(radiusX*0.2f),(int)(radiusY*0.13f));
-		okayButton.setDimensions((int)(radiusX*0.2f),(int)(radiusY*0.13f));
+		cancelButton.setDimensions((int)(radiusX*0.4f),(int)(radiusY*0.15f),0.7f,0.7f); //0.2 to 0.4 / 0.13 to 0.15
+		okayButton.setDimensions((int)(radiusX*0.4f),(int)(radiusY*0.15f),0.7f,0.7f);
 
 	}
 	
@@ -76,19 +81,19 @@ public class BuyinDialog extends DPCSprite {
 	public void setPosition(float x,float y) {
 		super.setPosition(x, y);
 		closeButton.setPosition(x+radiusX*0.96f,y+radiusY*0.78f);
-		envelope.setPosition(x-radiusX*0.8f,y+radiusY*0.8f);
+		envelope.setPosition(x,y+radiusY*0.78f);
 		// left aligned
-		buyinLabel.setPosition(envelope.x+envelope.radiusX+margin,envelope.y);
+		buyinLabel.setPosition(x,y+radiusY*0.47f);
 		
 		buyinFrameSprite.setPosition(x,y);
 		amountTitleLabel.setPosition(x,y+radiusY*0.2f);
-		minusButton.setPosition(x-radiusX*0.5f,y-radiusY*0.78f);
-		plusButton.setPosition(x+radiusX*0.5f,minusButton.y);
+		minusButton.setPosition(x-radiusX*0.65f,y-radiusY*0.05f); // 0.6 to 0.65 / 0.1 to 0.05
+		plusButton.setPosition(x+radiusX*0.65f,minusButton.y);
 		amountBackground.setPosition(x,minusButton.y);
 		amountNumberLabel.setPosition(x,minusButton.y);
 		
-		cancelButton.setPosition(x-radiusX*0.5f,y-radiusY*0.7f);
-		okayButton.setPosition(x+radiusX*0.5f,cancelButton.y);
+		cancelButton.setPosition(x-radiusX*0.45f,y-radiusY*0.55f); //0.7 to 55
+		okayButton.setPosition(x+radiusX*0.45f,cancelButton.y);
 	}
 	
 	public void setPositions(float xOffscreen,float yOffscreen,float xOnscreen,float yOnscreen) {		
@@ -106,7 +111,13 @@ public class BuyinDialog extends DPCSprite {
 		super.animate(delta);
 	}
 	
-	public void show() {
+	public void show(String tableName,int[] chipValues) {
+		setTableName(tableName);
+		int defaultBuyin = 8*chipValues[ChipCase.CHIP_A]+
+				4*chipValues[ChipCase.CHIP_B]+
+				2*chipValues[ChipCase.CHIP_C];
+		amountInterval = chipValues[ChipCase.CHIP_A];
+		setAmount(defaultBuyin);
 		closeButton.opacity=1;
 		setPosition(posOffscreen);
 		this.setDest(posOnscreen);
@@ -125,6 +136,32 @@ public class BuyinDialog extends DPCSprite {
 		plusButton.setTouchable(false);
 		cancelButton.setTouchable(false);
 		okayButton.setTouchable(false);
+	}
+	
+	public void increaseAmount() {
+		setAmount(amount+amountInterval);
+	}
+	
+	public void decreaseAmount() {
+		if (amount-amountInterval>0) {
+			setAmount(amount-amountInterval);
+		}
+	}
+	
+	private void setTableName(String tableName) {
+		buyinLabel.setText(BUYIN_TITLE+tableName+" ?");
+		buyinLabel.loadTexture();
+	}
+	
+	private void setAmount(int amount) {
+		this.amount = amount; 
+		amountNumberLabel.setText("$ "+Integer.toString(amount));
+		amountNumberLabel.loadTexture();
+		
+	}
+	
+	public int getAmount() {
+		return amount;
 	}
 
 }
