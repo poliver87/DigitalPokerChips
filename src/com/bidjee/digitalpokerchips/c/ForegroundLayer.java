@@ -857,25 +857,6 @@ public class ForegroundLayer {
 	public void hideTextMessage() {
 		Logger.log(LOG_TAG,"hideTextMessage()");
 	}
-
-	public void promptStateChange(String messageStateChange) {
-		Logger.log(LOG_TAG,"promptStateChange("+messageStateChange+")");
-
-		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
-	}
-
-	public void stateChangeACKed() {
-		Logger.log(LOG_TAG,"stateChangeACKed()");
-		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
-	}
-	
-	public void pauseStateChangePrompt() {
-		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
-	}
-	
-	public void resumeStateChangePrompt() {
-		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
-	}
 	
 	public void startReconnect() {
 		Logger.log(LOG_TAG,"startReconnect()");
@@ -887,11 +868,6 @@ public class ForegroundLayer {
 		Logger.log(LOG_TAG,"stopReconnect()");
 		reconnect1Label.fadeOut();
 		reconnect2Label.fadeOut();
-	}
-	
-	public void startWaitNextHand() {
-		Logger.log(LOG_TAG,"startWaitNextHand()");
-		waitNextHandLabel.startFlashing();
 	}
 	
 	public void stopWaitNextHand() {

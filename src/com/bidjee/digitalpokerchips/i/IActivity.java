@@ -12,4 +12,6 @@ public interface IActivity {
 	public IDPCSprite getHelpWebView();
 	public int getScreenOrientation();
 	public void performFacebookClick();
+	public void brightenScreen();
+	public void dimScreen();
 }

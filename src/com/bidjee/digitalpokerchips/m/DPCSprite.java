@@ -36,6 +36,7 @@ public class DPCSprite {
 	private float xSineAmp;
 	private float ySineAmp;
 	public float distanceMargin;
+	Vector2 velocity=new Vector2();
 	int moveHoldoffTimer;
 	int moveHoldoffDuration;
 	int moveFunction;
@@ -182,6 +183,11 @@ public class DPCSprite {
 	
 	public void setMoveFunc(int moveFunc) {
 		this.setMoveFunc(moveFunc,this.distanceMargin,this.moveSpeed,this.gravityAcceleration,this.elasticity);
+	}
+	
+	public void setMoveLinear(Vector2 velocity) {
+		this.moveFunction=MOVE_LINEAR;
+		this.velocity=velocity;
 	}
 	
 	public void setFrameAnimation(int numFrames,int frameDuration,boolean loop,int defaultFrame) {
@@ -344,7 +350,15 @@ public class DPCSprite {
 						this.setPosition(xNew,yNew);
 					}
 				} else if (moveFunction==MOVE_LINEAR) {
-					
+					float xNext=x+delta*velocity.x;
+					float yNext=y+delta*velocity.y;
+					if (Math.abs(x-xDest)<Math.abs(xNext-xDest)||
+							Math.abs(y-yDest)<Math.abs(yNext-xDest)) {
+						atDest=true;
+					} else {
+						x=xNext;
+						y=yNext;
+					}
 				} else if (moveFunction==MOVE_BOUNCE) {
 					float yf=y0+v0*(flightTime+delta)+0.5f*gravityAcceleration*(flightTime+delta)*(flightTime+delta);
 					if (yf>yDest) {

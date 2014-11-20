@@ -2,18 +2,18 @@ package com.bidjee.digitalpokerchips.m;
 
 public class MovePrompt {
 	
-	public int stake;
-	public boolean foldEnabled;
-	public String message;
-	public String messageStateChange;
+	public static final int BLINDS_NONE = 0;
+	public static final int BLINDS_SMALL = 1;
+	public static final int BLINDS_BIG = 2;
 	
+	public int stake;
+	public int blinds;
+	 	
 	public MovePrompt() {	}
 	
-	public MovePrompt(int stake,boolean foldEnabled,String message,String messageStateChange) {
+	public MovePrompt(int stake,int blinds) {
 		this.stake=stake;
-		this.foldEnabled=foldEnabled;
-		this.message=message;
-		this.messageStateChange=messageStateChange;
+		this.blinds=blinds;
 	}
 	
 }

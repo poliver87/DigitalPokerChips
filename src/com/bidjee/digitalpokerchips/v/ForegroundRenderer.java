@@ -12,7 +12,6 @@ import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.ForegroundLayer;
 import com.bidjee.digitalpokerchips.m.Chip;
 import com.bidjee.digitalpokerchips.m.ChipCase;
-import com.bidjee.digitalpokerchips.m.ChipStack;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.TableStatusMenu;
 import com.bidjee.digitalpokerchips.m.TextLabel;
@@ -73,6 +72,7 @@ public class ForegroundRenderer {
 	Texture dashboardIdTexture;
 	Texture dashboardStatusTexture;
 	Texture backButtonTexture;
+	Texture bellButtonTexture;
 	
 	TextureRegion blackRegion;
 	TextureRegion blackHoleRegion;
@@ -174,6 +174,7 @@ public class ForegroundRenderer {
 		dashboardIdTexture=manager.get("dashboard_id.png",Texture.class);
 		dashboardStatusTexture=manager.get("dashboard_status.png",Texture.class);
 		backButtonTexture=manager.get("btn_back.png",Texture.class);
+		bellButtonTexture=manager.get("btn_bell.png",Texture.class);
 		
 		buttonBlueTexture=manager.get("button_blue.png",Texture.class);
 		buttonOkTexture=manager.get("btn_okay.png",Texture.class);
@@ -308,10 +309,6 @@ public class ForegroundRenderer {
         }
         if (mFL.enterTableNameDoneButton.opacity!=0) {
         	renderEnterTableName();
-        }
-        
-        if (mFL.wifiButton.opacity!=0&&mFL.wifiLabel.opacity!=0) {
-        	renderNoWifi();
         }
         
         if (mFL.valueUpArrows!=null&&mFL.valueUpArrows[0]!=null&&mFL.valueUpArrows[0].opacity!=0) {
@@ -589,23 +586,6 @@ public class ForegroundRenderer {
         batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 	}
 	
-	public void renderNoWifi() {
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,mFL.wifiButton.opacity);
-		batch.draw(wifiRedTexture,
-				mFL.wifiButton.x-mFL.wifiButton.radiusX,
-				mFL.wifiButton.y-mFL.wifiButton.radiusY,
-				mFL.wifiButton.radiusX*2,mFL.wifiButton.radiusY*2,
-				0,0,128,128, false,false);
-		batch.draw(mFL.wifiLabel.texture,
-				mFL.wifiLabel.x-mFL.wifiLabel.radiusX,
-				mFL.wifiLabel.y-mFL.wifiLabel.radiusY,
-				mFL.wifiLabel.radiusX*2,mFL.wifiLabel.radiusY*2,
-				0,0,mFL.wifiLabel.radiusX*2,mFL.wifiLabel.radiusY*2,false,false);
-		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-	}
-	
 	private void renderDialogWArrow() {
 		alphaShader=batch.getColor();
 		batch.setColor(alphaShader.r,alphaShader.g,
@@ -859,6 +839,17 @@ public class ForegroundRenderer {
 		}
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.playerDashboard.winLabel.opacity);
+		if (mFL.playerDashboard.winLabel.texture!=null) {
+			x=(int) (mFL.playerDashboard.winLabel.x-mFL.playerDashboard.winLabel.radiusX);
+			y=(int) (mFL.playerDashboard.winLabel.y-mFL.playerDashboard.winLabel.radiusY);
+			batch.draw(mFL.playerDashboard.winLabel.texture,x,y,
+					0,0,mFL.playerDashboard.winLabel.radiusX*2,
+					mFL.playerDashboard.winLabel.radiusY*2);
+		}
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
         		alphaShader.b,mFL.playerDashboard.statusMessage.opacity);
 		if (!mFL.playerDashboard.statusIconTexture.equals("")) {
 			x=(int) (mFL.playerDashboard.statusIcon.x-mFL.playerDashboard.statusIcon.radiusX);
@@ -876,11 +867,18 @@ public class ForegroundRenderer {
 					0,0,mFL.playerDashboard.statusMessage.radiusX*2,
 					mFL.playerDashboard.statusMessage.radiusY*2);
 		}
-		batch.setColor(alphaShader);
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		batch.draw(backButtonTexture,mFL.playerDashboard.backButton.x-mFL.playerDashboard.backButton.radiusX,
 				mFL.playerDashboard.backButton.y-mFL.playerDashboard.backButton.radiusY,
 				mFL.playerDashboard.backButton.radiusX*2,mFL.playerDashboard.backButton.radiusY*2,
 				0,0,238,94,false,false);
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.playerDashboard.bellButton.opacity);
+		batch.draw(bellButtonTexture,mFL.playerDashboard.bellButton.x-mFL.playerDashboard.bellButton.radiusX,
+				mFL.playerDashboard.bellButton.y-mFL.playerDashboard.bellButton.radiusY,
+				mFL.playerDashboard.bellButton.radiusX*2,mFL.playerDashboard.bellButton.radiusY*2,
+				0,0,70,78,false,false);
+		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 	}
 	
 	private final void renderBetTotalDialog() {

@@ -30,7 +30,6 @@ public class ForegroundInput implements InputProcessor {
 	public static final String TOUCH_TUTORIAL_ARRANGEMENT = "TOUCH_TUTORIAL_ARRANGEMENT";
 	public static final String TOUCH_LOBBY = "TOUCH_LOBBY";
 	public static final String TOUCH_LOBBY_LOADED = "TOUCH_LOBBY_LOADED";
-	public static final String TOUCH_PLAYER_STATE_CHANGE = "TOUCH_PLAYER_STATE_CHANGE";
 	public static final String TOUCH_NO_WIFI = "TOUCH_NO_WIFI";
 	public static final String TOUCH_TABLE_GAMEPLAY = "TOUCH_TABLE_GAMEPLAY";
 	public static final String TOUCH_AUTOSAVE_DIALOG = "TOUCH_AUTOSAVE_DIALOG";
@@ -107,8 +106,6 @@ public class ForegroundInput implements InputProcessor {
 				mFL.tableStatusMenu.close();
 			} else if (getLastTouchFocus().equals(TOUCH_LOAD_DIALOG)) {
 				mFL.closeLoadDialog();
-			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_STATE_CHANGE)) {
-				mFL.game.mWL.thisPlayer.stateChangeACKed();
 			} else if (getLastTouchFocus().equals(TOUCH_TUTORIAL_ARRANGEMENT)) {
 				mFL.stopTutorialArrangement();
 			} else if (getLastTouchFocus().equals(TOUCH_BOOT_DIALOG)) {
@@ -126,9 +123,12 @@ public class ForegroundInput implements InputProcessor {
 	public boolean keyUp(int keycode) {
 		return false;
 	}
-
+	
 	@Override
 	public boolean touchDown(int screenX,int screenY,int pointer,int button) {
+
+		mFL.game.activity.brightenScreen();
+
 		boolean handled_=false;
 		float touchX=screenX;
 		float touchY=mFL.foregroundRenderer.yViewToWorld(screenY);
@@ -300,6 +300,10 @@ public class ForegroundInput implements InputProcessor {
 						mFL.playerDashboard.backButton.pointContained(touchX, touchY)) {
 					mFL.playerDashboard.backButton.setIsTouched(true);
 					handled_=true;
+				} else if (mFL.playerDashboard.bellButton.getTouchable()&&
+						mFL.playerDashboard.bellButton.pointContained(touchX, touchY)) {
+					mFL.playerDashboard.bellButton.setIsTouched(true);
+					handled_=true;
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_TABLE_STATUS)) {
 				if (mFL.tableStatusMenu.pointContained(touchX,touchY)||mFL.tableStatusMenu.handle.pointContained(touchX,touchY)) {
@@ -330,9 +334,6 @@ public class ForegroundInput implements InputProcessor {
 					handled_=true;
 					mFL.gotoGameButton.setIsTouched(true);
 				}
-			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_STATE_CHANGE)) {
-				handled_=true;
-				mFL.game.mWL.thisPlayer.stateChangeACKed();
 			} else if (getLastTouchFocus().equals(TOUCH_NO_WIFI)) {
 				if (mFL.wifiButton.getTouchable()&&mFL.wifiButton.pointContained(touchX, touchY)) {
 					handled_=true;
@@ -447,6 +448,11 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				mFL.playerDashboard.backButton.setIsTouched(false);
 				mFL.game.mWL.navigateBack();
+			}
+			if (mFL.playerDashboard.bellButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerDashboard.bellButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.bellButtonPressed();
 			}
 			if (mFL.wifiButton.getIsTouched()) {
 				handled_=true;
@@ -678,6 +684,12 @@ public class ForegroundInput implements InputProcessor {
 				handled_=true;
 				if (!mFL.playerDashboard.backButton.pointContained(touchX, touchY)) {
 					mFL.playerDashboard.backButton.setIsTouched(false);
+				}
+			}
+			if (mFL.playerDashboard.bellButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.playerDashboard.bellButton.pointContained(touchX, touchY)) {
+					mFL.playerDashboard.bellButton.setIsTouched(false);
 				}
 			}
 			if (mFL.enterNameDoneButton.getIsTouched()) {
