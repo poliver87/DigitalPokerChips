@@ -20,6 +20,7 @@ public class GameLogic {
 	public static final String STATE_NEXT_BET="STATE_NEXT_BET";
 	public static final String STATE_WAITING_BET="STATE_WAITING_BET";
 	public static final String STATE_END_ROUND="STATE_END_ROUND";
+	public static final String STATE_WAIT_DEAL_PROMPT="STATE_WAIT_DEAL_PROMPT";
 	public static final String STATE_FORM_POT="STATE_FORM_POT";
 	public static final String STATE_WAIT_POOL_STACKS="STATE_WAIT_POOL_STACKS";
 	public static final String STATE_FADEOUT_POT="STATE_FADEOUT_POT";
@@ -60,6 +61,7 @@ public class GameLogic {
 	boolean openingBet;
 	boolean waitingBuyins;
 	boolean waitingForBet;
+	boolean waitingDealPrompt;
 	boolean waitingSave;
 	
 	public GameLogic(Table table) {
@@ -146,29 +148,29 @@ public class GameLogic {
 					if (table.seats[i].player!=null)
 						table.seats[i].player.hasBet=false;
 				}
-				String dealerMessage="Deal ";
 				switch (dealStage) {
 				case DEAL_PRE_FLOP :
 		    		dealStage=DEAL_FLOP;
-		    		dealerMessage+=FLOP_STRING;
 		    		Logger.log(LOG_TAG,"*** FLOP ***");
 					break;
 				case DEAL_FLOP:
 					dealStage=DEAL_TURN;
-					dealerMessage+=TURN_STRING;
 					Logger.log(LOG_TAG,"*** TURN ***");
 					break;
 				case DEAL_TURN:
 					dealStage=DEAL_RIVER;
-					dealerMessage+=RIVER_STRING;
 					Logger.log(LOG_TAG,"*** RIVER ***");
 					break;
 				default:
 					break;
 				} // end switch (dealStage)
 				table.enablePotArrows();
-				table.promptDealer(dealer,dealerMessage);
-				openingBet=true;
+				table.promptDealer(dealer,dealStage);
+				waitingDealPrompt=true;
+				setGameState(STATE_WAIT_DEAL_PROMPT);
+			}
+		} else if (state.equals(STATE_WAIT_DEAL_PROMPT)) {
+			if (!waitingDealPrompt) {
 				setGameState(STATE_NEXT_BET);
 			}
 		} else if (state.equals(STATE_PROCESS_POTS)) {
@@ -369,41 +371,25 @@ public class GameLogic {
 		MovePrompt thisMovePrompt=new MovePrompt();
 		if (!smallBlindsIn) {
 			thisMovePrompt.stake=1;
-			thisMovePrompt.foldEnabled=false;
-			thisMovePrompt.message="Small Blinds";
-			thisMovePrompt.messageStateChange="";
+			thisMovePrompt.blinds=MovePrompt.BLINDS_SMALL;
 			table.mWL.game.mFL.blindsInLabel.startFlashing();
 		} else if (!bigBlindsIn) {
 			thisMovePrompt.stake=Math.max(currStake,1);
-			thisMovePrompt.foldEnabled=false;
-			thisMovePrompt.message="Big Blinds";
-			thisMovePrompt.messageStateChange="";
+			thisMovePrompt.blinds=MovePrompt.BLINDS_BIG;
 		} else if (openingBet) {
-			thisMovePrompt.messageStateChange="Open ";
+			thisMovePrompt.blinds=MovePrompt.BLINDS_NONE;
 			if (dealStage==DEAL_FLOP) {
-				thisMovePrompt.messageStateChange+=FLOP_STRING;
 				table.mWL.game.mFL.flopLabel.fadeIn();
 			} else if (dealStage==DEAL_TURN) {
-				thisMovePrompt.messageStateChange+=TURN_STRING;
 				table.mWL.game.mFL.turnLabel.fadeIn();
 			} else if (dealStage==DEAL_RIVER) {
-				thisMovePrompt.messageStateChange+=RIVER_STRING;
 				table.mWL.game.mFL.riverLabel.fadeIn();
 			}
-			thisMovePrompt.messageStateChange+=" Betting";
 			thisMovePrompt.stake=0;
-			thisMovePrompt.foldEnabled=true;
-			thisMovePrompt.message="Check or Bet";
 		} else {
+			thisMovePrompt.blinds=MovePrompt.BLINDS_NONE;
 			int amountToCall=currStake-table.seats[currBetter].player.betStack.value();
 			thisMovePrompt.stake=amountToCall;
-			thisMovePrompt.foldEnabled=true;
-			if (amountToCall==0) {
-				thisMovePrompt.message="Check or Bet";
-			} else {
-				thisMovePrompt.message=amountToCall+" to Call";
-			}
-			thisMovePrompt.messageStateChange="";
 		}
 		table.promptMove(currBetter,thisMovePrompt);
 		waitingForBet=true;
@@ -717,6 +703,10 @@ public class GameLogic {
 		} else {
 			return false;
 		}
+	}
+	
+	public void dealPromptDone() {
+		waitingDealPrompt=false;
 	}
 
 }

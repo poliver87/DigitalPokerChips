@@ -60,6 +60,8 @@ public class Table {
 	
 	public static final String TABLE_NAME_DEFAULT = "MyTable";
 	
+	static final int DEAL_PROMPT_DURATION = 5000;
+	
 	//////////////////// State Variables ////////////////////
 	boolean wifiEnabled;
 	int winLabelTimer;
@@ -73,6 +75,8 @@ public class Table {
 	public int bootDialogPlayer=-1;
 	public int saveSlot;
 	boolean gameCanStart;
+	long dealPromptTimer;
+	boolean timeDealPrompt;
 	
 	//////////////////// Models ////////////////////
 	public GameLogic gameLogic;
@@ -353,6 +357,13 @@ public class Table {
 			for (int seat=0;seat<Table.NUM_SEATS;seat++) {
 				if (seats[seat].player!=null) {
 					seats[seat].player.animate(delta);
+				}
+			}
+			if (timeDealPrompt) {
+				dealPromptTimer+=delta*1000;
+				if (dealPromptTimer>DEAL_PROMPT_DURATION) {
+					timeDealPrompt=false;
+					gameLogic.dealPromptDone();
 				}
 			}
 			if (animationState==ANIM_BETTING) {
@@ -1047,7 +1058,7 @@ public class Table {
 	public void sendSetupInfo(Player player) {
 		Logger.log(LOG_TAG,"sendSetupInfo("+player.name.getText()+")");
 		networkInterface.setColor(player.name.getText(),player.color);
-		networkInterface.sendChips(player.name.getText(),player.winStack.toString());
+		networkInterface.sendChipsBuyin(player.name.getText(),player.winStack.toString());
 		player.hasBoughtIn=true;
 		player.sentStartStack();
 		if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
@@ -1066,25 +1077,32 @@ public class Table {
 	}
 	
 	public void promptMove(int currBetter,MovePrompt movePrompt) {
-		Logger.log(LOG_TAG,"promptMove("+currBetter+","+movePrompt.stake+","+movePrompt.foldEnabled+","+movePrompt.message+","+movePrompt.messageStateChange+")");
+		Logger.log(LOG_TAG,"promptMove("+currBetter+","+movePrompt.stake+","+movePrompt.blinds+")");
 		networkInterface.promptMove(seats[currBetter].player.name.getText(),movePrompt,seats[currBetter].player.chipAmount);
 		seats[currBetter].player.name.fadeIn();
 		setConnectionShowing(seats[currBetter].player,true);
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&i!=currBetter) {
-				networkInterface.enableNudge(seats[i].player.name.getText(),seats[currBetter].player.name.getText());
+				networkInterface.notifyPlayerWaitBet(seats[i].player.name.getText(),seats[currBetter].player.name.getText());
 			}
 		}
 	}
 	
-	public void promptDealer(int dealer,String dealerMessage) {
-		Logger.log(LOG_TAG,"promptDealer("+dealer+","+dealerMessage+")");
-		networkInterface.sendTextMessage(seats[dealer].player.name.getText(),dealerMessage);
+	public void promptDealer(int dealer,int dealStage) {
+		Logger.log(LOG_TAG,"promptDealer("+dealer+","+dealStage+")");
+		networkInterface.promptDealer(seats[dealer].player.name.getText(),dealStage);
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null&&i!=dealer) {
+				networkInterface.notifyPlayerWaitDealer(seats[i].player.name.getText(),seats[dealer].player.name.getText(),dealStage);
+			}
+		}
+		timeDealPrompt=true;
+		dealPromptTimer=0;
 	}
 	
 	public void sendWinnings(int player,ChipStack winStack) {
 		Logger.log(LOG_TAG,"sendWinnings("+player+","+winStack.value());
-		networkInterface.sendChips(seats[player].player.name.getText(),winStack.toString());
+		networkInterface.sendChipsWin(seats[player].player.name.getText(),winStack.toString());
 		seats[player].player.chipAmount+=seats[player].player.winStack.value();
 		seats[player].player.resetWinStack();
 		syncAllTableStatusMenu();
@@ -1135,7 +1153,8 @@ public class Table {
 	//////////////////////////////////////////////////////////////////////////////	
 	
 	public void moveRxd(String playerName,int move,String chipString) {
-		networkInterface.disableNudge();
+		
+		// TODO maybe revoke belling for this player 
 		int moveRxdPlayer=getSeatFromPlayerName(playerName);
 		seats[moveRxdPlayer].player.name.fadeOut();
 		setConnectionShowing(seats[moveRxdPlayer].player,false);
@@ -1258,6 +1277,7 @@ public class Table {
 			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
 				seats[i].player.name.fadeIn();
 				setConnectionShowing(seats[i].player,true);
+				networkInterface.promptShowCards(seats[i].player.name.getText());
 			}
 		}
 	}

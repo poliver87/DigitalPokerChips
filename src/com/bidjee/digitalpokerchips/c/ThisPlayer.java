@@ -962,28 +962,21 @@ public class ThisPlayer {
 	}
 	
 	public void promptMove(MovePrompt movePrompt) {
-		Logger.log(LOG_TAG,"promptMove("+betStack+","+movePrompt.foldEnabled+","+movePrompt.message+")");
-		if (movePrompt.messageStateChange.equals("")) {
-			if (movePrompt.foldEnabled) {
-				enableFold();
-			}
-			if (movePrompt.stake==0) {
-				enableCheck();
-				if (betStack.size()>0) {
-					checkButton.setTouchable(false);
-					checkButton.fadeOut();
-				}
-			}
-			enableBet();
-			stake=movePrompt.stake;
-			mWL.soundFX.bellSound.play();
-			textMessage(movePrompt.message);
-			connectionBlob.fadeIn();
-		} else {
-			mWL.game.mFL.promptStateChange(movePrompt.messageStateChange);
-			movePrompt.messageStateChange="";
-			pendingMovePrompt=movePrompt;
+		Logger.log(LOG_TAG,"promptMove("+betStack+","+movePrompt.blinds+")");
+		if (movePrompt.blinds==MovePrompt.BLINDS_NONE) {
+			enableFold();
 		}
+		if (movePrompt.stake==0) {
+			enableCheck();
+			if (betStack.size()>0) {
+				checkButton.setTouchable(false);
+				checkButton.fadeOut();
+			}
+		}
+		enableBet();
+		stake=movePrompt.stake;
+		mWL.soundFX.bellSound.play();
+		connectionBlob.fadeIn();
 	}
 	
 	public void cancelMove() {
