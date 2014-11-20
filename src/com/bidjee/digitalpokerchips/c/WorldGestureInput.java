@@ -40,7 +40,7 @@ public class WorldGestureInput implements GestureListener {
 				float toBetStackAngle=toBetStack.angle();
 				float deltaAngle=Math.abs(toBetStackAngle-flingAngle);
 				deltaAngle=deltaAngle>180?360-deltaAngle:deltaAngle;
-				if (deltaAngle<30) {
+				if (deltaAngle<70) {
 					consumed=true;
 					mWL.thisPlayer.pickedUpChip.isTouched=false;
 					mWL.thisPlayer.doPickedUpChipFlung();

@@ -323,6 +323,7 @@ public class DPCGame extends Game {
 		manager.load("btn_back.png",Texture.class,tParam);
 		manager.load("searching.png",Texture.class,tParam);
 		manager.load("arrange.png",Texture.class,tParam);
+		manager.load("dealer_icon.png",Texture.class,tParam);
 		
 		manager.load("cancel_button.png",Texture.class,tParam);
 		manager.load("table_highlight.png",Texture.class,tParam);

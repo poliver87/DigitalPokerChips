@@ -3,6 +3,7 @@ package com.bidjee.digitalpokerchips.c;
 import java.util.ArrayList;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.i.IPlayerNetwork;
@@ -17,6 +18,7 @@ import com.bidjee.digitalpokerchips.m.Move;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.PlayerDashboard;
 import com.bidjee.digitalpokerchips.m.PlayerEntry;
+import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.util.Logger;
 
 public class ThisPlayer {
@@ -25,6 +27,8 @@ public class ThisPlayer {
 	
 	//////////////////// Constants ////////////////////
 	static final int[] defaultChipNums={0,0,0};
+	
+	static final Color blackColor = new Color(0,0,0,1);
 	
 	public static final int DURATION_SEARCH_HOLDOFF = 2000;
 	static final int RECONNECT_INTERVAL = 3000;
@@ -85,6 +89,7 @@ public class ThisPlayer {
 	String playerName;
 	public DiscoveredTable connectingTable;
 	public ChipStack[] mainStacks;
+	
 	public ChipStack bettingStack;
 	public ChipStack betStack;
 	public ChipStack cancellingStack;
@@ -138,22 +143,25 @@ public class ThisPlayer {
 		mainStacks[ChipCase.CHIP_B].scaleLabel();
 		mainStacks[ChipCase.CHIP_C].setMaxRenderNum(20);
 		mainStacks[ChipCase.CHIP_C].scaleLabel();
+		
 		betStack.setMaxRenderNum(20);
 		betStack.scaleLabel();
 		connectionSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
 		connectedSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
-		//dealerButton.setDimensions((int)(radiusY*0.022f),(int)(radiusY*0.022f));
-		//checkButton.setDimensions((int)(radiusY*0.1f),(int)(radiusY*0.04f));
+		dealerButton.setDimensions((int)(radiusY*0.15f),(int)(radiusY*0.15f));
+		checkButton.setDimensions((int)(radiusY*0.3f*2f),(int)(radiusY*0.3f));
 	} // setDimensions(float width_,float height_)
 	
 	public void setPositions(float x,float y) {
-		mainStacks[ChipCase.CHIP_A].setY(y-radiusY*0.2f);
-		mainStacks[ChipCase.CHIP_B].setY(mainStacks[ChipCase.CHIP_A].getY());
-		mainStacks[ChipCase.CHIP_C].setY(mainStacks[ChipCase.CHIP_A].getY());
-		int stackSpacing = (int) (radiusX*0.36f);
+		float yStacks = y-radiusY*0.2f;
+		mainStacks[ChipCase.CHIP_A].setY(yStacks);
+		mainStacks[ChipCase.CHIP_B].setY(yStacks);
+		mainStacks[ChipCase.CHIP_C].setY(yStacks);
+		int stackSpacing = (int) (radiusX*0.30f);
 		mainStacks[ChipCase.CHIP_A].setX(x-stackSpacing);
 		mainStacks[ChipCase.CHIP_B].setX(x);
 		mainStacks[ChipCase.CHIP_C].setX(x+stackSpacing);
+
 		limYBetStackTop=y+radiusY*0.8f;
 		limYBetStackBottom=mainStacks[ChipCase.CHIP_B].getY()+Chip.radiusY*2f;
 		limYBetStackCancel=limYBetStackBottom+Chip.radiusY*0.2f;
@@ -164,10 +172,10 @@ public class ThisPlayer {
 		winStackOrigin.set(x,y+radiusY*1.1f);
 		connectionSprite.setPosition(x,y+radiusY*0.63f);
 		connectedSprite.setPosition(x,y+radiusY*0.63f);
-		//yDealerButtonOffscreen=worldHeight_*0.5f;  
-		//yDealerButtonOnscreen=worldHeight_*0.25f;
-		//dealerButton.setPosition(worldWidth_*0.39f,yDealerButtonOffscreen);
-		//checkButton.setPosition(worldWidth_*0.5f,worldHeight_*0.35f);
+		yDealerButtonOffscreen=y+radiusY*1.5f;  
+		yDealerButtonOnscreen=y-radiusY*0.3f;
+		dealerButton.setPosition(x-radiusX*0.49f,yDealerButtonOffscreen);
+		checkButton.setPosition(x,y+radiusY*0.4f);
 	} // setPositions(float width_,float height_)
 	
 	public void scalePositions(float scaleX_,float scaleY_) {
@@ -272,7 +280,10 @@ public class ThisPlayer {
 				if (i==0) {
 					betStack.add(bettingStack.get(i));bettingStack.remove(i);
 					i--;
-					betStack.updateTotalLabel();
+					mWL.game.mFL.betTotalDialog.setAmount(betStack.value());
+					if (betStack.size()==1) {
+						mWL.game.mFL.betTotalDialog.show();
+					}
 				}
 			}
 			
@@ -438,6 +449,7 @@ public class ThisPlayer {
 		}
 		betStack.clear();
 		betStack.setPosition(betStackOrigin.x,betStackOrigin.y,0);
+		mWL.game.mFL.betTotalDialog.hide();
 		if (foldEnabled) {
 			mWL.game.mFL.foldButton.fadeIn();
 			mWL.game.mFL.foldButton.setTouchable(true);
@@ -495,6 +507,11 @@ public class ThisPlayer {
 		cancelMoveState();
 		setDealer(false);
 		waitingOnHost=false;
+		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
+			mWL.game.mFL.mainStackValueLabels[i].setText("");
+			mWL.game.mFL.mainStackValueLabels[i].loadTexture();
+			
+		}
 		mWL.game.mFL.reconnect1Label.fadeOut();
 		mWL.game.mFL.reconnect1Label.opacity=0;
 		mWL.game.mFL.reconnect2Label.fadeOut();
@@ -522,6 +539,7 @@ public class ThisPlayer {
 		mainStacks[ChipCase.CHIP_C].clear();
 		betStack.clear();
 		betStack.setPosition(betStackOrigin.x,betStackOrigin.y,0);
+		mWL.game.mFL.betTotalDialog.hide();
 		bettingStack.clear();
 		cancellingStack.clear();
 		cancelStack.clear();
@@ -631,10 +649,10 @@ public class ThisPlayer {
 	public void doPickedUpChipFlung() {
 		float xPUC=pickedUpChip.x;
 		float yPUC=pickedUpChip.getProjectedY();
-		float left=mainStacks[ChipCase.CHIP_A].getX()+Chip.radiusX*0.3f;
-		float right=mainStacks[ChipCase.CHIP_C].getX()-Chip.radiusX*0.3f;
-		float bottom=mainStacks[ChipCase.CHIP_A].getY()+Chip.radiusY*0.3f;
-		
+		float left=mainStacks[ChipCase.CHIP_A].getX()+Chip.radiusX*0.1f;
+		float right=mainStacks[ChipCase.CHIP_C].getX()-Chip.radiusX*0.1f;
+		float bottom=mainStacks[ChipCase.CHIP_A].getY()+Chip.radiusY*0.1f;
+		int diff = (int) (xPUC - left);
 		if (xPUC>left&&xPUC<right&&yPUC>bottom) {
 			addBetChip(pickedUpChip);
 			pickedUpChip=null;
@@ -747,6 +765,7 @@ public class ThisPlayer {
 		Logger.log(LOG_TAG,"searchHoldoff()");
 		connectivityStatus=CONN_SEARCH_HOLDOFF;
 		searchHoldoffTimer=0;
+		mWL.game.mFL.playerDashboard.setStatusMessage("");
 	}
 	
 	public void startPollReconnect() {
@@ -825,9 +844,8 @@ public class ThisPlayer {
 		setPlayerAmount(chipAmount-betStack.value());
 		betStack.clear();
 		betStack.setPosition(betStackOrigin.x,betStackOrigin.y,0);
-		disableBet();
-		disableCheck();
-		disableFold();
+		mWL.game.mFL.betTotalDialog.hide();
+		
 		mWL.game.mFL.hideTextMessage();
 		// TODO change connection sprite
 	}
@@ -837,9 +855,7 @@ public class ThisPlayer {
 		if (!waitingOnHost) {
 			mWL.soundFX.checkSound.play();
 			sendMove(new Move(GameLogic.MOVE_CHECK,""));
-			disableBet();
-			disableCheck();
-			disableFold();
+
 			// TODO change connection sprite
 			mWL.game.mFL.hideTextMessage();
 		}
@@ -850,15 +866,17 @@ public class ThisPlayer {
 		if (!waitingOnHost) {
 			mWL.soundFX.foldSound.play();
 			sendMove(new Move(GameLogic.MOVE_FOLD,""));
-			disableBet();
-			disableCheck();
-			disableFold();
+
 			// TODO change connection blob
 			mWL.game.mFL.hideTextMessage();
 		}
 	}
 	
 	public void sendMove(Move move) {
+		disableBet();
+		disableCheck();
+		disableFold();
+		setConnectionAnimationState(CONN_ANIM_STATIC);
 		networkInterface.submitMove(move);
 	}
 	
@@ -907,10 +925,20 @@ public class ThisPlayer {
 			connectivityStatus=CONN_CONNECTED;
 			this.tableName=tableName;
 			mWL.game.mFL.stopReconnect();
-			setConnectionAnimationState(CONN_ANIM_FORMING);
-			mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_ARRANGE);
+			
 			// TODO change back button to table menu button
 			waitingOnHost=false;
+			mWL.game.mFL.playerDashboard.setGameName(tableName);
+			mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_CONNECTED);
+			for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
+				mWL.game.mFL.mainStackValueLabels[i].setText(Integer.toString(ChipCase.values[i]));
+				mWL.game.mFL.mainStackValueLabels[i].loadTexture();
+				float xScreen = mWL.worldRenderer.xWorldToScreen(mainStacks[i].getX());
+				float yScreen = mWL.game.mFL.playerDashboard.posOnscreen.y+
+						mWL.game.mFL.playerDashboard.radiusY*0.888f+
+						mWL.game.mFL.mainStackValueLabels[i].maxRadiusY;
+				mWL.game.mFL.mainStackValueLabels[i].setPosition(xScreen, yScreen);
+			}
 		} else {
 			if (connectivityStatus==CONN_CONNECTING) {
 				cancelBuyin();
@@ -920,6 +948,10 @@ public class ThisPlayer {
 	
 	public void setConnectionAnimationState(int state) {
 		Logger.log(LOG_TAG,"setConnectionAnimationState("+state+")");
+		if (this.connectionAnimationState==CONN_ANIM_FORMING&&
+				state==CONN_ANIM_ACTIVE) {
+			state = CONN_ANIM_FORMING_ACTIVE;
+		}
 		this.connectionAnimationState=state;
 		if (state==CONN_ANIM_NONE) {
 			connectionSprite.opacity = 0;
@@ -946,6 +978,7 @@ public class ThisPlayer {
 			connectionSprite.stopFrameAnimation(true);
 			connectedSprite.opacity = 1;
 			connectedSprite.stopFlashing();
+			connectedSprite.stopFrameAnimation(true);
 		} else if (state==CONN_ANIM_RECONNECTING) {
 			connectionSprite.opacity = 0;
 			connectionSprite.stopFrameAnimation(true);
@@ -972,6 +1005,7 @@ public class ThisPlayer {
 	public void setColor(int color) {
 		Logger.log(LOG_TAG,"setColor()");
 		this.color=color;
+		setConnectionAnimationState(CONN_ANIM_FORMING);
 	}
 	
 	public void setDealer(boolean isDealer) {
@@ -1004,7 +1038,7 @@ public class ThisPlayer {
 			stake=movePrompt.stake;
 			mWL.soundFX.bellSound.play();
 			textMessage(movePrompt.message);
-			// TODO change connection sprite
+			setConnectionAnimationState(CONN_ANIM_ACTIVE);
 		} else {
 			mWL.game.mFL.promptStateChange(movePrompt.messageStateChange);
 			movePrompt.messageStateChange="";
@@ -1073,16 +1107,22 @@ public class ThisPlayer {
 
 	public void showConnection() {
 		Logger.log(LOG_TAG,"showConnection()");
-		if (connectionAnimationState==CONN_ANIM_FORMING) {
-			setConnectionAnimationState(CONN_ANIM_FORMING_ACTIVE);
-		} else {
-			setConnectionAnimationState(CONN_ANIM_ACTIVE);
-		}
+		
 	}
 	
 	public void hideConnection() {
 		Logger.log(LOG_TAG,"hideConnection()");
+		//setConnectionAnimationState(CONN_ANIM_STATIC);
+	}
+	
+	public void notifyArrange() {
+		setConnectionAnimationState(CONN_ANIM_ACTIVE);
+		mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_ARRANGE);
+	}
+	
+	public void notifySelectDealer() {
 		setConnectionAnimationState(CONN_ANIM_STATIC);
+		mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_SELECT_DEALER);
 	}
 	
 	public void syncChips(int chipAmount) {
@@ -1143,10 +1183,12 @@ public class ThisPlayer {
 				simpleBuyin[ChipCase.CHIP_B]+=numToGain;
 			}
 		}
-		Logger.log(LOG_TAG," a: "+simpleBuyin[ChipCase.CHIP_A]+
-							" b: "+simpleBuyin[ChipCase.CHIP_B]+
-							" c: "+simpleBuyin[ChipCase.CHIP_C]);
 		return simpleBuyin;
+	}
+	
+	public float getMainStackXScreen(int stack) {
+		float x = mainStacks[stack].getX();
+		return mWL.worldRenderer.xWorldToScreen(x);
 	}
 	
 }

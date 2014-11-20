@@ -27,6 +27,7 @@ import com.bidjee.digitalpokerchips.m.ColorPool;
 import com.bidjee.digitalpokerchips.m.GameLogic;
 import com.bidjee.digitalpokerchips.m.Player;
 import com.bidjee.digitalpokerchips.m.Seat;
+import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.graphics.ChipBatch;
 
 public class WorldRenderer {
@@ -261,6 +262,7 @@ public class WorldRenderer {
 		renderConnectionStuff();
 		
 		renderPlayerChips();
+		
 		
 		renderWinStacks();
 		

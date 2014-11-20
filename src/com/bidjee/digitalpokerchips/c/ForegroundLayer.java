@@ -6,6 +6,7 @@ import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.i.IDPCSprite;
 import com.bidjee.digitalpokerchips.m.AutosaveDialog;
+import com.bidjee.digitalpokerchips.m.BetTotalDialog;
 import com.bidjee.digitalpokerchips.m.BootDialog;
 import com.bidjee.digitalpokerchips.m.Button;
 import com.bidjee.digitalpokerchips.m.BuyinDialog;
@@ -30,6 +31,7 @@ public class ForegroundLayer {
 	public static final String LOG_TAG = "DPCUILayer";
 	
 	public static final Color whiteColor=new Color(1,1,1,1);
+	public static final Color blackColor=new Color(0,0,0,1);
 	public static final Color goldColor=new Color(0.88f,0.62f,0.09f,1);
 	public static final Color navyBlueColor=new Color(0.1f,0.23f,0.32f,1);
 	public static final Color darkGreenColor=new Color(0,0.4f,0,1);
@@ -45,7 +47,6 @@ public class ForegroundLayer {
 	boolean loadDialogOpen;
 	boolean runTutorialArrangement;
 	boolean openHelpOnStartup;
-	boolean showPlayerPrompt;
 	
 	//////////////////// Screen Scale & Layout ////////////////////
 	public float screenWidth;
@@ -53,8 +54,6 @@ public class ForegroundLayer {
 	float oldScreenWidth;
 	float oldScreenHeight;
 	float limFlingVelocity;
-	Vector2 posPlayerPromptOffscreen=new Vector2();
-	Vector2 posPlayerPromptOnscreen=new Vector2();
 	
 	//////////////////// Controllers ////////////////////
 	GestureDetector gestureInput;
@@ -71,6 +70,8 @@ public class ForegroundLayer {
 	public PlayerLoginDialog playerLoginDialog;
 	public BuyinDialog buyinDialog;
 	public PlayerDashboard playerDashboard;
+	public BetTotalDialog betTotalDialog;
+	public TextLabel[] mainStackValueLabels;
 	public ClosedDialog loadDialogSmall;
 	public ClosedDialog leaveTableDialogSmall;
 	public ClosedDialog destroyTableDialogSmall;
@@ -103,10 +104,6 @@ public class ForegroundLayer {
 	
 	//////////////////// Text Labels ////////////////////
 	public TextLabel wifiLabel;
-	public TextLabel playerPrompt;
-	public TextLabel stateChangePrompt;
-	public TextLabel enterName1Label;
-	public TextLabel enterName2Label;
 	public TextLabel enterTableName1Label;
 	public TextLabel enterTableName2Label;
 	public TextLabel setValuesLabel;
@@ -151,14 +148,11 @@ public class ForegroundLayer {
 		wifiLabel=new TextLabel("Please Connect to WiFi",0,true,0,false);
 		wifiLabel.setFontFace("segoe_print.ttf");
 		
-		playerPrompt=new TextLabel("",0,true,0,false);
-		stateChangePrompt=new TextLabel("",0,true,0,false);
-		stateChangePrompt.setFontFace("segoe_print.ttf");
-		
-		enterName1Label=new TextLabel("Enter Player's",0,true,0,false);
-		enterName1Label.setFontFace("segoe_print.ttf");
-		enterName2Label=new TextLabel("Name",0,true,0,false);
-		enterName2Label.setFontFace("segoe_print.ttf");
+		mainStackValueLabels=new TextLabel[ChipCase.CHIP_TYPES];
+		for (int chip_=ChipCase.CHIP_A;chip_<ChipCase.CHIP_TYPES;chip_++) {
+			mainStackValueLabels[chip_]=new TextLabel("",0,false,0.6f,false);
+			mainStackValueLabels[chip_].bodyColor = blackColor;
+		}
 		enterNameDoneButton=new Button(true,0,"");
 		
 		enterTableName1Label=new TextLabel("Enter Table's",0,true,0,false);
@@ -222,6 +216,7 @@ public class ForegroundLayer {
 		buyinDialog=new BuyinDialog();
 		
 		playerDashboard=new PlayerDashboard();
+		betTotalDialog=new BetTotalDialog();
 		
 		helpDialogSmall=new ClosedDialog(dialogWindow);
 		helpDialogSmall.opacity=0;
@@ -289,26 +284,19 @@ public class ForegroundLayer {
 		limFlingVelocity=screenHeight*0.2f;
 		homeUIAnimation.setDimensions(screenWidth,screenHeight);
 		homeForegroundAnimation.setDimensions(screenWidth,screenHeight);
+		mainStackValueLabels[ChipCase.CHIP_A].setMaxDimensions((int)(screenWidth*0.33f),(int)(screenHeight*0.023f));
+		mainStackValueLabels[ChipCase.CHIP_A].setTextSizeToMax("$1000000000");
+		int valueSize = mainStackValueLabels[ChipCase.CHIP_A].getTextSize();
+		mainStackValueLabels[ChipCase.CHIP_B].setMaxDimensions((int)(screenWidth*0.33f),(int)(screenHeight*0.023f));
+		mainStackValueLabels[ChipCase.CHIP_B].setTextSize(valueSize);
+		mainStackValueLabels[ChipCase.CHIP_C].setMaxDimensions((int)(screenWidth*0.33f),(int)(screenHeight*0.023f));
+		mainStackValueLabels[ChipCase.CHIP_C].setTextSize(valueSize);
 		wifiButton.setDimensions((int)(screenHeight*0.08f),(int)(screenHeight*0.08f));
 		foldButton.setDimensions((int)(screenHeight*0.15f),(int)(screenHeight*0.15f));
-		playerPrompt.setMaxDimensions((int)(screenWidth*0.20f),(int)(screenHeight*0.04f));
-		playerPrompt.setText(GameLogic.PROMPT_MEASURE);
-		playerPrompt.setTextSizeToMax();
-		playerPrompt.setText("");
-		stateChangePrompt.setMaxDimensions((int)(screenWidth*0.20f),(int)(screenHeight*0.1f));
-		stateChangePrompt.setText(GameLogic.PROMPT_MEASURE);
-		stateChangePrompt.setTextSizeToMax();
-		stateChangePrompt.setText("");
-		enterName1Label.setMaxDimensions((int)(screenWidth*0.14f),(int)(screenHeight*0.2f));
-		enterName2Label.setMaxDimensions((int)(screenWidth*0.14f),(int)(screenHeight*0.2f));
-		int textSize=Math.min(DPCGame.textFactory.getMaxTextSize(enterName1Label),
-				DPCGame.textFactory.getMaxTextSize(enterName2Label));
-		enterName1Label.setTextSize(textSize);
-		enterName2Label.setTextSize(textSize);
 		enterNameDoneButton.setDimensions((int)(screenHeight*0.08f),(int)(screenHeight*0.08f));
 		enterTableName1Label.setMaxDimensions((int)(screenWidth*0.12f),(int)(screenHeight*0.1f));
 		enterTableName2Label.setMaxDimensions((int)(screenWidth*0.12f),(int)(screenHeight*0.1f));
-		textSize=Math.min(DPCGame.textFactory.getMaxTextSize(enterTableName1Label),
+		int textSize=Math.min(DPCGame.textFactory.getMaxTextSize(enterTableName1Label),
 				DPCGame.textFactory.getMaxTextSize(enterTableName2Label));
 		enterTableName1Label.setTextSize(textSize);
 		enterTableName2Label.setTextSize(textSize);
@@ -341,6 +329,7 @@ public class ForegroundLayer {
 		buyinDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
 		
 		playerDashboard.setDimensions((int)(screenWidth*0.5f),(int)(screenHeight*0.09f));
+		betTotalDialog.setDimensions((int)(screenHeight*0.08f*2.5f),(int)(screenHeight*0.08f));
 		
 		divisibilityDialog.setDimensions((int)(screenWidth*0.3f),(int)(screenHeight*0.06f));
 		tutorialArrangement.setDimensions(screenWidth,screenHeight);
@@ -405,13 +394,9 @@ public class ForegroundLayer {
 	private void setPositions(float screenWidth,float screenHeight) {
 		homeUIAnimation.setPositions(screenWidth,screenHeight);
 		homeForegroundAnimation.setPositions(screenWidth,screenHeight);
+		
 		wifiButton.setPosition(screenWidth*0.5f,screenHeight*0.85f);
 		foldButton.setPosition(screenWidth*0.1f,screenHeight*0.76f);
-		posPlayerPromptOffscreen.set(screenWidth*0.8f,screenHeight+playerPrompt.maxRadiusY*1.2f);
-		posPlayerPromptOnscreen.set(screenWidth*0.8f,screenHeight-playerPrompt.maxRadiusY*1.1f);
-		stateChangePrompt.setPosition(screenWidth*0.5f,screenHeight*0.7f);
-		enterName1Label.setPosition(screenWidth*0.16f,screenHeight*0.72f);
-		enterName2Label.setPosition(screenWidth*0.16f,screenHeight*0.64f);
 		enterNameDoneButton.setPosition(screenWidth*0.76f,screenHeight*0.68f);
 		enterTableName1Label.setPosition(screenWidth*0.14f,screenHeight*0.77f);
 		enterTableName2Label.setPosition(screenWidth*0.14f,screenHeight*0.69f);
@@ -435,6 +420,9 @@ public class ForegroundLayer {
 		buyinDialog.setPositions(screenWidth*0.5f,screenHeight*1.5f,screenWidth*0.5f,screenHeight*0.5f);
 		
 		playerDashboard.setPositions(screenWidth*0.5f,-playerDashboard.radiusY*2,screenWidth*0.5f,playerDashboard.radiusY);
+		int margin = (int) (screenHeight*0.01f);
+		betTotalDialog.setPositions(0+margin+betTotalDialog.radiusX,screenHeight+betTotalDialog.radiusY*4f,
+									0+margin+betTotalDialog.radiusX,screenHeight-margin-betTotalDialog.radiusY);
 		
 		divisibilityDialog.setPosition(screenWidth*0.5f,screenHeight*0.08f);
 		manualConnectDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
@@ -470,8 +458,6 @@ public class ForegroundLayer {
 	
 	private void scalePositions(float scaleX,float scaleY) {
 		wifiButton.scalePosition(scaleX,scaleY);
-		enterName1Label.scalePosition(scaleX,scaleY);
-		enterName2Label.scalePosition(scaleX,scaleY);
 		enterNameDoneButton.scalePosition(scaleX,scaleY);
 		enterTableName1Label.scalePosition(scaleX,scaleY);
 		enterTableName2Label.scalePosition(scaleX,scaleY);
@@ -540,25 +526,7 @@ public class ForegroundLayer {
 		
 		wifiButton.animate(delta);
 		ipAddress.animate(delta);
-		
-		if (showPlayerPrompt) {
-			if (Math.abs(playerPrompt.y-posPlayerPromptOnscreen.y)>1) {
-				float deltaY_=9*delta*(posPlayerPromptOnscreen.y-playerPrompt.y);
-				playerPrompt.y+=deltaY_;
-			}
-		} else {
-			if (Math.abs(playerPrompt.y-posPlayerPromptOffscreen.y)>1) {
-				float deltaY_=9*delta*(posPlayerPromptOffscreen.y-playerPrompt.y);
-				playerPrompt.y+=deltaY_;
-			} else {
-				playerPrompt.opacity=0;
-			}
-		}
-		
-		stateChangePrompt.animate(delta);
-		
-		enterName1Label.animate(delta);
-		enterName2Label.animate(delta);
+
 		enterNameDoneButton.animate(delta);
 		
 		enterTableName1Label.animate(delta);
@@ -583,6 +551,7 @@ public class ForegroundLayer {
 		playerLoginDialog.animate(delta);
 		buyinDialog.animate(delta);
 		playerDashboard.animate(delta);
+		betTotalDialog.animate(delta);
 		manualConnectDialog.animate(delta);
 		leaveTableDialog.animate(delta);
 		destroyTableDialog.animate(delta);
@@ -809,14 +778,22 @@ public class ForegroundLayer {
 	public void showPlayerDashboard(String playerName) {
 		Logger.log(LOG_TAG,"startPlayerIDDialog()");
 		playerDashboard.setName(playerName);
-		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER_DASHBOARD);
 		playerDashboard.show();
 	}
 	
 	public void hidePlayerDashboard() {
 		Logger.log(LOG_TAG,"stopPlayerIDDialog()");
-		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_DASHBOARD);
 		playerDashboard.hide();
+	}
+	
+	public void showBetTotalDialog() {
+		Logger.log(LOG_TAG,"startPlayerIDDialog()");
+		betTotalDialog.show();
+	}
+	
+	public void hideBetTotalDialog() {
+		Logger.log(LOG_TAG,"stopPlayerIDDialog()");
+		betTotalDialog.hide();
 	}
 	
 	public void startDestroyTableDialog(String tableName) {
@@ -874,41 +851,29 @@ public class ForegroundLayer {
 	
 	public void showTextMessage(String textMessage) {
 		Logger.log(LOG_TAG,"showTextMessage("+textMessage+")");
-		playerPrompt.setPosition(posPlayerPromptOffscreen);
-		playerPrompt.setText(textMessage);
-		playerPrompt.loadTexture();
-		playerPrompt.x=screenWidth-playerPrompt.radiusX*1.1f;
-		playerPrompt.opacity=1;
-		showPlayerPrompt=true;
+
 	}
 	
 	public void hideTextMessage() {
 		Logger.log(LOG_TAG,"hideTextMessage()");
-		showPlayerPrompt=false;
 	}
 
 	public void promptStateChange(String messageStateChange) {
 		Logger.log(LOG_TAG,"promptStateChange("+messageStateChange+")");
-		stateChangePrompt.setText(messageStateChange);
-		stateChangePrompt.loadTexture();
-		stateChangePrompt.fadeIn();
+
 		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
 	}
 
 	public void stateChangeACKed() {
 		Logger.log(LOG_TAG,"stateChangeACKed()");
 		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
-		stateChangePrompt.setText("");
-		stateChangePrompt.fadeOut();
 	}
 	
 	public void pauseStateChangePrompt() {
 		input.popTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
-		stateChangePrompt.fadeOut();
 	}
 	
 	public void resumeStateChangePrompt() {
-		stateChangePrompt.fadeIn();
 		input.pushTouchFocus(ForegroundInput.TOUCH_PLAYER_STATE_CHANGE);
 	}
 	

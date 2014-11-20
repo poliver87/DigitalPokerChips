@@ -21,7 +21,6 @@ public class ForegroundInput implements InputProcessor {
 	public static final String TOUCH_LEAVE_TABLE = "TOUCH_LEAVE_TABLE";
 	public static final String TOUCH_HELP_DIALOG = "TOUCH_HELP_DIALOG";
 	public static final String TOUCH_PLAYER_LOGIN = "TOUCH_PLAYER_LOGIN";
-	public static final String TOUCH_PLAYER_DASHBOARD = "TOUCH_PLAYER_DASHBOARD";
 	public static final String TOUCH_DESTROY_TABLE = "TOUCH_DESTROY_TABLE";
 	public static final String TOUCH_BOOT_DIALOG = "TOUCH_BOOT_DIALOG";
 	public static final String TOUCH_LOAD_DIALOG = "TOUCH_LOAD_DIALOG";
@@ -241,12 +240,6 @@ public class ForegroundInput implements InputProcessor {
 						mFL.playerLoginDialog.facebookButton.pointContained(touchX, touchY)) {
 					mFL.playerLoginDialog.facebookButton.setIsTouched(true);
 				}
-			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_DASHBOARD)) {
-				if (mFL.playerDashboard.backButton.getTouchable()&&
-						mFL.playerDashboard.backButton.pointContained(touchX, touchY)) {
-					mFL.playerDashboard.backButton.setIsTouched(true);
-					handled_=true;
-				}
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				handled_=true;
 				for (int i=0;i<mFL.manualConnectDialog.ipQuads.length;i++) {
@@ -303,6 +296,10 @@ public class ForegroundInput implements InputProcessor {
 						mFL.foldButton.pointContained(touchX, touchY)) {
 						handled_=true;
 						mFL.foldButton.setIsTouched(true);
+				} else if (mFL.playerDashboard.backButton.getTouchable()&&
+						mFL.playerDashboard.backButton.pointContained(touchX, touchY)) {
+					mFL.playerDashboard.backButton.setIsTouched(true);
+					handled_=true;
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_TABLE_STATUS)) {
 				if (mFL.tableStatusMenu.pointContained(touchX,touchY)||mFL.tableStatusMenu.handle.pointContained(touchX,touchY)) {

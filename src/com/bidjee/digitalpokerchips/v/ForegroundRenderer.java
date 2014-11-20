@@ -252,8 +252,6 @@ public class ForegroundRenderer {
 	
 	public void loadLabels() {
 		Gdx.app.log("DPCLifecycle", "ForegroundRenderer - loadLabels()");
-		mFL.enterName1Label.loadTexture(whiteColor,blackColor);
-		mFL.enterName2Label.loadTexture(whiteColor,blackColor);
 		mFL.enterTableName1Label.loadTexture(whiteColor,blackColor);
 		mFL.enterTableName2Label.loadTexture(whiteColor,blackColor);
 		mFL.wifiLabel.loadTexture(greyColor,blackColor);
@@ -271,13 +269,7 @@ public class ForegroundRenderer {
 		mFL.bootDialog.bootButton.getLabel().loadTexture();
 		mFL.bootDialog.sitOutButton.getLabel().loadTexture();
 		mFL.waitNextHandLabel.loadTexture();
-		
-		if (!mFL.playerPrompt.getText().equals("")) {
-			mFL.playerPrompt.loadTexture();
-		}
-		if (!mFL.stateChangePrompt.getText().equals("")) {
-			mFL.stateChangePrompt.loadTexture();
-		}
+
 		if (!mFL.winLabel.getText().equals("")) {
 			mFL.winLabel.loadTexture();
 		}
@@ -311,7 +303,6 @@ public class ForegroundRenderer {
         
         renderHome();
         
-        renderPlayerPrompts();
         if (mFL.enterNameDoneButton.opacity!=0) {
         	renderEnterName();
         }
@@ -380,6 +371,12 @@ public class ForegroundRenderer {
 		if (mFL.playerDashboard!=null) {
 			renderPlayerDashboard();
 		}
+		
+		if (mFL.betTotalDialog!=null) {
+			renderBetTotalDialog();
+		}
+		
+		renderStackValueLabels();
 		
 		if (mFL.dialogWArrowWindow.opacity!=0) {
 			renderDialogWArrow();
@@ -451,52 +448,6 @@ public class ForegroundRenderer {
 		batch.end();
 	}
 	
-	private void renderPlayerPrompts() {
-		
-		if (mFL.playerPrompt.opacity!=0) {
-			batch.draw(mFL.playerPrompt.texture,
-					mFL.playerPrompt.x-mFL.playerPrompt.radiusX,
-					mFL.playerPrompt.y-mFL.playerPrompt.radiusY,
-					mFL.playerPrompt.radiusX*2,mFL.playerPrompt.radiusY*2,
-					0,0,mFL.playerPrompt.radiusX*2,mFL.playerPrompt.radiusY*2,false,false);
-		}
-		if (mFL.stateChangePrompt.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mFL.stateChangePrompt.opacity);
-			batch.draw(mFL.stateChangePrompt.texture,
-					mFL.stateChangePrompt.x-mFL.stateChangePrompt.radiusX,
-					mFL.stateChangePrompt.y-mFL.stateChangePrompt.radiusY,
-					mFL.stateChangePrompt.radiusX*2,mFL.stateChangePrompt.radiusY*2,
-					0,0,mFL.stateChangePrompt.radiusX*2,mFL.stateChangePrompt.radiusY*2,false,false);
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
-		if (mFL.reconnect1Label.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mFL.reconnect1Label.opacity);
-			batch.draw(mFL.reconnect1Label.texture,
-					mFL.reconnect1Label.x-mFL.reconnect1Label.radiusX,
-					mFL.reconnect1Label.y-mFL.reconnect1Label.radiusY,
-					mFL.reconnect1Label.radiusX*2,mFL.reconnect1Label.radiusY*2,
-					0,0,mFL.reconnect1Label.radiusX*2,mFL.reconnect1Label.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mFL.reconnect2Label.opacity);
-			batch.draw(mFL.reconnect2Label.texture,
-					mFL.reconnect2Label.x-mFL.reconnect2Label.radiusX,
-					mFL.reconnect2Label.y-mFL.reconnect2Label.radiusY,
-					mFL.reconnect2Label.radiusX*2,mFL.reconnect2Label.radiusY*2,
-					0,0,mFL.reconnect2Label.radiusX*2,mFL.reconnect2Label.radiusY*2,false,false);
-			 batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
-		if (mFL.waitNextHandLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,mFL.waitNextHandLabel.opacity);
-			batch.draw(mFL.waitNextHandLabel.texture,
-					mFL.waitNextHandLabel.x-mFL.waitNextHandLabel.radiusX,
-					mFL.waitNextHandLabel.y-mFL.waitNextHandLabel.radiusY,
-					mFL.waitNextHandLabel.radiusX*2,mFL.waitNextHandLabel.radiusY*2,
-					0,0,mFL.waitNextHandLabel.radiusX*2,mFL.waitNextHandLabel.radiusY*2,false,false);
-			 batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
-	}
 
 	private void renderFoldButton() {
 		// draw fold button
@@ -611,16 +562,6 @@ public class ForegroundRenderer {
 				mFL.enterNameDoneButton.y-mFL.enterNameDoneButton.radiusY,
 				mFL.enterNameDoneButton.radiusX*2,mFL.enterNameDoneButton.radiusY*2,
 				0,0,214,214,false,false);
-        batch.draw(mFL.enterName1Label.texture,
-				mFL.enterName1Label.x-mFL.enterName1Label.radiusX,
-				mFL.enterName1Label.y-mFL.enterName1Label.radiusY,
-				mFL.enterName1Label.radiusX*2,mFL.enterName1Label.radiusY*2,
-				0,0,mFL.enterName1Label.radiusX*2,mFL.enterName1Label.radiusY*2,false,false);
-        batch.draw(mFL.enterName2Label.texture,
-				mFL.enterName2Label.x-mFL.enterName2Label.radiusX,
-				mFL.enterName2Label.y-mFL.enterName2Label.radiusY,
-				mFL.enterName2Label.radiusX*2,mFL.enterName2Label.radiusY*2,
-				0,0,mFL.enterName2Label.radiusX*2,mFL.enterName2Label.radiusY*2,false,false);
         alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 	}
@@ -940,6 +881,61 @@ public class ForegroundRenderer {
 				mFL.playerDashboard.backButton.y-mFL.playerDashboard.backButton.radiusY,
 				mFL.playerDashboard.backButton.radiusX*2,mFL.playerDashboard.backButton.radiusY*2,
 				0,0,238,94,false,false);
+	}
+	
+	private final void renderBetTotalDialog() {
+		batch.draw(dashboardStatusTexture,mFL.betTotalDialog.x-mFL.betTotalDialog.radiusX,
+				mFL.betTotalDialog.y-mFL.betTotalDialog.radiusY,
+				mFL.betTotalDialog.radiusX*2,mFL.betTotalDialog.radiusY*2,
+				0,0,640,88,false,false);
+		if (mFL.betTotalDialog.titleLabel.texture==null) {
+        	mFL.betTotalDialog.titleLabel.loadTexture();
+        }
+		int x=(int) (mFL.betTotalDialog.titleLabel.x-mFL.betTotalDialog.titleLabel.radiusX);
+		int y=(int) (mFL.betTotalDialog.titleLabel.y-mFL.betTotalDialog.titleLabel.radiusY);
+		batch.draw(mFL.betTotalDialog.titleLabel.texture,x,y,
+				0,0,mFL.betTotalDialog.titleLabel.radiusX*2,
+				mFL.betTotalDialog.titleLabel.radiusY*2);
+		if (mFL.betTotalDialog.amountLabel.texture!=null) {
+			x=(int) (mFL.betTotalDialog.amountLabel.x-mFL.betTotalDialog.amountLabel.radiusX);
+			y=(int) (mFL.betTotalDialog.amountLabel.y-mFL.betTotalDialog.amountLabel.radiusY);
+			batch.draw(mFL.betTotalDialog.amountLabel.texture,x,y,
+					0,0,mFL.betTotalDialog.amountLabel.radiusX*2,
+					mFL.betTotalDialog.amountLabel.radiusY*2);
+		}
+	}
+	
+	private final void renderStackValueLabels() {
+		int x,y;
+		TextLabel thisLabel = mFL.mainStackValueLabels[ChipCase.CHIP_A];
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,thisLabel.opacity);
+		if (thisLabel.texture!=null) {
+			x=(int) (thisLabel.x-thisLabel.radiusX);
+			y=(int) (thisLabel.y-thisLabel.radiusY);
+			batch.draw(thisLabel.texture,x,y,
+					0,0,thisLabel.radiusX*2,
+					thisLabel.radiusY*2);
+		}
+		thisLabel =  mFL.mainStackValueLabels[ChipCase.CHIP_B];
+		if (thisLabel.texture!=null) {
+			x=(int) (thisLabel.x-thisLabel.radiusX);
+			y=(int) (thisLabel.y-thisLabel.radiusY);
+			batch.draw(thisLabel.texture,x,y,
+					0,0,thisLabel.radiusX*2,
+					thisLabel.radiusY*2);
+		}
+		thisLabel = mFL.mainStackValueLabels[ChipCase.CHIP_C];
+		if (thisLabel.texture!=null) {
+			x=(int) (thisLabel.x-thisLabel.radiusX);
+			y=(int) (thisLabel.y-thisLabel.radiusY);
+			batch.draw(thisLabel.texture,x,y,
+					0,0,thisLabel.radiusX*2,
+					thisLabel.radiusY*2);
+		}
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
 	}
 	
 	private void renderManualConnectDialog() {

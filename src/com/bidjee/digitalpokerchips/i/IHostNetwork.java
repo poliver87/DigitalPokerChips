@@ -29,6 +29,8 @@ public interface IHostNetwork {
 	public void disableNudge();
 	public void showConnection(String playerName);
 	public void hideConnection(String playerName);
+	public void arrange();
+	public void selectDealer();
 	public void promptWaitNextHand(String playerName);
 	public void parsePlayerMessage(String playerName,String msg);
 }

@@ -7,11 +7,14 @@ import com.badlogic.gdx.math.Vector2;
 public class PlayerDashboard extends DPCSprite {
 	
 	public static final String MESSAGE_SEARCHING = "SEARCHING FOR GAMES";
+	public static final String MESSAGE_CONNECTED = "Connected to ";
 	public static final String MESSAGE_ARRANGE = "ARRANGE POSITIONS";
+	public static final String MESSAGE_SELECT_DEALER = "SELECT DEALER";
 	
 	public DPCSprite profilePic = new DPCSprite();
 	public TextLabel nameLabel;
 	public TextLabel amountLabel;
+	public String gameName;
 	
 	public TextLabel statusMessage;
 	public DPCSprite statusIcon=new DPCSprite();
@@ -20,7 +23,7 @@ public class PlayerDashboard extends DPCSprite {
 	public Button backButton;
 	
 	Vector2 posOffscreen;
-	Vector2 posOnscreen;
+	public Vector2 posOnscreen;
 	
 	public DPCSprite idBackground=new DPCSprite();
 	public DPCSprite statusBackground=new DPCSprite();
@@ -39,6 +42,7 @@ public class PlayerDashboard extends DPCSprite {
 		statusMessage.bodyColor=new Color(1f,0.91f,0.66f,1);
 		statusIconTexture="";
 		backButton = new Button(false,1,"");
+		gameName="";
 	}
 	
 	@Override
@@ -107,17 +111,35 @@ public class PlayerDashboard extends DPCSprite {
 	}
 	
 	public void setStatusMessage(String message) {
-		statusMessage.setText(message);
-		statusMessage.loadTexture();
+		
 		statusMessage.stopFlashing();
 		statusMessage.opacity=0;
 		if (message.equals(MESSAGE_SEARCHING)) {
+			statusMessage.setText(message);
+			statusMessage.loadTexture();
 			statusIconTexture="searching.png";
 			statusMessage.startFlashing();
+		} else if (message.equals(MESSAGE_CONNECTED)) {
+			statusMessage.setText(message+gameName);
+			statusMessage.loadTexture();
+			statusMessage.fadeIn();
+			statusIconTexture="";
 		} else if (message.equals(MESSAGE_ARRANGE)) {
+			statusMessage.setText(message);
+			statusMessage.loadTexture();
 			statusIconTexture="arrange.png";
 			statusMessage.fadeIn();
+		} else if (message.equals(MESSAGE_SELECT_DEALER)) {
+			statusMessage.setText(message);
+			statusMessage.loadTexture();
+			statusIconTexture="dealer_icon.png";
+			statusMessage.fadeIn();
 		}
+	}
+	
+	public void setGameName(String gameName) {
+		this.gameName = gameName;
+		// TODO change back to game button with name on top
 	}
 	
 	public void show() {

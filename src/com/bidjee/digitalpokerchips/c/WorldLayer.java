@@ -1,5 +1,7 @@
 package com.bidjee.digitalpokerchips.c;
 
+import android.net.MailTo;
+
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.input.GestureDetector;
 import com.bidjee.digitalpokerchips.i.IHostNetwork;
