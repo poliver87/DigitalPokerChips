@@ -52,7 +52,7 @@ public class GameLogic {
 	
 	// State Variables //
 	public String state=STATE_NONE;
-	int dealStage;
+	public int dealStage;
 	private int dealer;
 	public int currBetter;
 	int currStake;
@@ -166,6 +166,7 @@ public class GameLogic {
 				} // end switch (dealStage)
 				table.enablePotArrows();
 				table.promptDealer(dealer,dealStage);
+				table.syncAllTableStatusMenu();
 				waitingDealPrompt=true;
 				setGameState(STATE_WAIT_DEAL_PROMPT);
 			}
@@ -215,6 +216,7 @@ public class GameLogic {
 			//flingPotLabel.fadeOut();
 			//flingDemo.stop();
 			table.pots.remove(table.displayedPotIndex);
+			table.syncAllTableStatusMenu();
 			if (table.pots.size()==0) {
 				setGameState(STATE_RECALL_DEALER);
 			} else {

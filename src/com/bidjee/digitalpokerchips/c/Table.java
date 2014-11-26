@@ -14,8 +14,10 @@ import com.bidjee.digitalpokerchips.m.ColorPool;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.Deck;
 import com.bidjee.digitalpokerchips.m.GameLogic;
+import com.bidjee.digitalpokerchips.m.GameMenuData;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.Player;
+import com.bidjee.digitalpokerchips.m.PlayerMenuItem;
 import com.bidjee.digitalpokerchips.m.Pot;
 import com.bidjee.digitalpokerchips.m.Seat;
 import com.bidjee.digitalpokerchips.m.TextField;
@@ -86,6 +88,7 @@ public class Table {
 	public Deck deck;
 	public ArrayList<Pot> pots;
 	public ArrayList<Player> players=new ArrayList<Player>();
+	GameMenuData gameMenuData = new GameMenuData();
 	
 	//////////////////// Text Labels ////////////////////
 	public TextField tableNameField;
@@ -1137,15 +1140,20 @@ public class Table {
 		networkInterface.syncPlayersChips(seats[seat].player.name.getText(),seats[seat].player.chipAmount);
 	}
 	
-	private void syncAllTableStatusMenu() {
+	public void syncAllTableStatusMenu() {
 		Logger.log(LOG_TAG,"syncAllTableStatusMenu()");
-		ArrayList<Player> players=new ArrayList<Player>();
+		ArrayList<PlayerMenuItem> players=new ArrayList<PlayerMenuItem>();
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null) {
-				players.add(seats[i].player);
+				PlayerMenuItem thisPlayer = new PlayerMenuItem(seats[i].player.name.getText(),
+						seats[i].player.betStack.value()+seats[i].player.bettingStack.value(),
+						seats[i].player.chipAmount);
+				players.add(thisPlayer);
 			}
 		}
-		networkInterface.syncAllTableStatusMenu(players);
+		gameMenuData.reset();
+		gameMenuData.set(tableNameField.getText(),gameLogic.dealStage,getPotTotal(),players);
+		networkInterface.syncAllGameData(gameMenuData);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
@@ -1724,6 +1732,15 @@ public class Table {
 			}
 		}
 		return thisPlayer;
+	}
+	
+	public int getPotTotal() {
+		int total=0;
+		int lastPot = pots.size() - 1;
+		if (lastPot>=0) {
+			total = pots.get(lastPot).potStack.value();
+		}
+		return total;
 	}
 	
 	public void updatePotRotation() {

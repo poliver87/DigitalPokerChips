@@ -12,6 +12,7 @@ import com.bidjee.digitalpokerchips.m.ChipStack;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.DiscoveredTable;
 import com.bidjee.digitalpokerchips.m.GameLogic;
+import com.bidjee.digitalpokerchips.m.GameMenuData;
 import com.bidjee.digitalpokerchips.m.Move;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.PlayerEntry;
@@ -939,8 +940,8 @@ public class ThisPlayer {
 		}
 	}
 	
-	public void syncStatusMenu(ArrayList<PlayerEntry> playerList) {
-		mWL.game.mFL.tableStatusMenu.syncStatusMenu(playerList);
+	public void syncGameData(GameMenuData gameMenuData) {
+		//mWL.game.mFL.tableStatusMenu.syncStatusMenu(playerList);
 	}
 	
 	public void setColor(int color) {
