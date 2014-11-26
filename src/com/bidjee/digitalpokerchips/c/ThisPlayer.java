@@ -156,7 +156,7 @@ public class ThisPlayer {
 		mainStacks[ChipCase.CHIP_A].setY(yStacks);
 		mainStacks[ChipCase.CHIP_B].setY(yStacks);
 		mainStacks[ChipCase.CHIP_C].setY(yStacks);
-		int stackSpacing = (int) (radiusX*0.30f);
+		int stackSpacing = (int) (radiusX*0.34f);
 		mainStacks[ChipCase.CHIP_A].setX(x-stackSpacing);
 		mainStacks[ChipCase.CHIP_B].setX(x);
 		mainStacks[ChipCase.CHIP_C].setX(x+stackSpacing);
@@ -173,7 +173,7 @@ public class ThisPlayer {
 		connectedSprite.setPosition(x,y+radiusY*0.63f);
 		yDealerButtonOffscreen=y+radiusY*1.5f;  
 		yDealerButtonOnscreen=y-radiusY*0.3f;
-		dealerButton.setPosition(x-radiusX*0.49f,yDealerButtonOffscreen);
+		dealerButton.setPosition(x-radiusX*0.52f,yDealerButtonOffscreen);
 		checkButton.setPosition(x,y+radiusY*0.4f);
 	} // setPositions(float width_,float height_)
 	

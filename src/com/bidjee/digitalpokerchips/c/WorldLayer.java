@@ -84,7 +84,7 @@ public class WorldLayer implements Screen {
 		backgroundRadiusX=(int) (worldWidth*0.5f);
 		backgroundSprite.setDimensions(backgroundRadiusX,(int)(worldHeight*0.5f)+1);
 		homeDeviceAnimation.setDimensions(worldWidth, worldHeight);
-		Chip.radiusY=(int) (homeDeviceAnimation.p1Sprite.radiusY*0.26f);
+		Chip.radiusY=(int) (homeDeviceAnimation.p1Sprite.radiusY*0.23f);
 		Chip.radiusX=(int) (Chip.radiusY*1.02f);
 		limChipFlingVel=(int) (worldHeight*0.15f);
 		
