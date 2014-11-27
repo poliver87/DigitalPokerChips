@@ -23,7 +23,7 @@ public interface IHostNetwork {
 	public void promptMove(String playerName,MovePrompt movePrompt,int chipTotal);
 	public void cancelMove(String playerName);
 	public void sendBell(String playerName);
-	public void arrange();
+	public void notifyArrange(String playerName);
 	public void selectDealer();
 	public void promptWaitNextHand(String playerName);
 	public void promptDealer(String playerName,int dealStage);

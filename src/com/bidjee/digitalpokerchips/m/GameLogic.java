@@ -15,6 +15,7 @@ public class GameLogic {
 	public static final String FLOP_STRING = "Flop";
 	public static final String TURN_STRING = "Turn";
 	public static final String RIVER_STRING = "River";
+	public static final String SHOWDOWN_STRING = "Showdown";
 
 	public static final String STATE_NONE="";
 	public static final String STATE_WAITING_BUYINS="STATE_WAITING_BUYINS";
@@ -41,6 +42,7 @@ public class GameLogic {
 	public static final int DEAL_FLOP = 1;
 	public static final int DEAL_TURN = 2;
 	public static final int DEAL_RIVER = 3;
+	public static final int DEAL_SHOWDOWN = 4;
 	
 	public static final int MOVE_CHECK = 0;
 	public static final int MOVE_BET = 1;
@@ -106,6 +108,7 @@ public class GameLogic {
 			resetGame();
 			table.sendDealerButton(dealer);
 			setGameState(STATE_NEXT_BET);
+			table.syncAllTableStatusMenu();
 		} else if (state.equals(STATE_NEXT_BET)) {
 			if (checkRoundComplete()) {
 				currBetter=NO_PLAYER;
@@ -141,6 +144,7 @@ public class GameLogic {
 				setGameState(STATE_PROCESS_POTS);
 				table.showLastPot();
 				table.disablePotArrows();
+				dealStage=DEAL_SHOWDOWN;
 			} else {
 				// if hand not complete, prompt dealer to deal next cards
 				currStake=0;
@@ -167,10 +171,10 @@ public class GameLogic {
 				} // end switch (dealStage)
 				table.enablePotArrows();
 				table.promptDealer(dealer,dealStage);
-				table.syncAllTableStatusMenu();
 				waitingDealPrompt=true;
 				setGameState(STATE_WAIT_DEAL_PROMPT);
 			}
+			table.syncAllTableStatusMenu();
 		} else if (state.equals(STATE_WAIT_DEAL_PROMPT)) {
 			if (!waitingDealPrompt) {
 				setGameState(STATE_NEXT_BET);
@@ -722,6 +726,8 @@ public class GameLogic {
 			str = TURN_STRING;
 		} else if (dealStage==DEAL_RIVER) {
 			str = RIVER_STRING;
+		} else if (dealStage==DEAL_SHOWDOWN) {
+			str = SHOWDOWN_STRING;
 		}
 		
 		return str;
