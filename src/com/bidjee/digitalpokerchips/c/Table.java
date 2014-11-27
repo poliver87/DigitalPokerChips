@@ -1067,9 +1067,7 @@ public class Table {
 		if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
 			setConnectionShowing(player,true);
 			player.name.fadeIn();
-			if (countPlayers()==2) {
-				networkInterface.arrange();
-			}
+			networkInterface.notifyArrange(player.name.getText());
 		}
 		if (gameState==STATE_GAME) {
 			if (allPlayersSetup()) {
@@ -1147,7 +1145,8 @@ public class Table {
 			if (seats[i].player!=null) {
 				PlayerMenuItem thisPlayer = new PlayerMenuItem(seats[i].player.name.getText(),
 						seats[i].player.betStack.value()+seats[i].player.bettingStack.value(),
-						seats[i].player.chipAmount);
+						seats[i].player.chipAmount,
+						seats[i].player.isFolded);
 				players.add(thisPlayer);
 			}
 		}
