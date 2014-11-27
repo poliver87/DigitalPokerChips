@@ -325,6 +325,7 @@ public class DPCGame extends Game {
 		manager.load("arrange.png",Texture.class,tParam);
 		manager.load("dealer_icon.png",Texture.class,tParam);
 		manager.load("btn_bell.png",Texture.class,tParam);
+		manager.load("game_panel.png",Texture.class,tParam);
 		
 		manager.load("cancel_button.png",Texture.class,tParam);
 		manager.load("table_highlight.png",Texture.class,tParam);

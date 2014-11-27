@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Matrix4;
 import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.ForegroundLayer;
+import com.bidjee.digitalpokerchips.c.PlayerMenuPanel;
 import com.bidjee.digitalpokerchips.m.Chip;
 import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
@@ -116,6 +117,8 @@ public class ForegroundRenderer {
 	
 	Texture dialogTexture;
 	
+	Texture gamePanelTexture;
+	
 	public ForegroundRenderer(ForegroundLayer mFL) {
 		this.mFL=mFL;
 		batch=new SpriteBatch(200);
@@ -175,6 +178,7 @@ public class ForegroundRenderer {
 		dashboardStatusTexture=manager.get("dashboard_status.png",Texture.class);
 		backButtonTexture=manager.get("btn_back.png",Texture.class);
 		bellButtonTexture=manager.get("btn_bell.png",Texture.class);
+		gamePanelTexture=manager.get("game_panel.png",Texture.class);
 		
 		buttonBlueTexture=manager.get("button_blue.png",Texture.class);
 		buttonOkTexture=manager.get("btn_okay.png",Texture.class);
@@ -371,6 +375,10 @@ public class ForegroundRenderer {
 		
 		if (mFL.betTotalDialog!=null) {
 			renderBetTotalDialog();
+		}
+		
+		if (mFL.gameMenu!=null) {
+			renderGameMenu();
 		}
 		
 		renderStackValueLabels();
@@ -900,6 +908,48 @@ public class ForegroundRenderer {
 			batch.draw(mFL.betTotalDialog.amountLabel.texture,x,y,
 					0,0,mFL.betTotalDialog.amountLabel.radiusX*2,
 					mFL.betTotalDialog.amountLabel.radiusY*2);
+		}
+	}
+	
+	private final void renderGameMenu() {
+		batch.draw(gamePanelTexture,mFL.gameMenu.gamePanel.x-mFL.gameMenu.gamePanel.radiusX,
+				mFL.gameMenu.gamePanel.y-mFL.gameMenu.gamePanel.radiusY,
+				mFL.gameMenu.gamePanel.radiusX*2,mFL.gameMenu.gamePanel.radiusY*2,
+				0,0,203,81,false,false);
+		if (mFL.gameMenu.gamePanel.dealLabel.texture!=null) {
+			int x=(int) (mFL.gameMenu.gamePanel.dealLabel.x-mFL.gameMenu.gamePanel.dealLabel.radiusX);
+			int y=(int) (mFL.gameMenu.gamePanel.dealLabel.y-mFL.gameMenu.gamePanel.dealLabel.radiusY);
+			batch.draw(mFL.gameMenu.gamePanel.dealLabel.texture,x,y,
+					0,0,mFL.gameMenu.gamePanel.dealLabel.radiusX*2,
+					mFL.gameMenu.gamePanel.dealLabel.radiusY*2);
+		}
+		if (mFL.gameMenu.gamePanel.potLabel.texture!=null) {
+			int x=(int) (mFL.gameMenu.gamePanel.potLabel.x-mFL.gameMenu.gamePanel.potLabel.radiusX);
+			int y=(int) (mFL.gameMenu.gamePanel.potLabel.y-mFL.gameMenu.gamePanel.potLabel.radiusY);
+			batch.draw(mFL.gameMenu.gamePanel.potLabel.texture,x,y,
+					0,0,mFL.gameMenu.gamePanel.potLabel.radiusX*2,
+					mFL.gameMenu.gamePanel.potLabel.radiusY*2);
+		}
+		for (int i=0;i<mFL.gameMenu.playerPanels.size();i++) {
+			PlayerMenuPanel thisPanel = mFL.gameMenu.playerPanels.get(i);
+			batch.draw(dashboardStatusTexture,thisPanel.x-thisPanel.radiusX,
+					thisPanel.y-thisPanel.radiusY,
+					thisPanel.radiusX*2,thisPanel.radiusY*2,
+					0,0,640,88,false,false);
+			if (thisPanel.nameLabel.texture!=null) {
+				int x=(int) (thisPanel.nameLabel.x-thisPanel.nameLabel.radiusX);
+				int y=(int) (thisPanel.nameLabel.y-thisPanel.nameLabel.radiusY);
+				batch.draw(thisPanel.nameLabel.texture,x,y,
+						0,0,thisPanel.nameLabel.radiusX*2,
+						thisPanel.nameLabel.radiusY*2);
+			}
+			if (thisPanel.amountsLabel.texture!=null) {
+				int x=(int) (thisPanel.amountsLabel.x-thisPanel.amountsLabel.radiusX);
+				int y=(int) (thisPanel.amountsLabel.y-thisPanel.amountsLabel.radiusY);
+				batch.draw(thisPanel.amountsLabel.texture,x,y,
+						0,0,thisPanel.amountsLabel.radiusX*2,
+						thisPanel.amountsLabel.radiusY*2);
+			}
 		}
 	}
 	

@@ -1,10 +1,8 @@
 package com.bidjee.digitalpokerchips.i;
 
-import java.util.ArrayList;
-
 import com.bidjee.digitalpokerchips.c.Table;
+import com.bidjee.digitalpokerchips.m.GameMenuData;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
-import com.bidjee.digitalpokerchips.m.Player;
 
 public interface IHostNetwork {
 	
@@ -21,7 +19,7 @@ public interface IHostNetwork {
 	public void createTable(String tableName);
 	public void destroyTable();
 	public void syncPlayersChips(String playerName,int chipAmount);
-	public void syncAllTableStatusMenu(ArrayList<Player> players);
+	public void syncAllGameData(GameMenuData gameMenuData);
 	public void promptMove(String playerName,MovePrompt movePrompt,int chipTotal);
 	public void cancelMove(String playerName);
 	public void sendBell(String playerName);

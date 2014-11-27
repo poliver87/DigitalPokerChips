@@ -3,7 +3,6 @@ package com.bidjee.digitalpokerchips.c;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.i.IDPCSprite;
 import com.bidjee.digitalpokerchips.m.AutosaveDialog;
 import com.bidjee.digitalpokerchips.m.BetTotalDialog;
@@ -14,7 +13,6 @@ import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.digitalpokerchips.m.ClosedDialog;
 import com.bidjee.digitalpokerchips.m.DestroyTableDialog;
 import com.bidjee.digitalpokerchips.m.DialogWindow;
-import com.bidjee.digitalpokerchips.m.GameLogic;
 import com.bidjee.digitalpokerchips.m.HelpDialog;
 import com.bidjee.digitalpokerchips.m.LeaveTableDialog;
 import com.bidjee.digitalpokerchips.m.ManualConnectDialog;
@@ -33,6 +31,8 @@ public class ForegroundLayer {
 	public static final Color whiteColor=new Color(1,1,1,1);
 	public static final Color blackColor=new Color(0,0,0,1);
 	public static final Color goldColor=new Color(0.88f,0.62f,0.09f,1);
+	public static final Color brightGoldColor=new Color(1f,0.88f,0.55f,1);
+	public static final Color brightestGoldColor=new Color(1f,0.94f,0.77f,1);
 	public static final Color navyBlueColor=new Color(0.1f,0.23f,0.32f,1);
 	public static final Color darkGreenColor=new Color(0,0.4f,0,1);
 	public static final Color darkBlueColor=new Color(0,0,0.4f,1);
@@ -61,6 +61,7 @@ public class ForegroundLayer {
 	public HomeUIAnimation homeUIAnimation=new HomeUIAnimation();
 	public HomeForegroundAnimation homeForegroundAnimation=new HomeForegroundAnimation();
 	public TutorialArrangement tutorialArrangement;
+	public GameMenu gameMenu;
 	
 	//////////////////// Models ////////////////////
 	public DialogWindow dialogWindow;
@@ -143,6 +144,8 @@ public class ForegroundLayer {
 
 		openHelpOnStartup=false;
 		tutorialArrangement=new TutorialArrangement();
+		
+		gameMenu=new GameMenu();
 		
 		wifiButton=new Button(true,0,"");
 		wifiLabel=new TextLabel("Please Connect to WiFi",0,true,0,false);
@@ -331,6 +334,8 @@ public class ForegroundLayer {
 		playerDashboard.setDimensions((int)(screenWidth*0.5f),(int)(screenHeight*0.09f));
 		betTotalDialog.setDimensions((int)(screenHeight*0.08f*2.5f),(int)(screenHeight*0.08f));
 		
+		gameMenu.setDimensions((int)(screenHeight*0.08f*2.5f),(int)(screenHeight*0.45f));
+		
 		divisibilityDialog.setDimensions((int)(screenWidth*0.3f),(int)(screenHeight*0.06f));
 		tutorialArrangement.setDimensions(screenWidth,screenHeight);
 		manualConnectDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
@@ -423,6 +428,8 @@ public class ForegroundLayer {
 		int margin = (int) (screenHeight*0.01f);
 		betTotalDialog.setPositions(0+margin+betTotalDialog.radiusX,screenHeight+betTotalDialog.radiusY*4f,
 									0+margin+betTotalDialog.radiusX,screenHeight-margin-betTotalDialog.radiusY);
+		
+		gameMenu.setPositions(screenWidth, screenHeight);
 		
 		divisibilityDialog.setPosition(screenWidth*0.5f,screenHeight*0.08f);
 		manualConnectDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
@@ -552,6 +559,7 @@ public class ForegroundLayer {
 		buyinDialog.animate(delta);
 		playerDashboard.animate(delta);
 		betTotalDialog.animate(delta);
+		gameMenu.animate(delta);
 		manualConnectDialog.animate(delta);
 		leaveTableDialog.animate(delta);
 		destroyTableDialog.animate(delta);

@@ -1,7 +1,5 @@
 package com.bidjee.digitalpokerchips.c;
 
-import java.util.ArrayList;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
@@ -14,10 +12,10 @@ import com.bidjee.digitalpokerchips.m.ChipStack;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.DiscoveredTable;
 import com.bidjee.digitalpokerchips.m.GameLogic;
+import com.bidjee.digitalpokerchips.m.GameMenuData;
 import com.bidjee.digitalpokerchips.m.Move;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.PlayerDashboard;
-import com.bidjee.digitalpokerchips.m.PlayerEntry;
 import com.bidjee.util.Logger;
 
 public class ThisPlayer {
@@ -1000,8 +998,8 @@ public class ThisPlayer {
 		}
 	}
 	
-	public void syncStatusMenu(ArrayList<PlayerEntry> playerList) {
-		mWL.game.mFL.tableStatusMenu.syncStatusMenu(playerList);
+	public void syncGameData(GameMenuData gameMenuData) {
+		mWL.game.mFL.gameMenu.setData(gameMenuData);
 	}
 	
 	public void setColor(int color) {

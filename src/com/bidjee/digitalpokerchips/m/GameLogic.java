@@ -11,6 +11,7 @@ public class GameLogic {
 	
 	public static final String PROMPT_MEASURE = "Open River Betting";
 	
+	public static final String PRE_FLOP_STRING = "Pre-Flop";
 	public static final String FLOP_STRING = "Flop";
 	public static final String TURN_STRING = "Turn";
 	public static final String RIVER_STRING = "River";
@@ -52,7 +53,7 @@ public class GameLogic {
 	
 	// State Variables //
 	public String state=STATE_NONE;
-	int dealStage;
+	public int dealStage;
 	private int dealer;
 	public int currBetter;
 	int currStake;
@@ -166,6 +167,7 @@ public class GameLogic {
 				} // end switch (dealStage)
 				table.enablePotArrows();
 				table.promptDealer(dealer,dealStage);
+				table.syncAllTableStatusMenu();
 				waitingDealPrompt=true;
 				setGameState(STATE_WAIT_DEAL_PROMPT);
 			}
@@ -215,6 +217,7 @@ public class GameLogic {
 			//flingPotLabel.fadeOut();
 			//flingDemo.stop();
 			table.pots.remove(table.displayedPotIndex);
+			table.syncAllTableStatusMenu();
 			if (table.pots.size()==0) {
 				setGameState(STATE_RECALL_DEALER);
 			} else {
@@ -711,7 +714,9 @@ public class GameLogic {
 	
 	public static String getDealStageString(int dealStage) {
 		String str="";
-		if (dealStage==DEAL_FLOP) {
+		if (dealStage==DEAL_PRE_FLOP) {
+			str = PRE_FLOP_STRING;
+		} else if (dealStage==DEAL_FLOP) {
 			str = FLOP_STRING;
 		} else if (dealStage==DEAL_TURN) {
 			str = TURN_STRING;
