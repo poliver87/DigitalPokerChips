@@ -11,6 +11,8 @@ public class Camera {
 	static final int ANIM_ZOOMING = 1;
 	static final int ANIM_PANNING = 2;
 	static final int ANIM_ZOOMING_AND_PANNING = 3;
+	
+	public static final float zoomSpeed = 2.5f;
 	// View Matrix
 	private final Matrix4 viewMatrix = new Matrix4();
 	// State Variables
@@ -113,7 +115,7 @@ public class Camera {
 	
 	public void animate(float delta) {
 		if (animationState==ANIM_ZOOMING) {
-			float deltaZoom_=delta*4f*(zoom-zoomDest);
+			float deltaZoom_=delta*zoomSpeed*(zoom-zoomDest);
 			if (deltaZoom_<-0.03f) {
 				deltaZoom_=-0.03f;
 			} else if (deltaZoom_>0.03f) {
@@ -145,7 +147,7 @@ public class Camera {
 			}
 			updateMatrix();
 		} else if (animationState==ANIM_ZOOMING_AND_PANNING) {
-			float deltaZoom_=delta*4f*(zoom-zoomDest);
+			float deltaZoom_=delta*zoomSpeed*(zoom-zoomDest);
 			if (deltaZoom_<-0.03f) {
 				deltaZoom_=-0.03f;
 			} else if (deltaZoom_>0.03f) {

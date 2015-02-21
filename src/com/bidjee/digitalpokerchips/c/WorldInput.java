@@ -93,7 +93,7 @@ public class WorldInput implements InputProcessor {
 					mWL.thisPlayer.checkButton.setIsTouched(true);
 				}
 			} else if (mWL.cameraDestination==mWL.camPosTable) {
-				if (mWL.table.gameState==Table.STATE_LOBBY) {
+				if (mWL.table.gameState==Table.STATE_LOBBY||mWL.table.gameState==Table.STATE_GAME_REARRANGE) {
 					if (mWL.table.pickedUpPlayer==null) {
 						// TODO deal with players animating, might not be a problem
 						
@@ -109,6 +109,15 @@ public class WorldInput implements InputProcessor {
 									deltaTouch.y=touchY-thisPlayer_.y;
 									break;
 								}
+							}
+						}
+					}
+				} else if (mWL.table.gameState==Table.STATE_SELECTING_DEALER) {
+					for (int i=0;i<Table.NUM_SEATS;i++) {
+						if (mWL.table.seats[i].player!=null&&mWL.table.seats[i].player.getTouchable()) {
+							if (mWL.table.seats[i].player.pointContained(touchX,touchY)) {
+								mWL.table.seats[i].player.setIsTouched(true);
+								break;
 							}
 						}
 					}
@@ -160,27 +169,35 @@ public class WorldInput implements InputProcessor {
 				mWL.thisPlayer.checkButton.setIsTouched(false);
 				mWL.thisPlayer.doCheck();
 			}
-			if (mWL.table.gameState==Table.STATE_LOBBY) {
+			if (mWL.table.gameState==Table.STATE_LOBBY||mWL.table.gameState==Table.STATE_GAME_REARRANGE) {
 				if (mWL.table.pickedUpPlayer!=null) {
 					if (mWL.table.pickedUpPlayer.getIsTouched()) {
 						mWL.table.pickedUpPlayer.setIsTouched(false);
 						mWL.table.pickedUpPlayerDropped();
 					}
 				}
-			}
-			for (int i=0;i<Table.NUM_SEATS;i++) {
-				if (mWL.table.seats[i].player!=null&&mWL.table.seats[i].player.getIsTouched()) {
-					mWL.table.seats[i].player.setIsTouched(false);
-					mWL.table.playerClicked(i);
+			} else if (mWL.table.gameState==Table.STATE_SELECTING_DEALER) {
+				for (int i=0;i<Table.NUM_SEATS;i++) {
+					if (mWL.table.seats[i].player!=null&&mWL.table.seats[i].player.getIsTouched()) {
+						mWL.table.seats[i].player.setIsTouched(false);
+						mWL.table.dealerSelected(i);
+					}
 				}
-				if (mWL.table.seats[i].undoButton.getIsTouched()) {
-					mWL.table.seats[i].undoButton.setIsTouched(false);
-					mWL.table.undoClicked(i);
+			} else if (mWL.table.gameState==Table.STATE_GAME) {
+				for (int i=0;i<Table.NUM_SEATS;i++) {
+					if (mWL.table.seats[i].player!=null&&mWL.table.seats[i].player.getIsTouched()) {
+						mWL.table.seats[i].player.setIsTouched(false);
+						mWL.table.playerClicked(i);
+					}
+					if (mWL.table.seats[i].undoButton.getIsTouched()) {
+						mWL.table.seats[i].undoButton.setIsTouched(false);
+						mWL.table.undoClicked(i);
+					}
 				}
-			}
-			if (mWL.table.animationState==Table.ANIM_SELECT_WINNER) {
-				if (mWL.table.pots.size()>0&&mWL.table.pots.get(mWL.table.displayedPotIndex).potStack.get(0).isTouched) {
-					mWL.table.pots.get(mWL.table.displayedPotIndex).potStack.get(0).isTouched=false;
+				if (mWL.table.animationState==Table.ANIM_SELECT_WINNER) {
+					if (mWL.table.pots.size()>0&&mWL.table.pots.get(mWL.table.displayedPotIndex).potStack.get(0).isTouched) {
+						mWL.table.pots.get(mWL.table.displayedPotIndex).potStack.get(0).isTouched=false;
+					}
 				}
 			}
 		}
@@ -223,14 +240,19 @@ public class WorldInput implements InputProcessor {
 					mWL.thisPlayer.checkButton.setIsTouched(false);
 				}
 			}
-			if (mWL.table.gameState==Table.STATE_LOBBY) {
+			if (mWL.table.gameState==Table.STATE_LOBBY||mWL.table.gameState==Table.STATE_GAME_REARRANGE) {
 				Player pickedUpPlayer_=mWL.table.pickedUpPlayer;
 				if (pickedUpPlayer_!=null) {
 					if (pickedUpPlayer_.getIsTouched()) {
-						pickedUpPlayer_.setX(touchX-deltaTouch.x);
-						pickedUpPlayer_.setY(touchY-deltaTouch.y);
-						mWL.table.rotateAndProjectPlayer(pickedUpPlayer_);
-						mWL.table.calculateClosestSeatToPickedUp();
+						mWL.table.pickedUpPlayerDragged(touchX-deltaTouch.x,touchY-deltaTouch.y);
+					}
+				}
+			} else if (mWL.table.gameState==Table.STATE_SELECTING_DEALER) {
+				for (int i=0;i<Table.NUM_SEATS;i++) {
+					if (mWL.table.seats[i].player!=null&&mWL.table.seats[i].player.getIsTouched()) {
+						if (!mWL.table.seats[i].player.pointContained(touchX,touchY)) {
+							mWL.table.seats[i].player.setIsTouched(false);
+						}
 					}
 				}
 			} else if (mWL.table.gameState==Table.STATE_GAME) {

@@ -1,12 +1,11 @@
 package com.bidjee.digitalpokerchips.c;
 
 import java.util.ArrayList;
+import java.util.Random;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.i.IHostNetwork;
 import com.bidjee.digitalpokerchips.i.ITableStore;
-import com.bidjee.digitalpokerchips.m.Card;
 import com.bidjee.digitalpokerchips.m.Chip;
 import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.digitalpokerchips.m.ChipStack;
@@ -15,12 +14,12 @@ import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.Deck;
 import com.bidjee.digitalpokerchips.m.GameLogic;
 import com.bidjee.digitalpokerchips.m.GameMenuData;
+import com.bidjee.digitalpokerchips.m.HostLobbyDialog;
 import com.bidjee.digitalpokerchips.m.MovePrompt;
 import com.bidjee.digitalpokerchips.m.Player;
 import com.bidjee.digitalpokerchips.m.PlayerMenuItem;
 import com.bidjee.digitalpokerchips.m.Pot;
 import com.bidjee.digitalpokerchips.m.Seat;
-import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.util.Logger;
 
 public class Table {
@@ -32,8 +31,10 @@ public class Table {
 	public static final int STATE_LOBBY = 1;
 	public static final int STATE_LOBBY_LOADED = 2;
 	public static final int STATE_SELECTING_DEALER = 3;
-	public static final int STATE_SENDING_DEALER_BUTTON = 4;
-	public static final int STATE_GAME = 5;
+	public static final int STATE_DEALER_TO_SEAT = 4;
+	public static final int STATE_DEALER_TO_PLAYER = 5;
+	public static final int STATE_GAME = 6;
+	public static final int STATE_GAME_REARRANGE = 7;
 	
 	public static final int ANIM_NONE = 0;
 	public static final int ANIM_BETTING = 1;
@@ -53,7 +54,7 @@ public class Table {
 	public static final int SAVE_SLOT_4 = 4;
 	public static final int SAVE_SLOT_5 = 5;
 	public static final int SAVE_SLOT_6 = 6;
-	public static final int SAVE_NUM_SLOTS = 6;
+	public static final int SAVE_NUM_SLOTS = 7;
 	
 	public static final int NUM_SEATS = 8;
 	public static final int MAX_STACK_RENDER_NUM = 8;
@@ -61,11 +62,10 @@ public class Table {
 	
 	public static final String TABLE_NAME_DEFAULT = "MyTable";
 	
-	static final int DEAL_PROMPT_DURATION = 5000;
+	static final int DEAL_PROMPT_DURATION = 2000;
 	
 	//////////////////// State Variables ////////////////////
 	boolean wifiEnabled;
-	int winLabelTimer;
 	int gameState;
 	public int animationState;
 	public int closestSeatToPickedUp;
@@ -74,12 +74,13 @@ public class Table {
 	public int displayedPotIndex;
 	public int winner;
 	public int bootDialogPlayer=-1;
-	public int saveSlot;
 	boolean gameCanStart;
 	long dealPromptTimer;
 	boolean timeDealPrompt;
+	String dealerName;
 	
 	//////////////////// Models ////////////////////
+	public String gameName;
 	public GameLogic gameLogic;
 	public DPCSprite dealerButton=new DPCSprite();
 	public Seat[] seats;
@@ -90,18 +91,18 @@ public class Table {
 	GameMenuData gameMenuData = new GameMenuData();
 	
 	//////////////////// Text Labels ////////////////////
-	public TextLabel startLabel;
 	
 	//////////////////// Screen Scale & Layout ////////////////////
 	public float sendOffscreenVel;
+	int radiusX;
+	int radiusY;
 	float xLeft;
 	float xRight;
 	float yTop;
 	float yBottom;
 	float dealerButtonOffset;
-	public static int radiusXSuit;
-	public static int radiusYSuit;
 	Vector2 posDealerButtonStart=new Vector2();
+	float maxStackHeight;
 	
 	//////////////////// References ////////////////////
 	public WorldLayer mWL;
@@ -113,8 +114,6 @@ public class Table {
 		this.networkInterface=networkInterface;
 		networkInterface.setTable(this);
 		this.tableStore=tableStore;
-		startLabel=new TextLabel("Ready to Start",0,true,0,false);
-		startLabel.maxOpacity=0.75f;
 		dealerButton.opacity=0;
 		seats=new Seat[NUM_SEATS];
 		for (int i=0;i<NUM_SEATS;i++) {
@@ -125,52 +124,49 @@ public class Table {
 		gameLogic=new GameLogic(this);
 		pots=new ArrayList<Pot>();
 		winner=-1;
-		saveSlot=SAVE_SLOT_NONE;
 	}
 	
 	//////////////////// Scale & Layout ////////////////////
-	public void setDimensions(float worldWidth,float worldHeight) {
-		int radiusYTableName_=(int)(worldHeight*0.03f);
-		dealerButton.setDimensions((int)(worldHeight*0.022f),(int)(worldHeight*0.022f));
-		int textSize_=Math.min(DPCGame.textFactory.getMaxTextSize(startLabel),
-				DPCGame.textFactory.getMaxTextSize(startLabel));
-		startLabel.setTextSize(textSize_);
+	public void setDimensions(int radiusX,int radiusY) {
+		this.radiusX=radiusX;
+		this.radiusY=radiusY;
+		dealerButton.setDimensions((int)(radiusY*0.2f),(int)(radiusY*0.2f));
 		for (int i=0;i<NUM_SEATS;i++) {
-			seats[i].setDimensions((int)(worldHeight*0.068f),(int)(worldHeight*0.04f));
+			seats[i].setDimensions((int)(radiusY*0.3f*1.7f),(int)(radiusY*0.3f));
 		}
 		if (pickedUpPlayer!=null) {
 			pickedUpPlayer.setDimensions(Seat.radiusX,Seat.radiusY);
 		}
 		dealerButtonOffset=Seat.radiusY*0.5f;
-		radiusXSuit=(int) (Seat.radiusY*0.2f);
-		radiusYSuit=radiusXSuit;
-		TextLabel faceLabel=new TextLabel("A",0,false,0,false);
-		faceLabel.setMaxDimensions(Table.radiusXSuit,Table.radiusYSuit);
-		Card.textSize=DPCGame.textFactory.getMaxTextSize(faceLabel);
-		gameLogic.setDimensions(worldWidth, worldHeight);
+		sendOffscreenVel=radiusY*0.9f;
 	}
 	
-	public void setPositions(float worldWidth,float worldHeight) {
-		sendOffscreenVel=worldWidth*0.1f;
-		Pot.originX=worldWidth*0.5f;
-		Pot.originY=worldHeight*0.5f;
-		xLeft=worldWidth*0.375f;
-		xRight=worldWidth*0.625f;
-		yTop=worldHeight*0.625f;
-		yBottom=worldHeight*0.375f;
-		posDealerButtonStart.set(worldWidth*0.5f,worldHeight*0.46f);
+	public void setChipDimensions() {
+		Chip.radiusY=(int) (radiusY*0.28f);
+		Chip.radiusX=(int) (Chip.radiusY*1.02f);
+		maxStackHeight=2*Chip.radiusY*(1+MAX_STACK_RENDER_NUM*Chip.Z_Y_OFFSET_RATIO);
+	}
+	
+	public void setPositions(float x,float y) {
 		
-		Seat.distToOffscreen=Seat.radiusY+2*Chip.radiusY*(1+MAX_STACK_RENDER_NUM*Chip.Z_Y_OFFSET_RATIO);
-		float seatOffsetX=Seat.radiusX*1.5f;
-		seats[0].setPosition(worldWidth*0.5f+seatOffsetX,worldHeight*0.375f+Seat.radiusY,0);
-		seats[1].setPosition(worldWidth*0.5f,worldHeight*0.375f+Seat.radiusY,0);
-		seats[2].setPosition(worldWidth*0.5f-seatOffsetX,worldHeight*0.375f+Seat.radiusY,0);
-		seats[3].setPosition(worldWidth*0.375f+Seat.radiusY,worldHeight*0.5f,-90);
-		seats[4].setPosition(worldWidth*0.5f-seatOffsetX,worldHeight*0.625f-Seat.radiusY,180);
-		seats[5].setPosition(worldWidth*0.5f,worldHeight*0.625f-Seat.radiusY,180);
-		seats[6].setPosition(worldWidth*0.5f+seatOffsetX,worldHeight*0.625f-Seat.radiusY,180);
-		seats[7].setPosition(worldWidth*0.625f-Seat.radiusY,worldHeight*0.5f,90);
-		gameLogic.setPositions(worldWidth,worldHeight);
+		Pot.originX=x;
+		Pot.originY=y;
+		xLeft=x-radiusX;
+		xRight=x+radiusX;
+		yTop=y+radiusY;
+		yBottom=y-radiusY;
+		posDealerButtonStart.set(x+radiusX*0.65f,y);
+		
+		
+		float seatOffsetX=Seat.radiusX*1.9f;
+		seats[0].setPosition(x+seatOffsetX,yBottom+Seat.radiusY,0);
+		seats[1].setPosition(x,yBottom+Seat.radiusY,0);
+		seats[2].setPosition(x-seatOffsetX,yBottom+Seat.radiusY,0);
+		seats[3].setPosition(xLeft+Seat.radiusY,y,-90);
+		seats[4].setPosition(x-seatOffsetX,yTop-Seat.radiusY,180);
+		seats[5].setPosition(x,yTop-Seat.radiusY,180);
+		seats[6].setPosition(x+seatOffsetX,yTop-Seat.radiusY,180);
+		seats[7].setPosition(xRight-Seat.radiusY,y,90);
 	}
 	
 	public void scalePositions(float scaleX,float scaleY) {
@@ -178,7 +174,6 @@ public class Table {
 		Pot.originX*=scaleX;
 		Pot.originY*=scaleY;
 		dealerButton.scalePosition(scaleX,scaleY);
-		startLabel.scalePosition(scaleX,scaleY);
 		
 		seats[1].scalePosition(scaleX,scaleY);
 		seats[2].scalePosition(scaleX,scaleY);
@@ -191,7 +186,6 @@ public class Table {
 		if (pickedUpPlayer!=null) {
 			pickedUpPlayer.scalePosition(scaleX,scaleY);
 		}
-		gameLogic.scalePositions(scaleX, scaleY);
 	}
 	
 	//////////////////// Controllers ////////////////////
@@ -200,10 +194,7 @@ public class Table {
 			gameLogic.updateLogic();
 		}
 		if (gameState==STATE_LOBBY) {
-			if (mWL.game.runTutorialArrangement&&countPlayersLobby()==1) {
-				mWL.game.runTutorialArrangement=false;
-				mWL.game.mFL.startTutorialArrangement(getAnyPlayer());
-			}
+			
 		}
 		
 		if (gameState==STATE_LOBBY) {
@@ -216,24 +207,20 @@ public class Table {
 			}
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			if (allPlayersSetup()) {
-				String gameStateString=tableStore.getGameState(saveSlot);
-				gameLogic.setGameStateFromString(gameStateString);
-				setGameState(STATE_SENDING_DEALER_BUTTON);
+				//String gameStateString=tableStore.getGameState(saveSlot);
+				//gameLogic.setGameStateFromString(gameStateString);
+				//setGameState(STATE_SENDING_DEALER_BUTTON);
 			}
 		}
 	}
 	
 	public void animate(float delta) {
-		startLabel.animate(delta);
 		dealerButton.animate(delta);
 		for (int i=0;i<NUM_SEATS;i++) {
 			seats[i].animate(delta);
 			Player thisPlayer=seats[i].player;
 			if (thisPlayer!=null) {
 				thisPlayer.animate(delta);
-				if (thisPlayer.getCard()!=null) {
-					thisPlayer.getCard().animate(delta);
-				}
 				if (thisPlayer.state==Player.STATE_RXING_JOIN_COIN) {
 					if (Math.abs(thisPlayer.joinToken.y-seats[i].y)<2&&
 							Math.abs(thisPlayer.joinToken.x-seats[i].x)<2) {
@@ -248,13 +235,15 @@ public class Table {
 				} else if (thisPlayer.state==Player.STATE_PAUSING_START_STACK) {
 					thisPlayer.pauseStartStack(delta);
 				} else if (thisPlayer.state==Player.STATE_SENDING_START_STACK) {
-					if (Math.abs(thisPlayer.winStack.getY()-seats[i].yOffscreen)<2&&
-							Math.abs(thisPlayer.winStack.getX()-seats[i].xOffscreen)<2) {
+					Vector2 posOffscreen = seats[i].getPositionOffsetVertically(-1*(Seat.radiusY+maxStackHeight));
+					float yDest = 0;
+					if (Math.abs(thisPlayer.winStack.getY()-posOffscreen.y)<2&&
+							Math.abs(thisPlayer.winStack.getX()-posOffscreen.x)<2) {
 						// shouldn't happen
 					} else {
-						float deltaY_=delta*5*(thisPlayer.winStack.getY()-seats[i].yOffscreen);
+						float deltaY_=delta*5*(thisPlayer.winStack.getY()-posOffscreen.y);
 						thisPlayer.winStack.setY(thisPlayer.winStack.getY()-deltaY_);
-						float deltaX_=delta*5*(thisPlayer.winStack.getX()-seats[i].xOffscreen);
+						float deltaX_=delta*5*(thisPlayer.winStack.getX()-posOffscreen.x);
 						thisPlayer.winStack.setX(thisPlayer.winStack.getX()-deltaX_);
 					}
 				}
@@ -263,7 +252,7 @@ public class Table {
 		for (int i=0;i<pots.size();i++) {
 			pots.get(i).potStack.animate(delta);
 		}
-		if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
+		if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED||gameState==STATE_GAME_REARRANGE) {
 			Player thisPlayer_;
 			for (int i=0;i<NUM_SEATS;i++) {
 				seats[i].animate(delta);
@@ -286,69 +275,16 @@ public class Table {
 				thisPlayer_.animate(delta);
 			}
 		} else if (gameState==STATE_SELECTING_DEALER) {
-			if (dealerButton.opacity==1) {
-				if (gameLogic.getDealer()==GameLogic.NO_PLAYER) {
-					boolean allCardsVisible=true;
-					for (int seatIndex=0;seatIndex<NUM_SEATS;seatIndex++) {
-						
-						if (seats[seatIndex].player!=null) {
-							seats[seatIndex].player.getCard().opacity+=delta*0.75f;
-							if (seats[seatIndex].player.getCard().opacity>1) {
-								seats[seatIndex].player.getCard().opacity=1;
-							}
-							if (seats[seatIndex].player.getCard().opacity!=1) {
-								allCardsVisible=false;
-								break;
-							}
-						}
-					}
-					if (allCardsVisible) {
-						setDealer(calculateDealer());
-						mWL.game.mFL.stopDealerSelect();
-						mWL.game.mFL.showWinLabel(seats[gameLogic.getDealer()].player.name); 
-						winLabelTimer=0;
-					}
-				} else if (winLabelTimer<DURATION_WIN_LABEL) {
-					winLabelTimer+=delta*1000;
-				} else {
-					setGameState(STATE_SENDING_DEALER_BUTTON);
-				}
+			
+		} else if (gameState==STATE_DEALER_TO_PLAYER) {
+			if (dealerButton.atDest) {
+				
+				setGameState(STATE_DEALER_TO_SEAT);
 			}
-		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
-			if (dealerButton.opacity==1) {
-				if (!dealerButton.atDest) {
-					Seat thisSeat_=seats[gameLogic.getDealer()];
-					float destX_=thisSeat_.x-thisSeat_.player.xCoeff*dealerButtonOffset;
-					float destY_=thisSeat_.y-thisSeat_.player.yCoeff*dealerButtonOffset;
-					if (Math.abs(dealerButton.y-destY_)<2&&
-							Math.abs(dealerButton.x-destX_)<2) {
-						dealerButton.atDest=true;
-					} else {
-						float deltaY_=delta*5*(destY_-dealerButton.y);
-						dealerButton.y+=deltaY_;
-						float deltaX_=delta*5*(destX_-dealerButton.x);
-						dealerButton.x+=deltaX_;
-						dealerButton.atDest=false;
-					}
-				} else {
-					if (Math.abs(dealerButton.y-seats[gameLogic.getDealer()].yOffscreen)<2&&
-							Math.abs(dealerButton.x-seats[gameLogic.getDealer()].xOffscreen)<2) {
-						// shouldn't happen - collision detector should clear it
-					} else {
-						float deltaY=delta*5*(seats[gameLogic.getDealer()].yOffscreen-dealerButton.y);
-						dealerButton.y+=deltaY;
-						float deltaX=delta*5*(seats[gameLogic.getDealer()].xOffscreen-dealerButton.x);
-						dealerButton.x+=deltaX;
-					}
-				}
-			}
+		} else if (gameState==STATE_DEALER_TO_SEAT) {
+			
 		} else if (gameState==STATE_GAME) {
-			//gameLogic.animate(delta);
-			for (int seat=0;seat<Table.NUM_SEATS;seat++) {
-				if (seats[seat].player!=null) {
-					seats[seat].player.animate(delta);
-				}
-			}
+
 			if (timeDealPrompt) {
 				dealPromptTimer+=delta*1000;
 				if (dealPromptTimer>DEAL_PROMPT_DURATION) {
@@ -489,8 +425,8 @@ public class Table {
 				}
 			}
 		}
-		if (gameState==STATE_SENDING_DEALER_BUTTON) {
-			if (dealerButton.atDest&&!mWL.worldRenderer.camera.isOnScreen(dealerButton)) {
+		if (gameState==STATE_DEALER_TO_SEAT) {
+			if (!mWL.worldRenderer.camera.isOnScreen(dealerButton)) {
 				setGameState(STATE_GAME);
 			}
 		} else if (gameState==STATE_GAME) {
@@ -570,7 +506,7 @@ public class Table {
 					for (int i=0;i<NUM_SEATS;i++) {
 						if (seats[i].player!=null) {
 							seats[i].player.name.fadeOut();
-							setConnectionShowing(seats[i].player,false);
+							seats[i].player.setActive(false);
 						}
 					}
 				}
@@ -590,7 +526,7 @@ public class Table {
 						for (int i=0;i<NUM_SEATS;i++) {
 							if (seats[i].player!=null) {
 								seats[i].player.name.fadeOut();
-								setConnectionShowing(seats[i].player,false);
+								seats[i].player.setActive(false);
 							}
 						}
 					}
@@ -626,11 +562,17 @@ public class Table {
 		if (gameState==STATE_NONE) {
 			//
 		} else if (gameState==STATE_LOBBY) {
-			mWL.game.mFL.startLobby();
 			if (!wifiEnabled) {
 				wifiOff();
 			}
 			gameCanStart=false;
+			for (int i=0;i<NUM_SEATS;i++) {
+				if (seats[i].player!=null) {
+					seats[i].player.setActive(true);
+					seats[i].player.setArrowsShowing(true);
+					networkInterface.notifyArrange(seats[i].player.name.getText());
+				}
+			}
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			mWL.game.mFL.startLobbyLoaded();
 			if (!wifiEnabled) {
@@ -639,29 +581,45 @@ public class Table {
 			for (int i=0;i<NUM_SEATS;i++) {
 				//seats[i].notifyAtLobby();
 				if (seats[i].player!=null) {
-					seats[i].player.connectionBlob.startFlashing();
+					//seats[i].player.connectionBlob.startFlashing();
 					seats[i].player.name.fadeIn();
 				}
 			}
 			gameCanStart=false;
 		} else if (gameState==STATE_SELECTING_DEALER) {
-			mWL.game.mFL.startDealerSelect();
+			networkInterface.selectDealer();
 			dealerButton.fadeIn();
 			dealerButton.setPosition(posDealerButtonStart);
-			dealCards();
-		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
+			dealerButton.rotation=0;
+			for (int i=0;i<NUM_SEATS;i++) {
+				if (seats[i].player!=null) {
+					seats[i].player.setActive(false);
+					seats[i].player.setArrowsShowing(false);
+				}
+			}
+		} else if (gameState==STATE_DEALER_TO_PLAYER) {
+			mWL.game.mFL.nextHostDealerDialog();
 			dealerButton.fadeIn();
 			dealerButton.setPosition(posDealerButtonStart);
+			dealerButton.setDest(seats[gameLogic.getDealer()].x,seats[gameLogic.getDealer()].y);
+		} else if (gameState==STATE_DEALER_TO_SEAT) {
+			Vector2 posOffscreen = seats[gameLogic.getDealer()].getPositionOffsetVertically(-1*(Seat.radiusY+dealerButton.radiusY*2));
+			dealerButton.setDest(posOffscreen);
 		} else if (gameState==STATE_GAME) {
 			inSetupFlow=false;
 			gameLogic.start();
+			mWL.game.mFL.notifyGameStarting();
+			
+		} else if (gameState==STATE_GAME_REARRANGE) {
+			dealerName = seats[gameLogic.getDealer()].player.name.getText();
 			for (int i=0;i<NUM_SEATS;i++) {
 				if (seats[i].player!=null) {
-					setConnectionShowing(seats[i].player,false);
-					seats[i].player.name.fadeOut();
+					seats[i].player.setActive(true);
+					seats[i].player.setArrowsShowing(true);
+					networkInterface.notifyArrange(seats[i].player.name.getText());
 				}
 			}
-			mWL.game.mFL.notifyGameStarting();
+			mWL.game.mFL.startHostRearrangeDialog();
 		}
 	}
 	
@@ -672,7 +630,6 @@ public class Table {
 				seats[i].playerSlot.fadeOut();
 				seats[i].playerSlot.opacity=0;
 			}
-			mWL.game.mFL.stopLobby();
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			loadedGame=false;
 			for (int i=0;i<NUM_SEATS;i++) {
@@ -682,26 +639,24 @@ public class Table {
 					seats[i].player.isLoadedPlayer=false;
 				}
 			}
-			mWL.game.mFL.stopLobby();
 		} else if (gameState==STATE_SELECTING_DEALER) {
-			mWL.game.mFL.stopDealerSelect();
-			for (int i=0;i<NUM_SEATS;i++) {
-				if (seats[i].player!=null&&seats[i].player.getCard()!=null) {
-					seats[i].player.getCard().fadeOut();
-				}
-			}
+
 			dealerButton.fadeOut();
-		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
-			mWL.game.mFL.stopDealerSelect();
-			for (int i=0;i<NUM_SEATS;i++) {
-				if (seats[i].player!=null&&seats[i].player.getCard()!=null) {
-					seats[i].player.getCard().fadeOut();
-				}
-			}
+		} else if (gameState==STATE_DEALER_TO_PLAYER) {
+			dealerButton.fadeOut();
+		} else if (gameState==STATE_DEALER_TO_SEAT) {
 			dealerButton.fadeOut();
 		} else if (gameState==STATE_GAME) {
-			gameLogic.removeAllPrompts();
 			mWL.game.mFL.stopGame();
+		} else if (gameState==STATE_GAME_REARRANGE) {
+			for (int i=0;i<NUM_SEATS;i++) {
+				if (seats[i].player!=null) {
+					seats[i].player.setActive(false);
+					if (seats[i].player.name.getText().equals(dealerName)) {
+						gameLogic.setDealer(i);
+					}
+				}
+			}
 		}
 	}
 	
@@ -714,11 +669,9 @@ public class Table {
 		if (gameState==STATE_NONE) {
 			
 		} else if (gameState==STATE_LOBBY) {
-			setGameState(STATE_NONE);
 			destroyTable();
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			destroyTable();
-			setGameState(STATE_NONE);
 		} else if (gameState==STATE_SELECTING_DEALER) {
 			setGameState(STATE_LOBBY);
 			backHandled=true;
@@ -734,47 +687,33 @@ public class Table {
 		inSetupFlow=true;
 		//mWL.sendCameraTo(mWL.camPosTableName);
 		mWL.sendCameraTo(mWL.camPosTable);
-		saveSlot=SAVE_SLOT_NONE;
 	}
 	
 	public void notifyAtTablePosition() {
 		Logger.log(LOG_TAG,"notifyAtTablePosition()");
-		if (!loadedGame) {
-			gameLogic.resetTable();
-			setGameState(STATE_LOBBY);
-		} else {
-			setGameState(STATE_LOBBY_LOADED);
-		}
+		setChipDimensions();
+		mWL.game.mFL.notifyAtHostPosition();
+		mWL.game.mFL.startHostNameDialog();
+		
+		//if (!loadedGame) {
+		//	gameLogic.resetTable();
+		//	setGameState(STATE_LOBBY);
+		//} else {
+		//	setGameState(STATE_LOBBY_LOADED);
+		//}
+		//createTable();
+	}
+	
+	public void startLobby() {
+		
+		gameLogic.resetTable();
+		setGameState(STATE_LOBBY);
 		createTable();
 	}
 	
 	public void notifyLeftTablePosition() {
 		Logger.log(LOG_TAG,"notifyLeftTablePosition()");
 		mWL.game.mFL.stopWifiPrompt();
-	}
-	
-	public void notifyAtTableNamePosition() {
-		Logger.log(LOG_TAG,"notifyAtTableNamePosition()");
-		mWL.game.mFL.startEnterTableName();
-		Gdx.input.setOnscreenKeyboardVisible(true);
-		mWL.input.setTypingFocus(WorldInput.TYPING_TABLE_NAME);
-	}
-	
-	public void notifyLeftTableNamePosition() {
-		Logger.log(LOG_TAG,"notifyLeftTableNamePosition()");
-		mWL.game.mFL.stopEnterTableName();
-		mWL.input.setTypingFocus(WorldInput.TYPING_NOTHING);
-		Gdx.input.setOnscreenKeyboardVisible(false);
-	}
-	
-	public void notifyAtChipCasePosition() {
-		Logger.log(LOG_TAG,"notifyAtChipCasePosition()");
-		mWL.game.mFL.startSetValues();
-	}
-	
-	public void notifyLeftChipCasePosition() {
-		Logger.log(LOG_TAG,"notifyLeftChipCasePosition()");
-		mWL.game.mFL.stopSetValues();
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
@@ -785,10 +724,8 @@ public class Table {
 	public void wifiOn(String ipAddressStr) {
 		Logger.log(LOG_TAG,"wifiOn("+ipAddressStr+")");
 		wifiEnabled=true;
-		mWL.game.mFL.setIpAddress(ipAddressStr);
 		if (gameState==STATE_LOBBY) {
 			networkInterface.createTable("table name");
-			mWL.game.mFL.startLobby();
 			mWL.game.mFL.stopWifiPrompt();
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			networkInterface.createTable("table name");
@@ -798,10 +735,10 @@ public class Table {
 			networkInterface.createTable("table name");
 			
 			mWL.game.mFL.stopWifiPrompt();
-		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
-			networkInterface.createTable("table name");
+		//} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
+			//networkInterface.createTable("table name");
 			
-			mWL.game.mFL.stopWifiPrompt();
+			//mWL.game.mFL.stopWifiPrompt();
 		} else if (gameState==STATE_GAME) {
 			networkInterface.createTable("table name");
 			
@@ -813,23 +750,20 @@ public class Table {
 	public void wifiOff() {
 		Logger.log(LOG_TAG,"wifiOff()");
 		wifiEnabled=false;
-		mWL.game.mFL.hideIpAddress();
 		if (gameState==STATE_LOBBY) {
 			networkInterface.destroyTable();
-			mWL.game.mFL.stopLobby();
 			mWL.game.mFL.startWifiPrompt();
 		} else if (gameState==STATE_LOBBY_LOADED) {
 			networkInterface.destroyTable();
-			mWL.game.mFL.stopLobby();
 			mWL.game.mFL.startWifiPrompt();
 		} else if (gameState==STATE_SELECTING_DEALER) {
 			networkInterface.destroyTable();
 			
 			mWL.game.mFL.startWifiPrompt();
-		} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
-			networkInterface.destroyTable();
+		//} else if (gameState==STATE_SENDING_DEALER_BUTTON) {
+			//networkInterface.destroyTable();
 			
-			mWL.game.mFL.startWifiPrompt();
+			//mWL.game.mFL.startWifiPrompt();
 		} else if (gameState==STATE_GAME) {
 			networkInterface.destroyTable();
 			
@@ -842,7 +776,7 @@ public class Table {
 	//////////////////////////////////////////////////////////////////////////////
 	
 	private void createTable() {
-		networkInterface.createTable("table name");
+		networkInterface.createTable(gameName);
 	}
 	
 	private void destroyTable() {
@@ -855,22 +789,17 @@ public class Table {
 		removeAllPlayers();
 		pots.clear();
 		gameLogic.destroyTable();
+		setGameState(STATE_NONE);
 	}
 	
 	public void saveTable() {
 		Logger.log(LOG_TAG,"saveTable()");
-		if (saveSlot==SAVE_SLOT_NONE) {
-			saveSlotSelected(SAVE_SLOT_1);
-			mWL.game.mFL.startAutosaveDialog(saveSlot,tableStore.getTableNames(SAVE_NUM_SLOTS));
-		} else {
-			tableStore.saveGame(saveSlot,"table name",buildTableStateString(),gameLogic.buildGameStateString());
-			gameLogic.saveDone();
-		}
+		tableStore.saveGame(gameName,buildTableStateString(),gameLogic.buildGameStateString());
+		gameLogic.saveDone();
 	}
 	
 	public void loadTable(int loadSlot) {
 		Logger.log(LOG_TAG,"loadTable("+loadSlot+")");
-		saveSlot=loadSlot;
 		String tableName=tableStore.getTableName(loadSlot);
 		String tableStateString=tableStore.getTableState(loadSlot);
 		
@@ -900,7 +829,7 @@ public class Table {
 		Player connectedPlayer=getPlayerFromPlayerName(playerName);
 		if (connectedPlayer==null) {
 			if (chipNumbers!=null) {
-				connectedPlayer=new Player(playerName,null);
+				connectedPlayer=new Player(playerName);
 				connectedPlayer.azimuth=azimuth;
 				addPlayer(connectedPlayer);
 				connectedPlayer.setBuyinBuild(chipNumbers);
@@ -908,9 +837,10 @@ public class Table {
 		}
 		if (connectedPlayer!=null) {
 			if (!connectedPlayer.hasBoughtIn) {
-				if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
+				if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED||gameState==STATE_GAME_REARRANGE) {
 					doPlayerBuyin(connectedPlayer);
-				} else if (gameState==STATE_GAME||gameState==STATE_SELECTING_DEALER||gameState==STATE_SENDING_DEALER_BUTTON) {
+				} else if (gameState==STATE_GAME||gameState==STATE_SELECTING_DEALER||
+						gameState==STATE_DEALER_TO_PLAYER||gameState==STATE_DEALER_TO_SEAT) {
 					doPlayerBuyinNextHand(connectedPlayer);
 				} else {
 					Logger.log(LOG_TAG,"notifyPlayerConnected("+playerName+","+azimuth+") connected in invalid state");
@@ -928,7 +858,7 @@ public class Table {
 		int seatIndex=getSeatFromPlayerName(playerName);
 		Player reconnectedPlayer=seats[seatIndex].player;
 		networkInterface.setColor(reconnectedPlayer.name.getText(),reconnectedPlayer.color);
-		setConnectionShowing(reconnectedPlayer,reconnectedPlayer.connectionShowing);
+		reconnectedPlayer.startAnimateConnection();
 		gameLogic.notifyPlayerReconnected(seatIndex);
 		reconnectedPlayer.setTouchable(true);
 		syncAllTableStatusMenu();
@@ -949,16 +879,12 @@ public class Table {
 		int seat=getSeatFromPlayerName(playerName);
 		if (seat>=0&&seat<NUM_SEATS) {
 			Logger.log(LOG_TAG,"removeFromTable("+playerName+") seat: "+seat);
-			if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
+			if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED||gameState==STATE_GAME_REARRANGE) {
 				removeFromSeat(seat);
 			} else if (gameState==STATE_GAME) {
 				gameLogic.notifyPlayerLeft(seat);
-				seats[seat].player.name.fadeOut();
-				setConnectionShowing(seats[seat].player,false);
-				if (seats[seat].player.selected) {
-					seats[seat].player.setSelected(false);
-					updateSplitButtons();
-				}
+				seats[seat].player.disconnectedFromGame();
+				updateSplitButtons();
 			}
 		} else if (pickedUpPlayer!=null&&pickedUpPlayer.name.getText().equals(playerName)) {
 			Logger.log(LOG_TAG,"removeFromTable("+playerName+") PUC");
@@ -974,7 +900,6 @@ public class Table {
 		Player player=getPlayerFromPlayerName(playerName);
 		if (player.isLoadedPlayer) {
 			disconnectPlayer(playerName);
-			player.connectionBlob.startFlashing();
 			player.setTouchable(false);
 		} else {
 			removeFromTable(playerName);
@@ -990,7 +915,6 @@ public class Table {
 		if (!player.isSeated) {
 			int nextFreeSeat=getNextFreeSeat(player.azimuth);
 			if (nextFreeSeat>=0&&nextFreeSeat<NUM_SEATS) {
-				player.copyConnectionBlobFrom(seats[nextFreeSeat].playerSlot);
 				seats[nextFreeSeat].seatPlayer(player);
 				seats[nextFreeSeat].player.color=ColorPool.assignColor();
 				seats[nextFreeSeat].player.name.loadTexture();
@@ -1014,6 +938,7 @@ public class Table {
 			while (getAnyUnseatedPlayer()!=null) {
 				doPlayerBuyin(getAnyUnseatedPlayer());
 			}
+			setGameState(STATE_GAME_REARRANGE);
 		} else {
 			gameLogic.buyinsDone();
 		}
@@ -1051,8 +976,10 @@ public class Table {
 		networkInterface.sendChipsBuyin(player.name.getText(),player.winStack.toString());
 		player.hasBoughtIn=true;
 		player.sentStartStack();
-		if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED) {
-			setConnectionShowing(player,true);
+		if (gameState==STATE_LOBBY||gameState==STATE_LOBBY_LOADED||gameState==STATE_GAME_REARRANGE) {
+			player.startAnimateConnection();
+			player.setActive(true);
+			player.setArrowsShowing(true);
 			player.name.fadeIn();
 			networkInterface.notifyArrange(player.name.getText());
 		}
@@ -1068,7 +995,7 @@ public class Table {
 		Logger.log(LOG_TAG,"promptMove("+currBetter+","+movePrompt.stake+","+movePrompt.blinds+")");
 		networkInterface.promptMove(seats[currBetter].player.name.getText(),movePrompt,seats[currBetter].player.chipAmount);
 		seats[currBetter].player.name.fadeIn();
-		setConnectionShowing(seats[currBetter].player,true);
+		seats[currBetter].player.setActive(true);
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&i!=currBetter) {
 				networkInterface.notifyPlayerWaitBet(seats[i].player.name.getText(),seats[currBetter].player.name.getText());
@@ -1106,15 +1033,6 @@ public class Table {
 		networkInterface.recallDealerChip(seats[dealer].player.name.getText());
 	}
 	
-	private void setConnectionShowing(Player player,boolean showing) {
-		Logger.log(LOG_TAG,"setConnectionShowing()");
-		if (showing) {
-			player.setConnectionShowing(true);
-		} else {
-			player.setConnectionShowing(false);
-		}
-	}
-	
 	public void cancelMove(int seat) {
 		Logger.log(LOG_TAG,"cancelMove("+seat+")");
 		networkInterface.cancelMove(seats[seat].player.name.getText());
@@ -1138,7 +1056,7 @@ public class Table {
 	 			}
 	 		}
 			gameMenuData.reset();
-			gameMenuData.set("insert table name",gameLogic.dealStage,getPotTotal(),players);
+			gameMenuData.set(gameName,gameLogic.dealStage,getPotTotal(),players);
 			networkInterface.syncAllGameData(gameMenuData);
 		}
 	
@@ -1150,12 +1068,13 @@ public class Table {
 		// TODO maybe revoke belling for this player now
 		int moveRxdPlayer=getSeatFromPlayerName(playerName);
 		seats[moveRxdPlayer].player.name.fadeOut();
-		setConnectionShowing(seats[moveRxdPlayer].player,false);
+		seats[moveRxdPlayer].player.setActive(false);
 		closeBootDialog();
 		if (!chipString.equals("")) {
 			seats[moveRxdPlayer].player.setBettingStack(ChipStack.parseStack(chipString));
-			seats[moveRxdPlayer].player.bettingStack.setX(seats[moveRxdPlayer].xOffscreen);
-			seats[moveRxdPlayer].player.bettingStack.setY(seats[moveRxdPlayer].yOffscreen);
+			Vector2 offset = seats[moveRxdPlayer].getPositionOffsetVertically(-1*(Seat.radiusY+maxStackHeight));
+			seats[moveRxdPlayer].player.bettingStack.setX(offset.x);
+			seats[moveRxdPlayer].player.bettingStack.setY(offset.y);
 			seats[moveRxdPlayer].player.bettingStack.setDest(seats[moveRxdPlayer].x,seats[moveRxdPlayer].y,seats[moveRxdPlayer].player.betStack.size());
 			animationState=ANIM_BETTING;
 		}
@@ -1176,33 +1095,6 @@ public class Table {
 	//////////////////////////////// Game Logic //////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////
 	
-	private void dealCards() {
-		Logger.log(LOG_TAG,"dealCards()");
-		deck.shuffle();
-		for (int seat=0;seat<NUM_SEATS;seat++) {
-			if (seats[seat].player!=null) {
-				seats[seat].player.giveCard(deck.drawTopCard());
-				seats[seat].player.getCard().loadLabel();
-			}
-		}
-	}
-	
-	private int calculateDealer() {
-		float highestRank=0;
-		int highestPlayer=-1;
-		for (int seat=0;seat<NUM_SEATS;seat++) {
-			if (seats[seat].player!=null) {
-				float rank=seats[seat].player.getCard().getRank();
-				if (rank>highestRank) {
-					highestRank=rank;
-					highestPlayer=seat;
-				}
-			}
-		}
-		Logger.log(LOG_TAG,"calculateDealer() = "+highestPlayer);
-		return highestPlayer;
-	}
-	
 	public void setDealer(int dealer) {
 		Logger.log(LOG_TAG,"setDealer("+dealer+")");
 		gameLogic.setDealer(dealer);
@@ -1211,7 +1103,7 @@ public class Table {
 		} else {
 			dealerButton.rotation=seats[dealer].rotation;
 		}
-		dealerButton.atDest=false;
+		
 	}
 	
 	public void formPots() {
@@ -1269,7 +1161,7 @@ public class Table {
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
 				seats[i].player.name.fadeIn();
-				setConnectionShowing(seats[i].player,true);
+				seats[i].player.setActive(true);
 				networkInterface.promptShowCards(seats[i].player.name.getText());
 			}
 		}
@@ -1279,13 +1171,78 @@ public class Table {
 		animationState=ANIM_WINNER_BY_DEFAULT;
 		this.winner=winner;
 		seats[winner].player.name.fadeIn();
-		setConnectionShowing(seats[winner].player,true);
 		pots.get(displayedPotIndex).potStack.setRotation(seats[winner].rotation);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
 	////////////////////////////// Input Callbacks ///////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////	
+	
+	public void hostCreateCancel() {
+		mWL.game.mFL.backHostNameDialog();
+		mWL.sendCameraTo(mWL.camPosHome);
+	}
+	
+	public void hostCreateComplete(String gameName) {
+		this.gameName=gameName;
+		mWL.game.mFL.nextHostNameDialog();
+		mWL.game.mFL.startHostChipCaseDialog();
+	}
+	
+	public void hostChipCaseBack() {
+		mWL.game.mFL.backHostChipCaseDialog();
+		mWL.game.mFL.startHostNameDialog();
+	}
+	
+	public void standardChipCaseSelected() {
+		mWL.game.mFL.nextHostChipCaseDialog();
+		mWL.game.mFL.startHostChipSetupDialog();
+	}
+	
+	public void customChipCaseSelected() {
+		mWL.game.mFL.nextHostChipCaseDialog();
+		mWL.game.mFL.startHostChipSetupDialog();
+	}
+	
+	public void hostChipSetupBack() {
+		mWL.game.mFL.backHostChipSetupDialog();
+		mWL.game.mFL.startHostChipCaseDialog();
+	}
+	
+	public void hostChipSetupDone() {
+		ChipCase.values=mWL.game.mFL.hostChipSetupDialog.getChipValues();
+		mWL.game.mFL.nextHostChipSetupDialog();
+		startLobby();
+		mWL.game.mFL.startHostLobbyDialog();
+	}
+	
+	public void hostLobbyBack() {
+		if (mWL.game.mFL.hostLobbyDialog.state==HostLobbyDialog.STATE_WAITING) {
+			mWL.game.mFL.backHostLobbyDialog();
+			mWL.game.mFL.startHostChipSetupDialog();
+			destroyTable();
+		} else if (mWL.game.mFL.hostLobbyDialog.state==HostLobbyDialog.STATE_DEALER) {
+			mWL.game.mFL.backHostDealerDialog();
+			setGameState(STATE_LOBBY);
+		}
+	}
+	
+	public void hostLobbyStart() {
+		if (mWL.game.mFL.hostLobbyDialog.state==HostLobbyDialog.STATE_WAITING) {
+			mWL.game.mFL.startHostDealerDialog();
+			setGameState(STATE_SELECTING_DEALER);
+		} else if (mWL.game.mFL.hostLobbyDialog.state==HostLobbyDialog.STATE_DEALER) {
+			setDealer(getRandomPlayer());
+			setGameState(STATE_DEALER_TO_PLAYER);
+		}
+		
+		// TODO change game state
+	}
+	
+	public void hostRearrangeDone() {
+		mWL.game.mFL.nextHostRearrangeDialog();
+		setGameState(STATE_GAME);
+	}
 	
 	public void tableNameDone() {
 		Logger.log(LOG_TAG,"tableNameDone()");
@@ -1307,7 +1264,14 @@ public class Table {
 		pickedUpPlayer=seats[seatIndex_].player;
 		seats[seatIndex_].removePlayer();
 		pickedUpPlayer.setIsTouched(true);
-		pickedUpPlayer.atDest=false;
+		//pickedUpPlayer.atDest=false;
+	}
+	
+	public void pickedUpPlayerDragged(float x,float y) {
+		pickedUpPlayer.setX(x);
+		pickedUpPlayer.setY(y);
+		rotateAndProjectPlayer(pickedUpPlayer);
+		closestSeatToPickedUp=calculateClosestSeatToPlayer(pickedUpPlayer);
 	}
 	
 	public void pickedUpPlayerDropped() {
@@ -1379,14 +1343,6 @@ public class Table {
 		pickedUpPlayer=null;
 	}
 	
-	public void playButtonClicked() {
-		if (countPlayers()>=2) {
-			setGameState(STATE_SELECTING_DEALER);
-		} else {
-			// TODO implement error checking stuff
-		}
-	}
-	
 	public void doDestroyDialog() {
 		mWL.game.mFL.startDestroyTableDialog("table name");
 	}
@@ -1395,7 +1351,6 @@ public class Table {
 		mWL.game.mFL.stopDestroyTableDialog();
 		if (actionCompleted) {
 			destroyTable();
-			setGameState(STATE_NONE);
 			mWL.sendCameraTo(mWL.camPosHome);
 		}
 	}
@@ -1404,7 +1359,7 @@ public class Table {
 		cancelMove(bootDialogPlayer);
 		gameLogic.sitPlayerOut(bootDialogPlayer);
 		seats[bootDialogPlayer].player.name.fadeOut();
-		setConnectionShowing(seats[bootDialogPlayer].player,false);
+		seats[bootDialogPlayer].player.setActive(false);
 		closeBootDialog();
 	}
 	
@@ -1496,6 +1451,11 @@ public class Table {
 		currPot.potStack.totalLabel.opacity=0;
 	}
 	
+	public void dealerSelected(int seat) {
+		setDealer(seat);
+		setGameState(STATE_DEALER_TO_PLAYER);
+	}
+	
 	public void playerClicked(int seat) {
 		if (animationState==ANIM_SELECT_WINNERS_SPLIT) {
 			if (pots.get(displayedPotIndex).playersEntitled.contains(seat)) {
@@ -1530,16 +1490,6 @@ public class Table {
 			mWL.game.mFL.splitDoneButton.fadeIn();
 			mWL.game.mFL.splitDoneButton.setTouchable(true);
 		}
-	}
-	
-	public void saveSlotSelected(int slot) {
-		saveSlot=slot;
-		mWL.game.mFL.autosaveDialog.slotSelected(slot);
-	}
-	
-	public void autosaveDialogDone() {
-		mWL.game.mFL.stopAutosaveDialog();
-		saveTable();
 	}
 	
 	public void closeBootDialog() {
@@ -1624,6 +1574,25 @@ public class Table {
 		return thisPlayer;
 	}
 	
+	private int getRandomPlayer() {
+		Random rand = new Random();
+
+	    // nextInt is normally exclusive of the top value,
+	    // so add 1 to make it inclusive
+	    int randomNum = rand.nextInt(countPlayers())+1;
+	    int playerCount = 0;
+	    int i=0;
+	    for (;i<NUM_SEATS;i++) {
+	    	if (seats[i].player!=null) {
+	    		playerCount++;
+	    		if (playerCount==randomNum) {
+	    			break;
+	    		}
+	    	}
+	    }
+	    return i;
+	}
+	
 	public void rotateAndProjectPlayer(Player player) {
 		// check the screen edges and rotate player if necessary
 		player.setRotation(seats[calculateClosestSeatToPlayer(player)].rotation);
@@ -1636,10 +1605,6 @@ public class Table {
 		} else if (player.rotation==90) {
 			player.setX(mWL.table.seats[7].x);
 		}
-	}
-	
-	public void calculateClosestSeatToPickedUp() {
-		closestSeatToPickedUp=calculateClosestSeatToPlayer(pickedUpPlayer);
 	}
 	
 	public int calculateClosestSeatToPlayer(Player player) {
@@ -1770,7 +1735,7 @@ public class Table {
     		startIndex=tableStateStr.indexOf("<AMOUNT>")+"<AMOUNT>".length();
     		endIndex=tableStateStr.indexOf("<AMOUNT/>");
     		int amount=Integer.parseInt(tableStateStr.substring(startIndex,endIndex));
-    		
+    		/*
     		Player thisPlayer=new Player(name,seats[playerIndex].playerSlot);
     		addPlayer(thisPlayer);
     		seats[playerIndex].seatPlayer(thisPlayer);
@@ -1782,6 +1747,7 @@ public class Table {
     		thisPlayer.setBuyinBuild(ChipCase.calculateSimplestBuild(amount));
     		thisPlayer.name.loadTexture();
     		tableStateStr=tableStateStr.substring(endIndex+"<AMOUNT/>".length());
+    		*/
     	}
 	}
 	

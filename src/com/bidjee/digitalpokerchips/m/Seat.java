@@ -1,5 +1,7 @@
 package com.bidjee.digitalpokerchips.m;
 
+import com.badlogic.gdx.math.Vector2;
+
 public class Seat {
 	
 	public static final int[] zOrder={5,6,4,7,3,0,2,1};
@@ -17,11 +19,6 @@ public class Seat {
 	public float y;
 	
 	public float rotation;
-	
-	public float xOffscreen;
-	public float yOffscreen;
-	public float xScreenEdge;
-	public float yScreenEdge;
 	
 	public Player player;
 	
@@ -60,10 +57,6 @@ public class Seat {
 		}
 		float xCoeff=(float) Math.sin(Math.toRadians(rotation_));
 		float yCoeff=(float) Math.cos(Math.toRadians(rotation_));
-		xOffscreen=(float) (x_+xCoeff*distToOffscreen);
-		yOffscreen=(float) (y_-yCoeff*distToOffscreen);
-		xScreenEdge=(float) (x_+xCoeff*radiusY);
-		yScreenEdge=(float) (y_-yCoeff*radiusY);
 		playerSlot.setPosition((float) (x_+xCoeff*radiusY),(float) (y_-yCoeff*radiusY));
 		float undoOffset=radiusY*0.5f;
 		undoButton.setPosition(x_+xCoeff*undoOffset,y_+yCoeff*undoOffset);
@@ -169,26 +162,18 @@ public class Seat {
 			player=null;
 		}
 	}
-
-	public boolean checkInOffscreenRegion(float px,float py) {
-		boolean inOffscreenRegion=false;
-		if (rotation==0) {
-			if ((Math.abs(x-px)<radiusX)&&py<yScreenEdge) {
-				inOffscreenRegion=true;
-			}
-		} else if (rotation==-90) {
-			if ((Math.abs(y-py)<radiusX)&&px<xScreenEdge) {
-				inOffscreenRegion=true;
-			}
-		} else if (rotation==180) {
-			if ((Math.abs(x-px)<radiusX)&&py>yScreenEdge) {
-				inOffscreenRegion=true;
-			}
-		} else if (rotation==90) {
-			if ((Math.abs(y-py)<radiusX)&&px>xScreenEdge) {
-				inOffscreenRegion=true;
-			}
+	
+	public Vector2 getPositionOffsetVertically(float offsetDistance) {
+		Vector2 offset = new Vector2(x,y);
+		if (rotation==0||rotation==360) {
+			offset.y += offsetDistance;
+		} else if (rotation==90||rotation==-270) {
+			offset.x -= offsetDistance;
+		} else if (rotation==180||rotation==-180) {
+			offset.y -= offsetDistance;
+		} else if (rotation==270||rotation==-90) {
+			offset.x += offsetDistance;
 		}
-		return inOffscreenRegion;
+		return offset;
 	}
 }

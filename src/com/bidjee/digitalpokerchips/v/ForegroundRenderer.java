@@ -11,10 +11,10 @@ import com.badlogic.gdx.math.Matrix4;
 import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.ForegroundLayer;
 import com.bidjee.digitalpokerchips.c.PlayerMenuPanel;
-import com.bidjee.digitalpokerchips.m.Chip;
+import com.bidjee.digitalpokerchips.c.Table;
 import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
-import com.bidjee.digitalpokerchips.m.TableStatusMenu;
+import com.bidjee.digitalpokerchips.m.Player;
 import com.bidjee.digitalpokerchips.m.TextLabel;
 
 public class ForegroundRenderer {
@@ -36,8 +36,6 @@ public class ForegroundRenderer {
 	int screenWidth;
 	int screenHeight;
 	
-	Texture blackTexture;
-	
 	Texture plantTexture;
 	Texture lampTexture;
 	
@@ -46,28 +44,19 @@ public class ForegroundRenderer {
 	Texture settingsButtonTexture;
 	Texture shopButtonTexture;
 	
-	Texture selectionTexture;
 	Texture hostButtonTexture;
 	Texture joinButtonTexture;
 	
-	Texture buttonBlueTexture;
-	Texture buttonOkTexture;
 	Texture buttonLoginFacebookTexture;
 	
-	Texture textFieldTexture;
-	
-	Texture wifiRedTexture;
-	
-	Texture backTexture;
+	TextureRegion textFieldRegion;
+	TextureRegion[] textFieldRegions;
 	
 	Texture cursorTexture;
 	
 	Texture envelopeTexture;
-	Texture buyinFrameTexture;
-	Texture buttonPlusTexture;
-	Texture buttonMinusTexture;
-	Texture buttonOkayTextureBuyin;
-	Texture buttonCancelTextureBuyin;
+	TextureRegion buttonPlusRegion;
+	TextureRegion buttonMinusRegion;
 	
 	Texture playerDashboardTexture;
 	Texture dashboardIdTexture;
@@ -75,55 +64,45 @@ public class ForegroundRenderer {
 	Texture backButtonTexture;
 	Texture bellButtonTexture;
 	
-	TextureRegion blackRegion;
-	TextureRegion blackHoleRegion;
-	TextureRegion blackRectangleRoundedRegion;
-	TextureRegion blackCircleRegion;
-	
-	Texture handTexture;
-	
-	Texture arrowTexture;
 	Texture okButtonTexture;
 	Texture cancelButtonTexture;
-	Texture tableButtonTexture;
 	
 	Texture foldButtonTexture;
 	
-	Texture[] chipTextures;
-	
 	Texture closeButtonTexture;
-	Texture deviceFrameTexture;
-	Texture nextButtonTexture;
 	
 	TextureRegion[] blackDialogRegions=new TextureRegion[9];
-	
-	Texture buttonRedTexture;
-
-	Texture arrowHanddrawnTexture;
-	
-	Texture buttonBellRed;
 	
 	Texture arrowPotTexture;
 	
 	Texture splitButtonTexture;
 	
-	Texture saveSlotHighlightTexture;
-	Texture tableSlotTexture;
-	Texture playGameTexture;
-	
 	Texture dialogWArrowTexture;
 	
 	Texture profilePicTexture;
 	
-	Texture dialogTexture;
-	
 	Texture gamePanelTexture;
+	
+	TextureRegion chipRegions[];
+	
+	Texture anonTexture;
+	TextureRegion btnDialog;
+	TextureRegion btnDialogLeft;
+	TextureRegion btnDialogRight;
+	
+	TextureRegion case1BackRegion;
+	TextureRegion standardCaseRegion;
+	TextureRegion case2BackRegion;
+	TextureRegion goldLineRegion;
+	
+	TextureRegion hostExitRegion;
+	TextureRegion hostUndoRegion;
 	
 	public ForegroundRenderer(ForegroundLayer mFL) {
 		this.mFL=mFL;
 		batch=new SpriteBatch(200);
-		chipTextures=new Texture[ChipCase.CHIP_TYPES*Chip.CHIP_ROTATION_N];
 		logoDPCTextures=new Texture[10];
+		chipRegions=new TextureRegion[ChipCase.CHIP_TYPES];
 	}
 	
 	public void resize(int width,int height) {
@@ -159,19 +138,20 @@ public class ForegroundRenderer {
 		shopButtonTexture=manager.get("home_shop.png",Texture.class);
 		settingsButtonTexture=manager.get("home_settings.png",Texture.class);
 		helpButtonTexture=manager.get("home_help.png",Texture.class);
-		selectionTexture=manager.get("selection_orange.png",Texture.class);
 		hostButtonTexture=manager.get("host_button.png",Texture.class);
 		joinButtonTexture=manager.get("join_button.png",Texture.class);
 		
-		textFieldTexture=manager.get("text_field.png",Texture.class);
+		textFieldRegion=new TextureRegion(manager.get("text_field.png",Texture.class),469,70);
+		textFieldRegions=new TextureRegion[3];
+		textFieldRegions[0]=new TextureRegion(manager.get("text_field.png",Texture.class),0,0,33,70);
+		textFieldRegions[1]=new TextureRegion(manager.get("text_field.png",Texture.class),200,0,33,70);
+		textFieldRegions[2]=new TextureRegion(manager.get("text_field.png",Texture.class),436,0,33,70);
+		
 		cursorTexture=manager.get("cursor.png",Texture.class);
 		
 		envelopeTexture=manager.get("envelope.png",Texture.class);
-		buyinFrameTexture=manager.get("buyin_box.png",Texture.class);
-		buttonPlusTexture=manager.get("btn_plus.png",Texture.class);
-		buttonMinusTexture=manager.get("btn_minus.png",Texture.class);
-		buttonOkayTextureBuyin=manager.get("btn_okay_buyin.png",Texture.class);
-		buttonCancelTextureBuyin=manager.get("btn_cancel.png",Texture.class);
+		buttonPlusRegion=new TextureRegion(manager.get("btn_plus.png",Texture.class),47,49);
+		buttonMinusRegion=new TextureRegion(manager.get("btn_minus.png",Texture.class),47,49);
 		
 		playerDashboardTexture=manager.get("dashboard.png",Texture.class);
 		dashboardIdTexture=manager.get("dashboard_id.png",Texture.class);
@@ -180,116 +160,55 @@ public class ForegroundRenderer {
 		bellButtonTexture=manager.get("btn_bell.png",Texture.class);
 		gamePanelTexture=manager.get("game_panel.png",Texture.class);
 		
-		buttonBlueTexture=manager.get("button_blue.png",Texture.class);
-		buttonOkTexture=manager.get("btn_okay.png",Texture.class);
-		buttonLoginFacebookTexture=manager.get("btn_login_facebook.png",Texture.class);
-		wifiRedTexture=manager.get("wifi_red.png",Texture.class);
-		backTexture=manager.get("back.png",Texture.class);
-		
-		blackTexture=manager.get("black_hole.png",Texture.class);
-		blackHoleRegion=new TextureRegion(blackTexture,0,0,463,243);
-		blackRegion=new TextureRegion(blackTexture,1,1,2,2);
-		Texture blackRectangleRoundedTexture_=manager.get("rectangle_rounded.png",Texture.class);
-		blackRectangleRoundedRegion=new TextureRegion(blackRectangleRoundedTexture_,0,0,747,246);
-		Texture blackCircleTexture_=manager.get("black_circle.png",Texture.class);
-		blackCircleRegion=new TextureRegion(blackCircleTexture_,0,0,128,128);
-		
-		handTexture=manager.get("hand.png",Texture.class);
-		
-		arrowTexture=manager.get("arrow.png",Texture.class);
+		buttonLoginFacebookTexture=manager.get("btn_fb.png",Texture.class);
+
 		okButtonTexture=manager.get("ok_button.png",Texture.class);
 		cancelButtonTexture=manager.get("cancel_button.png",Texture.class);
 		
 		foldButtonTexture=manager.get("fold_button.png",Texture.class);
 		
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_0_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_0_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_0_2.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_1_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_1_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_1_2.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_2_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_2_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_2_2.png",Texture.class);
-		
 		closeButtonTexture=manager.get("btn_close.png",Texture.class);
-		deviceFrameTexture=manager.get("galaxy_frame.png",Texture.class);
-		nextButtonTexture=manager.get("next_button.png",Texture.class);
 		
-		Texture dialogBlackFillTexture=manager.get("dialog_black_fill.png",Texture.class);
-		Texture dialogBlackCornerTexture=manager.get("dialog_black_corner.png",Texture.class);
-		TextureRegion dialogBlackFillRegion=new TextureRegion(dialogBlackFillTexture,0,0,16,16);
+		blackDialogRegions[0]=new TextureRegion(manager.get("dialog_tl.png",Texture.class),20,20);
+		blackDialogRegions[1]=new TextureRegion(manager.get("dialog_t.png",Texture.class),20,20);
+		blackDialogRegions[2]=new TextureRegion(manager.get("dialog_tr.png",Texture.class),20,20);
+		blackDialogRegions[3]=new TextureRegion(manager.get("dialog_l.png",Texture.class),20,200);
+		blackDialogRegions[4]=new TextureRegion(manager.get("dialog_m.png",Texture.class),20,20);
+		blackDialogRegions[5]=new TextureRegion(manager.get("dialog_r.png",Texture.class),20,200);
+		blackDialogRegions[6]=new TextureRegion(manager.get("dialog_bl.png",Texture.class),20,20);
+		blackDialogRegions[7]=new TextureRegion(manager.get("dialog_b.png",Texture.class),20,20);
+		blackDialogRegions[8]=new TextureRegion(manager.get("dialog_br.png",Texture.class),20,20);
 		
-		blackDialogRegions[0]=new TextureRegion(dialogBlackCornerTexture,200,200);
-		blackDialogRegions[1]=dialogBlackFillRegion;
-		blackDialogRegions[2]=new TextureRegion(dialogBlackCornerTexture,200,0,-200,200);
-		blackDialogRegions[3]=dialogBlackFillRegion;
-		blackDialogRegions[4]=dialogBlackFillRegion;
-		blackDialogRegions[5]=dialogBlackFillRegion;
-		blackDialogRegions[6]=new TextureRegion(dialogBlackCornerTexture,0,200,200,-200);
-		blackDialogRegions[7]=dialogBlackFillRegion;
-		blackDialogRegions[8]=new TextureRegion(dialogBlackCornerTexture,200,200,-200,-200);
-		
-		tableButtonTexture=manager.get("table_button.png",Texture.class);
-
-		buttonRedTexture=manager.get("button_red.png",Texture.class);
-		
-		arrowHanddrawnTexture=manager.get("arrow_handdrawn.png",Texture.class);
-		
-		buttonBellRed=manager.get("button_bell_red.png",Texture.class);
 		arrowPotTexture=manager.get("arrow_pot.png",Texture.class);
 		splitButtonTexture=manager.get("split_button.png",Texture.class);
 		
-		saveSlotHighlightTexture=manager.get("connection_blob.png",Texture.class);
-		tableSlotTexture=manager.get("table_slot.png",Texture.class);
-		playGameTexture=manager.get("table_slot.png",Texture.class);
 		dialogWArrowTexture=manager.get("dialog_w_arrow.png",Texture.class);
-		
-		mFL.manualConnectDialog.ipQuads[0].texture=manager.get("speech_bubble_gold.png",Texture.class);
-		mFL.manualConnectDialog.ipQuads[1].texture=manager.get("speech_bubble_gold.png",Texture.class);
-		mFL.manualConnectDialog.ipQuads[2].texture=manager.get("speech_bubble_gold.png",Texture.class);
-		mFL.manualConnectDialog.ipQuads[3].texture=manager.get("speech_bubble_gold.png",Texture.class);
 		
 		profilePicTexture=manager.get("anon.jpeg",Texture.class);
 		
-		dialogTexture=manager.get("base_login_popup.png",Texture.class);
-	}
-	
-	public void loadLabels() {
-		Gdx.app.log("DPCLifecycle", "ForegroundRenderer - loadLabels()");
-		mFL.enterTableName1Label.loadTexture(whiteColor,blackColor);
-		mFL.enterTableName2Label.loadTexture(whiteColor,blackColor);
-		mFL.wifiLabel.loadTexture(greyColor,blackColor);
-		mFL.reconnect1Label.loadTexture(greyColor,blackColor);
-		mFL.reconnect2Label.loadTexture(greyColor,blackColor);
-		mFL.tutorialArrangement.instrLabel.loadTexture(whiteColor,blackColor);
-		mFL.selectingDealerLabel.loadTexture(greyColor,blackColor);
-		mFL.gotoGameButton.getLabel().loadTexture(greyColor,blackColor);
-		mFL.splitButton.getLabel().loadTexture(greyColor,blackColor);
-		mFL.setValuesLabel.loadTexture(whiteColor,blackColor);
-		mFL.divisibilityDialog.messageLabel.loadTexture(whiteColor,blackColor);
-		mFL.autosaveDialog.titleLabel.loadTexture();
-		mFL.loadDialog.titleLabel.loadTexture();
-		mFL.manualConnectDialog.titleLabel.loadTexture();
-		mFL.bootDialog.bootButton.getLabel().loadTexture();
-		mFL.bootDialog.sitOutButton.getLabel().loadTexture();
-		mFL.waitNextHandLabel.loadTexture();
-
-		if (!mFL.winLabel.getText().equals("")) {
-			mFL.winLabel.loadTexture();
-		}
-		if (!mFL.tableStatusMenu.tableName.getText().equals("")) {
-			mFL.tableStatusMenu.tableName.loadTexture();
-		}
-		for (int i=0;i<mFL.tableStatusMenu.playerList.size();i++) {
-			mFL.tableStatusMenu.playerList.get(i).name.loadTexture();
-			mFL.tableStatusMenu.playerList.get(i).amount.loadTexture();
-		}
+		chipRegions[0]=new TextureRegion(manager.get("chip_0_0.png",Texture.class),256,252);
+		chipRegions[1]=new TextureRegion(manager.get("chip_1_0.png",Texture.class),256,252);
+		chipRegions[2]=new TextureRegion(manager.get("chip_2_0.png",Texture.class),256,252);
+		
+		anonTexture = manager.get("anon_circle.png",Texture.class);
+		btnDialog=new TextureRegion(manager.get("btn_dialog.png",Texture.class),200,46);
+		btnDialogLeft=new TextureRegion(manager.get("btn_dialog.png",Texture.class),277,46);
+		btnDialogRight=new TextureRegion(manager.get("btn_dialog.png",Texture.class),277,0,-277,46);
+		
+		case1BackRegion=new TextureRegion(manager.get("case1back.png",Texture.class),215,179);
+		standardCaseRegion=new TextureRegion(manager.get("chips2.png",Texture.class),400,422);
+		case2BackRegion=new TextureRegion(manager.get("case2back.png",Texture.class),215,179);
+		goldLineRegion=new TextureRegion(manager.get("gold_line.png",Texture.class),2,2);
+		
+		hostExitRegion=new TextureRegion(manager.get("host_exit.png",Texture.class),81,81);
+		hostUndoRegion=new TextureRegion(manager.get("host_undo.png",Texture.class),81,81);
 	}
 	
 	public float yViewToWorld(float yView_) {return screenHeight-yView_;}
 	
 	public void render() {
+		
+		
 		alphaShader=batch.getColor();
 		batch.begin();
 		batch.setColor(alphaShader.r,alphaShader.g,
@@ -306,59 +225,14 @@ public class ForegroundRenderer {
     	//			0,0,256,256,false,false);
         //}
         
+        renderPlayerNames();
+        
         renderHome();
-        
-        if (mFL.enterNameDoneButton.opacity!=0) {
-        	renderEnterName();
-        }
-        if (mFL.enterTableNameDoneButton.opacity!=0) {
-        	renderEnterTableName();
-        }
-        
-        if (mFL.valueUpArrows!=null&&mFL.valueUpArrows[0]!=null&&mFL.valueUpArrows[0].opacity!=0) {
-        	alphaShader=batch.getColor();
-    		batch.setColor(alphaShader.r,alphaShader.g,
-            		alphaShader.b,mFL.valueUpArrows[0].opacity);
-        	for (int i=0;i<mFL.valueUpArrows.length;i++) {
-        		batch.draw(arrowTexture,
-        				mFL.valueUpArrows[i].x-mFL.valueUpArrows[i].radiusX,
-        				mFL.valueUpArrows[i].y-mFL.valueUpArrows[i].radiusY,
-        				mFL.valueUpArrows[i].radiusX*2,mFL.valueUpArrows[i].radiusY*2,
-        				0,0,128,128,false,false);
-        		batch.draw(arrowTexture,
-        				mFL.valueDownArrows[i].x-mFL.valueDownArrows[i].radiusX,
-        				mFL.valueDownArrows[i].y-mFL.valueDownArrows[i].radiusY,
-        				mFL.valueDownArrows[i].radiusX*2,mFL.valueDownArrows[i].radiusY*2,
-        				0,0,128,128,false,true);
-        	}
-        	batch.draw(okButtonTexture,
-    				mFL.setValuesOkButton.x-mFL.setValuesOkButton.radiusX,
-    				mFL.setValuesOkButton.y-mFL.setValuesOkButton.radiusY,
-    				mFL.setValuesOkButton.radiusX*2,mFL.setValuesOkButton.radiusY*2,
-    				0,0,214,214,false,false);
-        	if (mFL.setValuesLabel.texture==null) {
-				mFL.setValuesLabel.loadTexture(whiteColor,blackColor);
-			}
-        	batch.draw(mFL.setValuesLabel.texture,
-					mFL.setValuesLabel.x-mFL.setValuesLabel.radiusX,
-					mFL.setValuesLabel.y-mFL.setValuesLabel.radiusY,
-					mFL.setValuesLabel.radiusX*2,mFL.setValuesLabel.radiusY*2,
-					0,0,mFL.setValuesLabel.radiusX*2,mFL.setValuesLabel.radiusY*2,false,false);
-        	alphaShader=batch.getColor();
-            batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-            
-        }
         
 
 		renderFoldButton();
         
-        if (mFL.tableStatusMenu.opacity!=0) {
-			renderTableStatusMenu();
-		}
-        
 		renderHostButtons();
-        
-        renderHostPrompts();
 		
 		if (mFL.dialogWindow.opacity!=0) {
 			alphaShader=batch.getColor();
@@ -392,38 +266,44 @@ public class ForegroundRenderer {
 		}
 		
 		
-		if (mFL.playerLoginDialog.guestTitleLabel.opacity!=0) {
+		if (mFL.playerLoginDialog.enterNameLabel.opacity!=0) {
 			renderPlayerLoginDialog();
 		}
 		
-		if (mFL.buyinDialog.closeButton.opacity!=0) {
-			renderBuyinDialog();
+		if (mFL.hostNameDialog.enterNameLabel.opacity!=0) {
+			renderHostNameDialog();
 		}
 		
+		if (mFL.hostChipCaseDialog.selectLabel.opacity!=0) {
+			renderHostChipCaseDialog();
+		}
 		
+		if (mFL.hostChipSetupDialog.chipCaseSprite.opacity!=0) {
+			renderHostChipSetupDialog();
+		}
 		
-		if (mFL.manualConnectDialog.titleLabel.opacity!=0) {
-			renderManualConnectDialog();
+		if (mFL.hostLobbyDialog.nameLabel.opacity!=0) {
+			renderHostLobbyDialog();
+		}
+		
+		if (mFL.hostRearrangeDialog.nameLabel.opacity!=0) {
+			renderHostRearrangeDialog();
+		}
+		
+		if (mFL.playerBuyinDialog.envelope.opacity!=0) {
+			renderBuyinDialog();
 		}
 		
 		if (mFL.bootDialog.bootButton.opacity!=0) {
 			renderBootDialog();
 		}
 		
-		if (mFL.leaveTableDialog.titleLabel.opacity!=0) {
-			renderLeaveTableDialog();
+		if (mFL.playerLeaveDialog.text1Label.opacity!=0) {
+			renderPlayerLeaveDialog();
 		}
 		
 		if (mFL.destroyTableDialog.titleLabel.opacity!=0) {
 			renderDestroyTableDialog();
-		}
-		
-		if (mFL.autosaveDialog.titleLabel.opacity!=0) {
-			renderAutosaveDialog();
-		}
-		
-		if (mFL.loadDialog.titleLabel.opacity!=0) {
-			renderLoadDialog();
 		}
 		
 		if (mFL.divisibilityDialog.opacity!=0) {
@@ -433,14 +313,9 @@ public class ForegroundRenderer {
 		renderPotArrows();
 		renderSplitUI();
 		
-		if (mFL.tutorialArrangement.highlight.opacity!=0) {
-			renderTutorialArrangement();
-		}
-		
 		//renderHomeTutorial();
 		
 		if (DPCGame.debugMode) {
-			renderGuides();
 			if (mFL.azimuthLabel.texture!=null) {
 				batch.draw(mFL.azimuthLabel.texture,
 						mFL.azimuthLabel.x-mFL.azimuthLabel.radiusX,
@@ -466,6 +341,69 @@ public class ForegroundRenderer {
 					mFL.foldButton.radiusX*2,mFL.foldButton.radiusY*2,
 					0,0,256,256, false,false);
 	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+	}
+	
+	private void renderHostButtons() {
+		if (mFL.hostHelpButton.opacity>0) {
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mFL.hostHelpButton.opacity);
+			batch.draw(helpButtonTexture,
+					mFL.hostHelpButton.x-mFL.hostHelpButton.radiusX,
+					mFL.hostHelpButton.y-mFL.hostHelpButton.radiusY,
+					mFL.hostHelpButton.radiusX*2,mFL.hostHelpButton.radiusY*2,
+					0,0,81,81, false,false);
+	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+		if (mFL.hostUndoButton.opacity>0) {
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mFL.hostUndoButton.opacity);
+			batch.draw(hostUndoRegion,
+					mFL.hostUndoButton.x-mFL.hostUndoButton.radiusX,
+					mFL.hostUndoButton.y-mFL.hostUndoButton.radiusY,
+					mFL.hostUndoButton.radiusX*2,mFL.hostUndoButton.radiusY*2);
+	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+		if (mFL.hostExitButton.opacity>0) {
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mFL.hostExitButton.opacity);
+			batch.draw(hostExitRegion,
+					mFL.hostExitButton.x-mFL.hostExitButton.radiusX,
+					mFL.hostExitButton.y-mFL.hostExitButton.radiusY,
+					mFL.hostExitButton.radiusX*2,mFL.hostExitButton.radiusY*2);
+	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+	}
+	
+	private void renderPlayerNames() {
+		Table table = mFL.game.mWL.table;
+		Player thisPlayer;
+		Camera camera = mFL.game.mWL.worldRenderer.camera;
+		for (int i=0;i<Table.NUM_SEATS+1;i++) {
+			if (i<Table.NUM_SEATS) {
+				thisPlayer=table.seats[i].player;
+			} else {
+				thisPlayer=table.pickedUpPlayer;
+			}
+			if (thisPlayer!=null&&thisPlayer.name.opacity!=0) {
+				alphaShader=batch.getColor();
+				batch.setColor(alphaShader.r,alphaShader.g,
+						alphaShader.b,thisPlayer.name.opacity);
+				
+				int x = (int) ((thisPlayer.name.x-camera.x)*camera.zoom+screenWidth*0.5f);
+				int y = (int) (screenHeight*0.5f-(camera.y-thisPlayer.name.y)*camera.zoom);
+				batch.draw(thisPlayer.name.texture,x-thisPlayer.name.radiusX,
+						y-thisPlayer.name.radiusY,
+						thisPlayer.name.radiusX,thisPlayer.name.radiusY,
+						thisPlayer.name.radiusX*2,thisPlayer.name.radiusY*2,
+						1,1,thisPlayer.getRotation(),
+						0,0,thisPlayer.name.radiusX*2,thisPlayer.name.radiusY*2,false,false);
+				
+				batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+			}
 		}
 	}
 
@@ -557,43 +495,6 @@ public class ForegroundRenderer {
 		}
 	}
 	
-
-	private void renderEnterName() {
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,mFL.enterNameDoneButton.opacity);
-        batch.draw(okButtonTexture,
-				mFL.enterNameDoneButton.x-mFL.enterNameDoneButton.radiusX,
-				mFL.enterNameDoneButton.y-mFL.enterNameDoneButton.radiusY,
-				mFL.enterNameDoneButton.radiusX*2,mFL.enterNameDoneButton.radiusY*2,
-				0,0,214,214,false,false);
-        alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-	}
-	
-	private void renderEnterTableName() {
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,mFL.enterTableNameDoneButton.opacity);
-        batch.draw(okButtonTexture,
-				mFL.enterTableNameDoneButton.x-mFL.enterTableNameDoneButton.radiusX,
-				mFL.enterTableNameDoneButton.y-mFL.enterTableNameDoneButton.radiusY,
-				mFL.enterTableNameDoneButton.radiusX*2,mFL.enterTableNameDoneButton.radiusY*2,
-				0,0,214,214,false,false);
-        batch.draw(mFL.enterTableName1Label.texture,
-				mFL.enterTableName1Label.x-mFL.enterTableName1Label.radiusX,
-				mFL.enterTableName1Label.y-mFL.enterTableName1Label.radiusY,
-				mFL.enterTableName1Label.radiusX*2,mFL.enterTableName1Label.radiusY*2,
-				0,0,mFL.enterTableName1Label.radiusX*2,mFL.enterTableName1Label.radiusY*2,false,false);
-        batch.draw(mFL.enterTableName2Label.texture,
-				mFL.enterTableName2Label.x-mFL.enterTableName2Label.radiusX,
-				mFL.enterTableName2Label.y-mFL.enterTableName2Label.radiusY,
-				mFL.enterTableName2Label.radiusX*2,mFL.enterTableName2Label.radiusY*2,
-				0,0,mFL.enterTableName2Label.radiusX*2,mFL.enterTableName2Label.radiusY*2,false,false);
-        alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-	}
-	
 	private void renderDialogWArrow() {
 		alphaShader=batch.getColor();
 		batch.setColor(alphaShader.r,alphaShader.g,
@@ -611,7 +512,7 @@ public class ForegroundRenderer {
 	private void renderHelpDialog() {
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,mFL.playerLoginDialog.guestTitleLabel.opacity);
+        		alphaShader.b,mFL.playerLoginDialog.enterNameLabel.opacity);
         
         if (mFL.helpDialog.titleLabel.texture==null) {
         	mFL.helpDialog.titleLabel.loadTexture();
@@ -628,34 +529,32 @@ public class ForegroundRenderer {
 	private void renderPlayerLoginDialog() {
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,mFL.playerLoginDialog.guestTitleLabel.opacity);
-        
-        batch.draw(dialogTexture,
-				mFL.playerLoginDialog.x-mFL.playerLoginDialog.radiusX,
-				mFL.playerLoginDialog.y-mFL.playerLoginDialog.radiusY,
-				mFL.playerLoginDialog.radiusX*2,mFL.playerLoginDialog.radiusY*2,
-				0,0,582,396,false,false);
-        batch.draw(closeButtonTexture,
-				mFL.playerLoginDialog.closeButton.x-mFL.playerLoginDialog.closeButton.radiusX,
-				mFL.playerLoginDialog.closeButton.y-mFL.playerLoginDialog.closeButton.radiusY,
-				mFL.playerLoginDialog.closeButton.radiusX*2,mFL.playerLoginDialog.closeButton.radiusY*2,
-				0,0,54,54,false,false);
+        		alphaShader.b,mFL.playerLoginDialog.enterNameLabel.opacity);
+
+        int x = (int) (mFL.playerLoginDialog.x);
+        int y = (int) (mFL.playerLoginDialog.y);
+        renderRectangleRounded(blackDialogRegions,x,y,
+				mFL.playerLoginDialog.radiusX,mFL.playerLoginDialog.radiusY);
+        batch.draw(anonTexture,
+				mFL.playerLoginDialog.anonSprite.x-mFL.playerLoginDialog.anonSprite.radiusX,
+				mFL.playerLoginDialog.anonSprite.y-mFL.playerLoginDialog.anonSprite.radiusY,
+				mFL.playerLoginDialog.anonSprite.radiusX*2,mFL.playerLoginDialog.anonSprite.radiusY*2,
+				0,0,70,71,false,false);
         // title and text field left anchored
-        if (mFL.playerLoginDialog.guestTitleLabel.texture==null) {
-        	mFL.playerLoginDialog.guestTitleLabel.loadTexture(new Color(0.88f,0.62f,0.09f,1),new Color(0,0,0.3f,1));
+        if (mFL.playerLoginDialog.enterNameLabel.texture==null) {
+        	mFL.playerLoginDialog.enterNameLabel.loadTexture();
         }
-		int x=(int) (mFL.playerLoginDialog.guestTitleLabel.x-mFL.playerLoginDialog.guestTitleLabel.radiusX);
-		int y=(int) (mFL.playerLoginDialog.guestTitleLabel.y-mFL.playerLoginDialog.guestTitleLabel.radiusY);
-		batch.draw(mFL.playerLoginDialog.guestTitleLabel.texture,x,y,
-				0,0,mFL.playerLoginDialog.guestTitleLabel.radiusX*2,
-				mFL.playerLoginDialog.guestTitleLabel.radiusY*2);
+		x=(int) (mFL.playerLoginDialog.enterNameLabel.x-mFL.playerLoginDialog.enterNameLabel.radiusX);
+		y=(int) (mFL.playerLoginDialog.enterNameLabel.y-mFL.playerLoginDialog.enterNameLabel.radiusY);
+		batch.draw(mFL.playerLoginDialog.enterNameLabel.texture,x,y,
+				0,0,mFL.playerLoginDialog.enterNameLabel.radiusX*2,
+				mFL.playerLoginDialog.enterNameLabel.radiusY*2);
 		
 		x=(int) (mFL.playerLoginDialog.nameField.x-mFL.playerLoginDialog.nameField.radiusX);
 		y=(int) (mFL.playerLoginDialog.nameField.y-mFL.playerLoginDialog.nameField.radiusY);
-		batch.draw(textFieldTexture,x,y,
+		batch.draw(textFieldRegion,x,y,
 				mFL.playerLoginDialog.nameField.radiusX*2,
-				mFL.playerLoginDialog.nameField.radiusY*2,
-				0,0,366,54,false,false);
+				mFL.playerLoginDialog.nameField.radiusY*2);
 		if (mFL.playerLoginDialog.nameField.label.texture!=null) {
 			x=(int) (mFL.playerLoginDialog.nameField.label.x-mFL.playerLoginDialog.nameField.label.radiusX);
 			y=(int) (mFL.playerLoginDialog.nameField.label.y-mFL.playerLoginDialog.nameField.label.radiusY);
@@ -671,30 +570,14 @@ public class ForegroundRenderer {
 			batch.draw(cursorTexture,x,y,
 					mFL.playerLoginDialog.nameField.cursor.radiusX*2,
 					mFL.playerLoginDialog.nameField.cursor.radiusY*2,
-					0,0,32,128,false,false);
+					0,0,8,64,false,false);
 			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.playerLoginDialog.guestTitleLabel.opacity);
+	        		alphaShader.b,mFL.playerLoginDialog.enterNameLabel.opacity);
 		}
-		
-		x=(int) (mFL.playerLoginDialog.guestOKButton.x-mFL.playerLoginDialog.guestOKButton.radiusX);
-		y=(int) (mFL.playerLoginDialog.guestOKButton.y-mFL.playerLoginDialog.guestOKButton.radiusY);
-		batch.draw(buttonOkTexture,x,y,
-				mFL.playerLoginDialog.guestOKButton.radiusX*2,
-				mFL.playerLoginDialog.guestOKButton.radiusY*2,
-				0,0,126,54,false,false);
-		
-		if (mFL.playerLoginDialog.guestOKButton.getLabel().texture==null) {
-        	mFL.playerLoginDialog.guestOKButton.getLabel().loadTexture(whiteColor,new Color(0,0.4f,0,1));
-        }
-		x=(int) (mFL.playerLoginDialog.guestOKButton.getLabel().x-mFL.playerLoginDialog.guestOKButton.getLabel().radiusX);
-		y=(int) (mFL.playerLoginDialog.guestOKButton.getLabel().y-mFL.playerLoginDialog.guestOKButton.getLabel().radiusY);
-		batch.draw(mFL.playerLoginDialog.guestOKButton.getLabel().texture,x,y,
-				0,0,mFL.playerLoginDialog.guestOKButton.getLabel().radiusX*2,
-				mFL.playerLoginDialog.guestOKButton.getLabel().radiusY*2);
 		
 		
 		if (mFL.playerLoginDialog.orLabel.texture==null) {
-        	mFL.playerLoginDialog.orLabel.loadTexture(new Color(0.88f,0.62f,0.09f,1),new Color(0,0,0.3f,1));
+        	mFL.playerLoginDialog.orLabel.loadTexture();
         }
 		x=(int) (mFL.playerLoginDialog.orLabel.x-mFL.playerLoginDialog.orLabel.radiusX);
 		y=(int) (mFL.playerLoginDialog.orLabel.y-mFL.playerLoginDialog.orLabel.radiusY);
@@ -707,7 +590,7 @@ public class ForegroundRenderer {
 		batch.draw(buttonLoginFacebookTexture,x,y,
 				mFL.playerLoginDialog.facebookButton.radiusX*2,
 				mFL.playerLoginDialog.facebookButton.radiusY*2,
-				0,0,502,54,false,false);
+				0,0,430,49,false,false);
 		if (mFL.playerLoginDialog.facebookButton.getLabel().texture==null) {
         	mFL.playerLoginDialog.facebookButton.getLabel().loadTexture(whiteColor,new Color(0,0,0.4f,1));
         }
@@ -717,104 +600,665 @@ public class ForegroundRenderer {
 				0,0,mFL.playerLoginDialog.facebookButton.getLabel().radiusX*2,
 				mFL.playerLoginDialog.facebookButton.getLabel().radiusY*2);
 		
+		x=(int) (mFL.playerLoginDialog.backButton.x-mFL.playerLoginDialog.backButton.radiusX);
+		y=(int) (mFL.playerLoginDialog.backButton.y-mFL.playerLoginDialog.backButton.radiusY);
+		batch.draw(btnDialogLeft,x,y,
+				mFL.playerLoginDialog.backButton.radiusX*2,
+				mFL.playerLoginDialog.backButton.radiusY*2);
+		if (mFL.playerLoginDialog.backButton.getLabel().texture==null) {
+        	mFL.playerLoginDialog.backButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.playerLoginDialog.backButton.getLabel().x-mFL.playerLoginDialog.backButton.getLabel().radiusX);
+		y=(int) (mFL.playerLoginDialog.backButton.getLabel().y-mFL.playerLoginDialog.backButton.getLabel().radiusY);
+		batch.draw(mFL.playerLoginDialog.backButton.getLabel().texture,x,y,
+				0,0,mFL.playerLoginDialog.backButton.getLabel().radiusX*2,
+				mFL.playerLoginDialog.backButton.getLabel().radiusY*2);
+		
+		
+		x=(int) (mFL.playerLoginDialog.okButton.x-mFL.playerLoginDialog.okButton.radiusX);
+		y=(int) (mFL.playerLoginDialog.okButton.y-mFL.playerLoginDialog.okButton.radiusY);
+		batch.draw(btnDialogRight,x,y,
+				mFL.playerLoginDialog.okButton.radiusX*2,
+				mFL.playerLoginDialog.okButton.radiusY*2);
+		if (mFL.playerLoginDialog.okButton.getLabel().texture==null) {
+        	mFL.playerLoginDialog.okButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.playerLoginDialog.okButton.getLabel().x-mFL.playerLoginDialog.okButton.getLabel().radiusX);
+		y=(int) (mFL.playerLoginDialog.okButton.getLabel().y-mFL.playerLoginDialog.okButton.getLabel().radiusY);
+		batch.draw(mFL.playerLoginDialog.okButton.getLabel().texture,x,y,
+				0,0,mFL.playerLoginDialog.okButton.getLabel().radiusX*2,
+				mFL.playerLoginDialog.okButton.getLabel().radiusY*2);
+		
+		batch.setColor(alphaShader);
+
+	}
+	
+	private void renderHostNameDialog() {
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostNameDialog.enterNameLabel.opacity);
+        
+        int x = (int) (mFL.hostNameDialog.x);
+        int y = (int) (mFL.hostNameDialog.y);
+        renderRectangleRounded(blackDialogRegions,x,y,
+				mFL.hostNameDialog.radiusX,mFL.hostNameDialog.radiusY);
+        
+        batch.draw(anonTexture,
+				mFL.hostNameDialog.tableSprite.x-mFL.hostNameDialog.tableSprite.radiusX,
+				mFL.hostNameDialog.tableSprite.y-mFL.hostNameDialog.tableSprite.radiusY,
+				mFL.hostNameDialog.tableSprite.radiusX*2,mFL.hostNameDialog.tableSprite.radiusY*2,
+				0,0,70,71,false,false);
+        
+        if (mFL.hostNameDialog.enterNameLabel.texture==null) {
+        	mFL.hostNameDialog.enterNameLabel.loadTexture();
+        }
+		x=(int) (mFL.hostNameDialog.enterNameLabel.x-mFL.hostNameDialog.enterNameLabel.radiusX);
+		y=(int) (mFL.hostNameDialog.enterNameLabel.y-mFL.hostNameDialog.enterNameLabel.radiusY);
+		batch.draw(mFL.hostNameDialog.enterNameLabel.texture,x,y,
+				0,0,mFL.hostNameDialog.enterNameLabel.radiusX*2,
+				mFL.hostNameDialog.enterNameLabel.radiusY*2);
+		
+		x=(int) (mFL.hostNameDialog.nameField.x-mFL.hostNameDialog.nameField.radiusX);
+		y=(int) (mFL.hostNameDialog.nameField.y-mFL.hostNameDialog.nameField.radiusY);
+		batch.draw(textFieldRegion,x,y,
+				mFL.hostNameDialog.nameField.radiusX*2,
+				mFL.hostNameDialog.nameField.radiusY*2);
+		if (mFL.hostNameDialog.nameField.label.texture!=null) {
+			x=(int) (mFL.hostNameDialog.nameField.label.x-mFL.hostNameDialog.nameField.label.radiusX);
+			y=(int) (mFL.hostNameDialog.nameField.label.y-mFL.hostNameDialog.nameField.label.radiusY);
+			batch.draw(mFL.hostNameDialog.nameField.label.texture,x,y,
+					0,0,mFL.hostNameDialog.nameField.label.radiusX*2,
+					mFL.hostNameDialog.nameField.label.radiusY*2);
+		}
+		if (mFL.hostNameDialog.nameField.cursor.opacity!=0) {
+			batch.setColor(alphaShader.r,alphaShader.g,
+		        		alphaShader.b,mFL.hostNameDialog.nameField.cursor.opacity);
+			x=(int) (mFL.hostNameDialog.nameField.cursor.x-mFL.hostNameDialog.nameField.cursor.radiusX);
+			y=(int) (mFL.hostNameDialog.nameField.cursor.y-mFL.hostNameDialog.nameField.cursor.radiusY);
+			batch.draw(cursorTexture,x,y,
+					mFL.hostNameDialog.nameField.cursor.radiusX*2,
+					mFL.hostNameDialog.nameField.cursor.radiusY*2,
+					0,0,8,64,false,false);
+			batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,mFL.hostNameDialog.enterNameLabel.opacity);
+		}
+		
+		if (mFL.hostNameDialog.infoLabel.texture==null) {
+        	mFL.hostNameDialog.infoLabel.loadTexture();
+        }
+		x=(int) (mFL.hostNameDialog.infoLabel.x-mFL.hostNameDialog.infoLabel.radiusX);
+		y=(int) (mFL.hostNameDialog.infoLabel.y-mFL.hostNameDialog.infoLabel.radiusY);
+		batch.draw(mFL.hostNameDialog.infoLabel.texture,x,y,
+				0,0,mFL.hostNameDialog.infoLabel.radiusX*2,
+				mFL.hostNameDialog.infoLabel.radiusY*2);
+		
+		x=(int) (mFL.hostNameDialog.backButton.x-mFL.hostNameDialog.backButton.radiusX);
+		y=(int) (mFL.hostNameDialog.backButton.y-mFL.hostNameDialog.backButton.radiusY);
+		batch.draw(btnDialogLeft,x,y,
+				mFL.hostNameDialog.backButton.radiusX*2,
+				mFL.hostNameDialog.backButton.radiusY*2);
+		if (mFL.hostNameDialog.backButton.getLabel().texture==null) {
+        	mFL.hostNameDialog.backButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostNameDialog.backButton.getLabel().x-mFL.hostNameDialog.backButton.getLabel().radiusX);
+		y=(int) (mFL.hostNameDialog.backButton.getLabel().y-mFL.hostNameDialog.backButton.getLabel().radiusY);
+		batch.draw(mFL.hostNameDialog.backButton.getLabel().texture,x,y,
+				0,0,mFL.hostNameDialog.backButton.getLabel().radiusX*2,
+				mFL.hostNameDialog.backButton.getLabel().radiusY*2);
+		
+		x=(int) (mFL.hostNameDialog.okButton.x-mFL.hostNameDialog.okButton.radiusX);
+		y=(int) (mFL.hostNameDialog.okButton.y-mFL.hostNameDialog.okButton.radiusY);
+		batch.draw(btnDialogRight,x,y,
+				mFL.hostNameDialog.okButton.radiusX*2,
+				mFL.hostNameDialog.okButton.radiusY*2);
+		if (mFL.hostNameDialog.okButton.getLabel().texture==null) {
+        	mFL.hostNameDialog.okButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostNameDialog.okButton.getLabel().x-mFL.hostNameDialog.okButton.getLabel().radiusX);
+		y=(int) (mFL.hostNameDialog.okButton.getLabel().y-mFL.hostNameDialog.okButton.getLabel().radiusY);
+		batch.draw(mFL.hostNameDialog.okButton.getLabel().texture,x,y,
+				0,0,mFL.hostNameDialog.okButton.getLabel().radiusX*2,
+				mFL.hostNameDialog.okButton.getLabel().radiusY*2);
+		
+		
+		batch.setColor(alphaShader);
+
+	}
+	
+	private void renderHostChipCaseDialog() {
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostChipCaseDialog.selectLabel.opacity);
+        
+        int x = (int) (mFL.hostChipCaseDialog.x);
+        int y = (int) (mFL.hostChipCaseDialog.y);
+        renderRectangleRounded(blackDialogRegions,x,y,
+				mFL.hostChipCaseDialog.radiusX,mFL.hostChipCaseDialog.radiusY);
+        
+        batch.draw(anonTexture,
+				mFL.hostChipCaseDialog.chipCaseSprite.x-mFL.hostChipCaseDialog.chipCaseSprite.radiusX,
+				mFL.hostChipCaseDialog.chipCaseSprite.y-mFL.hostChipCaseDialog.chipCaseSprite.radiusY,
+				mFL.hostChipCaseDialog.chipCaseSprite.radiusX*2,mFL.hostChipCaseDialog.chipCaseSprite.radiusY*2,
+				0,0,70,71,false,false);
+        
+        if (mFL.hostChipCaseDialog.selectLabel.texture==null) {
+        	mFL.hostChipCaseDialog.selectLabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.selectLabel.x-mFL.hostChipCaseDialog.selectLabel.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.selectLabel.y-mFL.hostChipCaseDialog.selectLabel.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.selectLabel.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.selectLabel.radiusX*2,
+				mFL.hostChipCaseDialog.selectLabel.radiusY*2);
+		
+		batch.draw(case1BackRegion,
+				mFL.hostChipCaseDialog.standardBackground.x-mFL.hostChipCaseDialog.standardBackground.radiusX,
+				mFL.hostChipCaseDialog.standardBackground.y-mFL.hostChipCaseDialog.standardBackground.radiusY,
+				mFL.hostChipCaseDialog.standardBackground.radiusX*2,mFL.hostChipCaseDialog.standardBackground.radiusY*2);
+		
+		if (mFL.hostChipCaseDialog.standardTitle.texture==null) {
+        	mFL.hostChipCaseDialog.standardTitle.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.standardTitle.x-mFL.hostChipCaseDialog.standardTitle.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.standardTitle.y-mFL.hostChipCaseDialog.standardTitle.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.standardTitle.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.standardTitle.radiusX*2,
+				mFL.hostChipCaseDialog.standardTitle.radiusY*2);
+		
+		batch.draw(standardCaseRegion,
+				mFL.hostChipCaseDialog.standardImage.x-mFL.hostChipCaseDialog.standardImage.radiusX,
+				mFL.hostChipCaseDialog.standardImage.y-mFL.hostChipCaseDialog.standardImage.radiusY,
+				mFL.hostChipCaseDialog.standardImage.radiusX*2,mFL.hostChipCaseDialog.standardImage.radiusY*2);
+		
+		if (mFL.hostChipCaseDialog.standardText1.texture==null) {
+        	mFL.hostChipCaseDialog.standardText1.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.standardText1.x-mFL.hostChipCaseDialog.standardText1.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.standardText1.y-mFL.hostChipCaseDialog.standardText1.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.standardText1.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.standardText1.radiusX*2,
+				mFL.hostChipCaseDialog.standardText1.radiusY*2);
+		if (mFL.hostChipCaseDialog.standardText2.texture==null) {
+        	mFL.hostChipCaseDialog.standardText2.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.standardText2.x-mFL.hostChipCaseDialog.standardText2.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.standardText2.y-mFL.hostChipCaseDialog.standardText2.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.standardText2.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.standardText2.radiusX*2,
+				mFL.hostChipCaseDialog.standardText2.radiusY*2);
+		if (mFL.hostChipCaseDialog.standardPrice.texture==null) {
+        	mFL.hostChipCaseDialog.standardPrice.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.standardPrice.x-mFL.hostChipCaseDialog.standardPrice.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.standardPrice.y-mFL.hostChipCaseDialog.standardPrice.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.standardPrice.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.standardPrice.radiusX*2,
+				mFL.hostChipCaseDialog.standardPrice.radiusY*2);
+		
+		batch.draw(case2BackRegion,
+				mFL.hostChipCaseDialog.customBackground.x-mFL.hostChipCaseDialog.customBackground.radiusX,
+				mFL.hostChipCaseDialog.customBackground.y-mFL.hostChipCaseDialog.customBackground.radiusY,
+				mFL.hostChipCaseDialog.customBackground.radiusX*2,mFL.hostChipCaseDialog.customBackground.radiusY*2);
+		
+		if (mFL.hostChipCaseDialog.customTitle.texture==null) {
+        	mFL.hostChipCaseDialog.customTitle.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.customTitle.x-mFL.hostChipCaseDialog.customTitle.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.customTitle.y-mFL.hostChipCaseDialog.customTitle.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.customTitle.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.customTitle.radiusX*2,
+				mFL.hostChipCaseDialog.customTitle.radiusY*2);
+		
+		batch.draw(standardCaseRegion,
+				mFL.hostChipCaseDialog.customImage.x-mFL.hostChipCaseDialog.customImage.radiusX,
+				mFL.hostChipCaseDialog.customImage.y-mFL.hostChipCaseDialog.customImage.radiusY,
+				mFL.hostChipCaseDialog.customImage.radiusX*2,mFL.hostChipCaseDialog.customImage.radiusY*2);
+		
+		if (mFL.hostChipCaseDialog.customText1.texture==null) {
+        	mFL.hostChipCaseDialog.customText1.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.customText1.x-mFL.hostChipCaseDialog.customText1.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.customText1.y-mFL.hostChipCaseDialog.customText1.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.customText1.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.customText1.radiusX*2,
+				mFL.hostChipCaseDialog.customText1.radiusY*2);
+		if (mFL.hostChipCaseDialog.customText2.texture==null) {
+        	mFL.hostChipCaseDialog.customText2.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.customText2.x-mFL.hostChipCaseDialog.customText2.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.customText2.y-mFL.hostChipCaseDialog.customText2.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.customText2.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.customText2.radiusX*2,
+				mFL.hostChipCaseDialog.customText2.radiusY*2);
+		if (mFL.hostChipCaseDialog.customPrice.texture==null) {
+        	mFL.hostChipCaseDialog.customPrice.loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.customPrice.x-mFL.hostChipCaseDialog.customPrice.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.customPrice.y-mFL.hostChipCaseDialog.customPrice.radiusY);
+		batch.draw(mFL.hostChipCaseDialog.customPrice.texture,x,y,
+				0,0,mFL.hostChipCaseDialog.customPrice.radiusX*2,
+				mFL.hostChipCaseDialog.customPrice.radiusY*2);
+		
+		x=(int) (mFL.hostChipCaseDialog.backButton.x-mFL.hostChipCaseDialog.backButton.radiusX);
+		y=(int) (mFL.hostChipCaseDialog.backButton.y-mFL.hostChipCaseDialog.backButton.radiusY);
+		batch.draw(btnDialog,x,y,
+				mFL.hostChipCaseDialog.backButton.radiusX*2,
+				mFL.hostChipCaseDialog.backButton.radiusY*2);
+		if (mFL.hostChipCaseDialog.backButton.getLabel().texture==null) {
+        	mFL.hostChipCaseDialog.backButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostChipCaseDialog.backButton.getLabel().x-mFL.hostChipCaseDialog.backButton.getLabel().radiusX);
+		y=(int) (mFL.hostChipCaseDialog.backButton.getLabel().y-mFL.hostChipCaseDialog.backButton.getLabel().radiusY);
+		batch.draw(mFL.hostChipCaseDialog.backButton.getLabel().texture,x,y,
+				0,0,mFL.hostChipCaseDialog.backButton.getLabel().radiusX*2,
+				mFL.hostChipCaseDialog.backButton.getLabel().radiusY*2);
+
+		
+		
+		batch.setColor(alphaShader);
+
+	}
+	
+	private void renderHostChipSetupDialog() {
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostChipSetupDialog.chipCaseSprite.opacity);
+        
+        int x = (int) (mFL.hostChipSetupDialog.x);
+        int y = (int) (mFL.hostChipSetupDialog.y);
+        renderRectangleRounded(blackDialogRegions,x,y,
+				mFL.hostChipSetupDialog.radiusX,mFL.hostChipSetupDialog.radiusY);
+        
+        batch.draw(anonTexture,
+				mFL.hostChipSetupDialog.chipCaseSprite.x-mFL.hostChipSetupDialog.chipCaseSprite.radiusX,
+				mFL.hostChipSetupDialog.chipCaseSprite.y-mFL.hostChipSetupDialog.chipCaseSprite.radiusY,
+				mFL.hostChipSetupDialog.chipCaseSprite.radiusX*2,mFL.hostChipSetupDialog.chipCaseSprite.radiusY*2,
+				0,0,70,71,false,false);
+        
+        
+        batch.draw(chipRegions[0],
+				mFL.hostChipSetupDialog.chipASprite.x-mFL.hostChipSetupDialog.chipASprite.radiusX,
+				mFL.hostChipSetupDialog.chipASprite.y-mFL.hostChipSetupDialog.chipASprite.radiusY,
+				mFL.hostChipSetupDialog.chipASprite.radiusX*2,mFL.hostChipSetupDialog.chipASprite.radiusY*2);
+        batch.draw(buttonMinusRegion,
+				mFL.hostChipSetupDialog.minusAButton.x-mFL.hostChipSetupDialog.minusAButton.radiusX,
+				mFL.hostChipSetupDialog.minusAButton.y-mFL.hostChipSetupDialog.minusAButton.radiusY,
+				mFL.hostChipSetupDialog.minusAButton.radiusX*2,mFL.hostChipSetupDialog.minusAButton.radiusY*2);
+        batch.draw(buttonPlusRegion,
+				mFL.hostChipSetupDialog.plusAButton.x-mFL.hostChipSetupDialog.plusAButton.radiusX,
+				mFL.hostChipSetupDialog.plusAButton.y-mFL.hostChipSetupDialog.plusAButton.radiusY,
+				mFL.hostChipSetupDialog.plusAButton.radiusX*2,mFL.hostChipSetupDialog.plusAButton.radiusY*2);
+        renderTextField(textFieldRegions,
+				(int)mFL.hostChipSetupDialog.amountABackground.x,
+				(int)mFL.hostChipSetupDialog.amountABackground.y,
+				mFL.hostChipSetupDialog.amountABackground.radiusX,mFL.hostChipSetupDialog.amountABackground.radiusY);
+        if (mFL.hostChipSetupDialog.amountALabel.texture==null) {
+        	mFL.hostChipSetupDialog.amountALabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.amountALabel.x-mFL.hostChipSetupDialog.amountALabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.amountALabel.y-mFL.hostChipSetupDialog.amountALabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.amountALabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.amountALabel.radiusX*2,
+				mFL.hostChipSetupDialog.amountALabel.radiusY*2);
+		if (mFL.hostChipSetupDialog.infoALabel.texture==null) {
+        	mFL.hostChipSetupDialog.infoALabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.infoALabel.x-mFL.hostChipSetupDialog.infoALabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.infoALabel.y-mFL.hostChipSetupDialog.infoALabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.infoALabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.infoALabel.radiusX*2,
+				mFL.hostChipSetupDialog.infoALabel.radiusY*2);
+		
+		batch.draw(chipRegions[1],
+				mFL.hostChipSetupDialog.chipBSprite.x-mFL.hostChipSetupDialog.chipBSprite.radiusX,
+				mFL.hostChipSetupDialog.chipBSprite.y-mFL.hostChipSetupDialog.chipBSprite.radiusY,
+				mFL.hostChipSetupDialog.chipBSprite.radiusX*2,mFL.hostChipSetupDialog.chipBSprite.radiusY*2);
+        batch.draw(buttonMinusRegion,
+				mFL.hostChipSetupDialog.minusBButton.x-mFL.hostChipSetupDialog.minusBButton.radiusX,
+				mFL.hostChipSetupDialog.minusBButton.y-mFL.hostChipSetupDialog.minusBButton.radiusY,
+				mFL.hostChipSetupDialog.minusBButton.radiusX*2,mFL.hostChipSetupDialog.minusBButton.radiusY*2);
+        batch.draw(buttonPlusRegion,
+				mFL.hostChipSetupDialog.plusBButton.x-mFL.hostChipSetupDialog.plusBButton.radiusX,
+				mFL.hostChipSetupDialog.plusBButton.y-mFL.hostChipSetupDialog.plusBButton.radiusY,
+				mFL.hostChipSetupDialog.plusBButton.radiusX*2,mFL.hostChipSetupDialog.plusBButton.radiusY*2);
+        renderTextField(textFieldRegions,
+				(int)mFL.hostChipSetupDialog.amountBBackground.x,
+				(int)mFL.hostChipSetupDialog.amountBBackground.y,
+				mFL.hostChipSetupDialog.amountBBackground.radiusX,mFL.hostChipSetupDialog.amountBBackground.radiusY);
+        if (mFL.hostChipSetupDialog.amountBLabel.texture==null) {
+        	mFL.hostChipSetupDialog.amountBLabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.amountBLabel.x-mFL.hostChipSetupDialog.amountBLabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.amountBLabel.y-mFL.hostChipSetupDialog.amountBLabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.amountBLabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.amountBLabel.radiusX*2,
+				mFL.hostChipSetupDialog.amountBLabel.radiusY*2);
+		if (mFL.hostChipSetupDialog.infoBLabel.texture==null) {
+        	mFL.hostChipSetupDialog.infoBLabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.infoBLabel.x-mFL.hostChipSetupDialog.infoBLabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.infoBLabel.y-mFL.hostChipSetupDialog.infoBLabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.infoBLabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.infoBLabel.radiusX*2,
+				mFL.hostChipSetupDialog.infoBLabel.radiusY*2);
+		
+		batch.draw(chipRegions[2],
+				mFL.hostChipSetupDialog.chipCSprite.x-mFL.hostChipSetupDialog.chipCSprite.radiusX,
+				mFL.hostChipSetupDialog.chipCSprite.y-mFL.hostChipSetupDialog.chipCSprite.radiusY,
+				mFL.hostChipSetupDialog.chipCSprite.radiusX*2,mFL.hostChipSetupDialog.chipCSprite.radiusY*2);
+        batch.draw(buttonMinusRegion,
+				mFL.hostChipSetupDialog.minusCButton.x-mFL.hostChipSetupDialog.minusCButton.radiusX,
+				mFL.hostChipSetupDialog.minusCButton.y-mFL.hostChipSetupDialog.minusCButton.radiusY,
+				mFL.hostChipSetupDialog.minusCButton.radiusX*2,mFL.hostChipSetupDialog.minusCButton.radiusY*2);
+        batch.draw(buttonPlusRegion,
+				mFL.hostChipSetupDialog.plusCButton.x-mFL.hostChipSetupDialog.plusCButton.radiusX,
+				mFL.hostChipSetupDialog.plusCButton.y-mFL.hostChipSetupDialog.plusCButton.radiusY,
+				mFL.hostChipSetupDialog.plusCButton.radiusX*2,mFL.hostChipSetupDialog.plusCButton.radiusY*2);
+        renderTextField(textFieldRegions,
+				(int)mFL.hostChipSetupDialog.amountCBackground.x,
+				(int)mFL.hostChipSetupDialog.amountCBackground.y,
+				mFL.hostChipSetupDialog.amountCBackground.radiusX,mFL.hostChipSetupDialog.amountCBackground.radiusY);
+        if (mFL.hostChipSetupDialog.amountCLabel.texture==null) {
+        	mFL.hostChipSetupDialog.amountCLabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.amountCLabel.x-mFL.hostChipSetupDialog.amountCLabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.amountCLabel.y-mFL.hostChipSetupDialog.amountCLabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.amountCLabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.amountCLabel.radiusX*2,
+				mFL.hostChipSetupDialog.amountCLabel.radiusY*2);
+		if (mFL.hostChipSetupDialog.infoCLabel.texture==null) {
+        	mFL.hostChipSetupDialog.infoCLabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.infoCLabel.x-mFL.hostChipSetupDialog.infoCLabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.infoCLabel.y-mFL.hostChipSetupDialog.infoCLabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.infoCLabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.infoCLabel.radiusX*2,
+				mFL.hostChipSetupDialog.infoCLabel.radiusY*2);
+		
+		batch.draw(buttonMinusRegion,
+				mFL.hostChipSetupDialog.minusBuyinButton.x-mFL.hostChipSetupDialog.minusBuyinButton.radiusX,
+				mFL.hostChipSetupDialog.minusBuyinButton.y-mFL.hostChipSetupDialog.minusBuyinButton.radiusY,
+				mFL.hostChipSetupDialog.minusBuyinButton.radiusX*2,mFL.hostChipSetupDialog.minusBuyinButton.radiusY*2);
+        batch.draw(buttonPlusRegion,
+				mFL.hostChipSetupDialog.plusBuyinButton.x-mFL.hostChipSetupDialog.plusBuyinButton.radiusX,
+				mFL.hostChipSetupDialog.plusBuyinButton.y-mFL.hostChipSetupDialog.plusBuyinButton.radiusY,
+				mFL.hostChipSetupDialog.plusBuyinButton.radiusX*2,mFL.hostChipSetupDialog.plusBuyinButton.radiusY*2);
+        x=(int) (mFL.hostChipSetupDialog.amountBuyinBackground.x);
+        y=(int) (mFL.hostChipSetupDialog.amountBuyinBackground.y);
+        renderTextField(textFieldRegions,x,y,
+				mFL.hostChipSetupDialog.amountBuyinBackground.radiusX,
+				mFL.hostChipSetupDialog.amountBuyinBackground.radiusY);
+        if (mFL.hostChipSetupDialog.amountBuyinLabel.texture==null) {
+        	mFL.hostChipSetupDialog.amountBuyinLabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.amountBuyinLabel.x-mFL.hostChipSetupDialog.amountBuyinLabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.amountBuyinLabel.y-mFL.hostChipSetupDialog.amountBuyinLabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.amountBuyinLabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.amountBuyinLabel.radiusX*2,
+				mFL.hostChipSetupDialog.amountBuyinLabel.radiusY*2);
+		if (mFL.hostChipSetupDialog.infoBuyinLabel.texture==null) {
+        	mFL.hostChipSetupDialog.infoBuyinLabel.loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.infoBuyinLabel.x-mFL.hostChipSetupDialog.infoBuyinLabel.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.infoBuyinLabel.y-mFL.hostChipSetupDialog.infoBuyinLabel.radiusY);
+		batch.draw(mFL.hostChipSetupDialog.infoBuyinLabel.texture,x,y,
+				0,0,mFL.hostChipSetupDialog.infoBuyinLabel.radiusX*2,
+				mFL.hostChipSetupDialog.infoBuyinLabel.radiusY*2);
+        
+		x=(int) (mFL.hostChipSetupDialog.backButton.x-mFL.hostChipSetupDialog.backButton.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.backButton.y-mFL.hostChipSetupDialog.backButton.radiusY);
+		batch.draw(btnDialogLeft,x,y,
+				mFL.hostChipSetupDialog.backButton.radiusX*2,
+				mFL.hostChipSetupDialog.backButton.radiusY*2);
+		if (mFL.hostChipSetupDialog.backButton.getLabel().texture==null) {
+        	mFL.hostChipSetupDialog.backButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.backButton.getLabel().x-mFL.hostChipSetupDialog.backButton.getLabel().radiusX);
+		y=(int) (mFL.hostChipSetupDialog.backButton.getLabel().y-mFL.hostChipSetupDialog.backButton.getLabel().radiusY);
+		batch.draw(mFL.hostChipSetupDialog.backButton.getLabel().texture,x,y,
+				0,0,mFL.hostChipSetupDialog.backButton.getLabel().radiusX*2,
+				mFL.hostChipSetupDialog.backButton.getLabel().radiusY*2);
+
+		x=(int) (mFL.hostChipSetupDialog.okayButton.x-mFL.hostChipSetupDialog.okayButton.radiusX);
+		y=(int) (mFL.hostChipSetupDialog.okayButton.y-mFL.hostChipSetupDialog.okayButton.radiusY);
+		batch.draw(btnDialogRight,x,y,
+				mFL.hostChipSetupDialog.okayButton.radiusX*2,
+				mFL.hostChipSetupDialog.okayButton.radiusY*2);
+		if (mFL.hostChipSetupDialog.okayButton.getLabel().texture==null) {
+        	mFL.hostChipSetupDialog.okayButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostChipSetupDialog.okayButton.getLabel().x-mFL.hostChipSetupDialog.okayButton.getLabel().radiusX);
+		y=(int) (mFL.hostChipSetupDialog.okayButton.getLabel().y-mFL.hostChipSetupDialog.okayButton.getLabel().radiusY);
+		batch.draw(mFL.hostChipSetupDialog.okayButton.getLabel().texture,x,y,
+				0,0,mFL.hostChipSetupDialog.okayButton.getLabel().radiusX*2,
+				mFL.hostChipSetupDialog.okayButton.getLabel().radiusY*2);
+		
+		batch.setColor(alphaShader);
+
+	}
+	
+	private void renderHostLobbyDialog() {
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostLobbyDialog.nameLabel.opacity);
+        
+        int x = (int) (mFL.hostLobbyDialog.x);
+        int y = (int) (mFL.hostLobbyDialog.y);
+        renderRectangleRounded(blackDialogRegions,x,y,
+				mFL.hostLobbyDialog.radiusX,mFL.hostLobbyDialog.radiusY);
+        
+        renderTextField(textFieldRegions, mFL.hostLobbyDialog.ringSprite);
+        
+        x=(int) (mFL.hostLobbyDialog.lineSprite.x-mFL.hostLobbyDialog.lineSprite.radiusX);
+		y=(int) (mFL.hostLobbyDialog.lineSprite.y-mFL.hostLobbyDialog.lineSprite.radiusY);
+		batch.draw(goldLineRegion,x,y,
+				mFL.hostLobbyDialog.lineSprite.radiusX*2,mFL.hostLobbyDialog.lineSprite.radiusY*2);
+		
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostLobbyDialog.waitingLabel.opacity);
+        if (mFL.hostLobbyDialog.waitingLabel.texture==null) {
+        	mFL.hostLobbyDialog.waitingLabel.loadTexture();
+        }
+		x=(int) (mFL.hostLobbyDialog.waitingLabel.x-mFL.hostLobbyDialog.waitingLabel.radiusX);
+		y=(int) (mFL.hostLobbyDialog.waitingLabel.y-mFL.hostLobbyDialog.waitingLabel.radiusY);
+		batch.draw(mFL.hostLobbyDialog.waitingLabel.texture,x,y,
+				0,0,mFL.hostLobbyDialog.waitingLabel.radiusX*2,
+				mFL.hostLobbyDialog.waitingLabel.radiusY*2);
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostLobbyDialog.dealerLabel.opacity);
+        if (mFL.hostLobbyDialog.dealerLabel.texture==null) {
+        	mFL.hostLobbyDialog.dealerLabel.loadTexture();
+        }
+		x=(int) (mFL.hostLobbyDialog.dealerLabel.x-mFL.hostLobbyDialog.dealerLabel.radiusX);
+		y=(int) (mFL.hostLobbyDialog.dealerLabel.y-mFL.hostLobbyDialog.dealerLabel.radiusY);
+		batch.draw(mFL.hostLobbyDialog.dealerLabel.texture,x,y,
+				0,0,mFL.hostLobbyDialog.dealerLabel.radiusX*2,
+				mFL.hostLobbyDialog.dealerLabel.radiusY*2);
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		
+		
+		if (mFL.hostLobbyDialog.nameLabel.texture==null) {
+        	mFL.hostLobbyDialog.nameLabel.loadTexture();
+        }
+		x=(int) (mFL.hostLobbyDialog.nameLabel.x-mFL.hostLobbyDialog.nameLabel.radiusX);
+		y=(int) (mFL.hostLobbyDialog.nameLabel.y-mFL.hostLobbyDialog.nameLabel.radiusY);
+		batch.draw(mFL.hostLobbyDialog.nameLabel.texture,x,y,
+				0,0,mFL.hostLobbyDialog.nameLabel.radiusX*2,
+				mFL.hostLobbyDialog.nameLabel.radiusY*2);
+		
+		x=(int) (mFL.hostLobbyDialog.backButton.x-mFL.hostLobbyDialog.backButton.radiusX);
+		y=(int) (mFL.hostLobbyDialog.backButton.y-mFL.hostLobbyDialog.backButton.radiusY);
+		batch.draw(btnDialogLeft,x,y,
+				mFL.hostLobbyDialog.backButton.radiusX*2,
+				mFL.hostLobbyDialog.backButton.radiusY*2);
+		if (mFL.hostLobbyDialog.backButton.getLabel().texture==null) {
+        	mFL.hostLobbyDialog.backButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostLobbyDialog.backButton.getLabel().x-mFL.hostLobbyDialog.backButton.getLabel().radiusX);
+		y=(int) (mFL.hostLobbyDialog.backButton.getLabel().y-mFL.hostLobbyDialog.backButton.getLabel().radiusY);
+		batch.draw(mFL.hostLobbyDialog.backButton.getLabel().texture,x,y,
+				0,0,mFL.hostLobbyDialog.backButton.getLabel().radiusX*2,
+				mFL.hostLobbyDialog.backButton.getLabel().radiusY*2);
+		
+		x=(int) (mFL.hostLobbyDialog.startButton.x-mFL.hostLobbyDialog.startButton.radiusX);
+		y=(int) (mFL.hostLobbyDialog.startButton.y-mFL.hostLobbyDialog.startButton.radiusY);
+		batch.draw(btnDialogRight,x,y,
+				mFL.hostLobbyDialog.startButton.radiusX*2,
+				mFL.hostLobbyDialog.startButton.radiusY*2);
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostLobbyDialog.startButton.getLabel().opacity);
+		if (mFL.hostLobbyDialog.startButton.getLabel().texture==null) {
+        	mFL.hostLobbyDialog.startButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostLobbyDialog.startButton.getLabel().x-mFL.hostLobbyDialog.startButton.getLabel().radiusX);
+		y=(int) (mFL.hostLobbyDialog.startButton.getLabel().y-mFL.hostLobbyDialog.startButton.getLabel().radiusY);
+		batch.draw(mFL.hostLobbyDialog.startButton.getLabel().texture,x,y,
+				0,0,mFL.hostLobbyDialog.startButton.getLabel().radiusX*2,
+				mFL.hostLobbyDialog.startButton.getLabel().radiusY*2);
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		
+		batch.setColor(alphaShader);
+
+	}
+	
+	private void renderHostRearrangeDialog() {
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostRearrangeDialog.nameLabel.opacity);
+        
+        int x = (int) (mFL.hostRearrangeDialog.x);
+        int y = (int) (mFL.hostRearrangeDialog.y);
+        renderRectangleRounded(blackDialogRegions,x,y,
+				mFL.hostRearrangeDialog.radiusX,mFL.hostRearrangeDialog.radiusY);
+        
+        renderTextField(textFieldRegions, mFL.hostRearrangeDialog.ringSprite);
+        
+        x=(int) (mFL.hostRearrangeDialog.lineSprite.x-mFL.hostRearrangeDialog.lineSprite.radiusX);
+		y=(int) (mFL.hostRearrangeDialog.lineSprite.y-mFL.hostRearrangeDialog.lineSprite.radiusY);
+		batch.draw(goldLineRegion,x,y,
+				mFL.hostRearrangeDialog.lineSprite.radiusX*2,mFL.hostRearrangeDialog.lineSprite.radiusY*2);
+		
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.hostRearrangeDialog.rearrangeLabel.opacity);
+        if (mFL.hostRearrangeDialog.rearrangeLabel.texture==null) {
+        	mFL.hostRearrangeDialog.rearrangeLabel.loadTexture();
+        }
+		x=(int) (mFL.hostRearrangeDialog.rearrangeLabel.x-mFL.hostRearrangeDialog.rearrangeLabel.radiusX);
+		y=(int) (mFL.hostRearrangeDialog.rearrangeLabel.y-mFL.hostRearrangeDialog.rearrangeLabel.radiusY);
+		batch.draw(mFL.hostRearrangeDialog.rearrangeLabel.texture,x,y,
+				0,0,mFL.hostRearrangeDialog.rearrangeLabel.radiusX*2,
+				mFL.hostRearrangeDialog.rearrangeLabel.radiusY*2);
+		batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,1);
+		
+		
+		if (mFL.hostRearrangeDialog.nameLabel.texture==null) {
+        	mFL.hostRearrangeDialog.nameLabel.loadTexture();
+        }
+		x=(int) (mFL.hostRearrangeDialog.nameLabel.x-mFL.hostRearrangeDialog.nameLabel.radiusX);
+		y=(int) (mFL.hostRearrangeDialog.nameLabel.y-mFL.hostRearrangeDialog.nameLabel.radiusY);
+		batch.draw(mFL.hostRearrangeDialog.nameLabel.texture,x,y,
+				0,0,mFL.hostRearrangeDialog.nameLabel.radiusX*2,
+				mFL.hostRearrangeDialog.nameLabel.radiusY*2);
+		
+		x=(int) (mFL.hostRearrangeDialog.doneButton.x-mFL.hostRearrangeDialog.doneButton.radiusX);
+		y=(int) (mFL.hostRearrangeDialog.doneButton.y-mFL.hostRearrangeDialog.doneButton.radiusY);
+		batch.draw(btnDialog,x,y,
+				mFL.hostRearrangeDialog.doneButton.radiusX*2,
+				mFL.hostRearrangeDialog.doneButton.radiusY*2);
+		if (mFL.hostRearrangeDialog.doneButton.getLabel().texture==null) {
+        	mFL.hostRearrangeDialog.doneButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.hostRearrangeDialog.doneButton.getLabel().x-mFL.hostRearrangeDialog.doneButton.getLabel().radiusX);
+		y=(int) (mFL.hostRearrangeDialog.doneButton.getLabel().y-mFL.hostRearrangeDialog.doneButton.getLabel().radiusY);
+		batch.draw(mFL.hostRearrangeDialog.doneButton.getLabel().texture,x,y,
+				0,0,mFL.hostRearrangeDialog.doneButton.getLabel().radiusX*2,
+				mFL.hostRearrangeDialog.doneButton.getLabel().radiusY*2);
+		
 		batch.setColor(alphaShader);
 
 	}
 	
 	private void renderBuyinDialog() {
         
-        batch.draw(dialogTexture,
-				mFL.buyinDialog.x-mFL.buyinDialog.radiusX,
-				mFL.buyinDialog.y-mFL.buyinDialog.radiusY,
-				mFL.buyinDialog.radiusX*2,mFL.buyinDialog.radiusY*2,
-				0,0,582,396,false,false);
-        batch.draw(closeButtonTexture,
-				mFL.buyinDialog.closeButton.x-mFL.buyinDialog.closeButton.radiusX,
-				mFL.buyinDialog.closeButton.y-mFL.buyinDialog.closeButton.radiusY,
-				mFL.buyinDialog.closeButton.radiusX*2,mFL.buyinDialog.closeButton.radiusY*2,
-				0,0,54,54,false,false);
+        renderRectangleRounded(blackDialogRegions, (int)mFL.playerBuyinDialog.x, (int)mFL.playerBuyinDialog.y,
+        		mFL.playerBuyinDialog.radiusX, mFL.playerBuyinDialog.radiusY);
         batch.draw(envelopeTexture,
-				mFL.buyinDialog.envelope.x-mFL.buyinDialog.envelope.radiusX,
-				mFL.buyinDialog.envelope.y-mFL.buyinDialog.envelope.radiusY,
-				mFL.buyinDialog.envelope.radiusX*2,mFL.buyinDialog.envelope.radiusY*2,
+				mFL.playerBuyinDialog.envelope.x-mFL.playerBuyinDialog.envelope.radiusX,
+				mFL.playerBuyinDialog.envelope.y-mFL.playerBuyinDialog.envelope.radiusY,
+				mFL.playerBuyinDialog.envelope.radiusX*2,mFL.playerBuyinDialog.envelope.radiusY*2,
 				0,0,110,70,false,false);
-        if (mFL.buyinDialog.buyinLabel.texture==null) {
-        	mFL.buyinDialog.buyinLabel.loadTexture();
+        if (mFL.playerBuyinDialog.buyinLabel.texture==null) {
+        	mFL.playerBuyinDialog.buyinLabel.loadTexture();
         }
-		int x=(int) (mFL.buyinDialog.buyinLabel.x-mFL.buyinDialog.buyinLabel.radiusX);
-		int y=(int) (mFL.buyinDialog.buyinLabel.y-mFL.buyinDialog.buyinLabel.radiusY);
-		batch.draw(mFL.buyinDialog.buyinLabel.texture,x,y,
-				0,0,mFL.buyinDialog.buyinLabel.radiusX*2,
-				mFL.buyinDialog.buyinLabel.radiusY*2);
-        batch.draw(buyinFrameTexture,
-				mFL.buyinDialog.buyinFrameSprite.x-mFL.buyinDialog.buyinFrameSprite.radiusX,
-				mFL.buyinDialog.buyinFrameSprite.y-mFL.buyinDialog.buyinFrameSprite.radiusY,
-				mFL.buyinDialog.buyinFrameSprite.radiusX*2,mFL.buyinDialog.buyinFrameSprite.radiusY*2,
-				0,0,496,152,false,false);
-        if (mFL.buyinDialog.amountTitleLabel.texture==null) {
-        	mFL.buyinDialog.amountTitleLabel.loadTexture();
+		int x=(int) (mFL.playerBuyinDialog.buyinLabel.x-mFL.playerBuyinDialog.buyinLabel.radiusX);
+		int y=(int) (mFL.playerBuyinDialog.buyinLabel.y-mFL.playerBuyinDialog.buyinLabel.radiusY);
+		batch.draw(mFL.playerBuyinDialog.buyinLabel.texture,x,y,
+				0,0,mFL.playerBuyinDialog.buyinLabel.radiusX*2,
+				mFL.playerBuyinDialog.buyinLabel.radiusY*2);
+        if (mFL.playerBuyinDialog.amountTitleLabel.texture==null) {
+        	mFL.playerBuyinDialog.amountTitleLabel.loadTexture();
         }
-		x=(int) (mFL.buyinDialog.amountTitleLabel.x-mFL.buyinDialog.amountTitleLabel.radiusX);
-		y=(int) (mFL.buyinDialog.amountTitleLabel.y-mFL.buyinDialog.amountTitleLabel.radiusY);
-		batch.draw(mFL.buyinDialog.amountTitleLabel.texture,x,y,
-				0,0,mFL.buyinDialog.amountTitleLabel.radiusX*2,
-				mFL.buyinDialog.amountTitleLabel.radiusY*2);
-		batch.draw(buttonMinusTexture,
-				mFL.buyinDialog.minusButton.x-mFL.buyinDialog.minusButton.radiusX,
-				mFL.buyinDialog.minusButton.y-mFL.buyinDialog.minusButton.radiusY,
-				mFL.buyinDialog.minusButton.radiusX*2,mFL.buyinDialog.minusButton.radiusY*2,
-				0,0,54,54,false,false);
-		batch.draw(buttonPlusTexture,
-				mFL.buyinDialog.plusButton.x-mFL.buyinDialog.plusButton.radiusX,
-				mFL.buyinDialog.plusButton.y-mFL.buyinDialog.plusButton.radiusY,
-				mFL.buyinDialog.plusButton.radiusX*2,mFL.buyinDialog.plusButton.radiusY*2,
-				0,0,54,54,false,false);
-		batch.draw(textFieldTexture,
-				mFL.buyinDialog.amountBackground.x-mFL.buyinDialog.amountBackground.radiusX,
-				mFL.buyinDialog.amountBackground.y-mFL.buyinDialog.amountBackground.radiusY,
-				mFL.buyinDialog.amountBackground.radiusX*2,mFL.buyinDialog.amountBackground.radiusY*2,
-				0,0,366,54,false,false);
-		if (mFL.buyinDialog.amountNumberLabel.texture==null) {
-        	mFL.buyinDialog.amountNumberLabel.loadTexture();
+		x=(int) (mFL.playerBuyinDialog.amountTitleLabel.x-mFL.playerBuyinDialog.amountTitleLabel.radiusX);
+		y=(int) (mFL.playerBuyinDialog.amountTitleLabel.y-mFL.playerBuyinDialog.amountTitleLabel.radiusY);
+		batch.draw(mFL.playerBuyinDialog.amountTitleLabel.texture,x,y,
+				0,0,mFL.playerBuyinDialog.amountTitleLabel.radiusX*2,
+				mFL.playerBuyinDialog.amountTitleLabel.radiusY*2);
+		batch.draw(buttonMinusRegion,
+				mFL.playerBuyinDialog.minusButton.x-mFL.playerBuyinDialog.minusButton.radiusX,
+				mFL.playerBuyinDialog.minusButton.y-mFL.playerBuyinDialog.minusButton.radiusY,
+				mFL.playerBuyinDialog.minusButton.radiusX*2,mFL.playerBuyinDialog.minusButton.radiusY*2);
+		batch.draw(buttonPlusRegion,
+				mFL.playerBuyinDialog.plusButton.x-mFL.playerBuyinDialog.plusButton.radiusX,
+				mFL.playerBuyinDialog.plusButton.y-mFL.playerBuyinDialog.plusButton.radiusY,
+				mFL.playerBuyinDialog.plusButton.radiusX*2,mFL.playerBuyinDialog.plusButton.radiusY*2);
+		batch.draw(textFieldRegion,
+				mFL.playerBuyinDialog.amountBackground.x-mFL.playerBuyinDialog.amountBackground.radiusX,
+				mFL.playerBuyinDialog.amountBackground.y-mFL.playerBuyinDialog.amountBackground.radiusY,
+				mFL.playerBuyinDialog.amountBackground.radiusX*2,mFL.playerBuyinDialog.amountBackground.radiusY*2);
+		if (mFL.playerBuyinDialog.amountNumberLabel.texture==null) {
+        	mFL.playerBuyinDialog.amountNumberLabel.loadTexture();
         }
-		x=(int) (mFL.buyinDialog.amountNumberLabel.x-mFL.buyinDialog.amountNumberLabel.radiusX);
-		y=(int) (mFL.buyinDialog.amountNumberLabel.y-mFL.buyinDialog.amountNumberLabel.radiusY);
-		batch.draw(mFL.buyinDialog.amountNumberLabel.texture,x,y,
-				0,0,mFL.buyinDialog.amountNumberLabel.radiusX*2,
-				mFL.buyinDialog.amountNumberLabel.radiusY*2);
-		batch.draw(buttonCancelTextureBuyin,
-				mFL.buyinDialog.cancelButton.x-mFL.buyinDialog.cancelButton.radiusX,
-				mFL.buyinDialog.cancelButton.y-mFL.buyinDialog.cancelButton.radiusY,
-				mFL.buyinDialog.cancelButton.radiusX*2,mFL.buyinDialog.cancelButton.radiusY*2,
-				0,0,246,54,false,false);
-		if (mFL.buyinDialog.cancelButton.getLabel().texture==null) {
-        	mFL.buyinDialog.cancelButton.getLabel().loadTexture();
+		x=(int) (mFL.playerBuyinDialog.amountNumberLabel.x-mFL.playerBuyinDialog.amountNumberLabel.radiusX);
+		y=(int) (mFL.playerBuyinDialog.amountNumberLabel.y-mFL.playerBuyinDialog.amountNumberLabel.radiusY);
+		batch.draw(mFL.playerBuyinDialog.amountNumberLabel.texture,x,y,
+				0,0,mFL.playerBuyinDialog.amountNumberLabel.radiusX*2,
+				mFL.playerBuyinDialog.amountNumberLabel.radiusY*2);
+		batch.draw(btnDialogLeft,
+				mFL.playerBuyinDialog.cancelButton.x-mFL.playerBuyinDialog.cancelButton.radiusX,
+				mFL.playerBuyinDialog.cancelButton.y-mFL.playerBuyinDialog.cancelButton.radiusY,
+				mFL.playerBuyinDialog.cancelButton.radiusX*2,mFL.playerBuyinDialog.cancelButton.radiusY*2);
+		if (mFL.playerBuyinDialog.cancelButton.getLabel().texture==null) {
+        	mFL.playerBuyinDialog.cancelButton.getLabel().loadTexture();
         }
-		x=(int) (mFL.buyinDialog.cancelButton.getLabel().x-mFL.buyinDialog.cancelButton.getLabel().radiusX);
-		y=(int) (mFL.buyinDialog.cancelButton.getLabel().y-mFL.buyinDialog.cancelButton.getLabel().radiusY);
-		batch.draw(mFL.buyinDialog.cancelButton.getLabel().texture,x,y,
-				0,0,mFL.buyinDialog.cancelButton.getLabel().radiusX*2,
-				mFL.buyinDialog.cancelButton.getLabel().radiusY*2);
-		batch.draw(buttonOkayTextureBuyin,
-				mFL.buyinDialog.okayButton.x-mFL.buyinDialog.okayButton.radiusX,
-				mFL.buyinDialog.okayButton.y-mFL.buyinDialog.okayButton.radiusY,
-				mFL.buyinDialog.okayButton.radiusX*2,mFL.buyinDialog.okayButton.radiusY*2,
-				0,0,246,54,false,false);
-		if (mFL.buyinDialog.okayButton.getLabel().texture==null) {
-        	mFL.buyinDialog.okayButton.getLabel().loadTexture();
+		x=(int) (mFL.playerBuyinDialog.cancelButton.getLabel().x-mFL.playerBuyinDialog.cancelButton.getLabel().radiusX);
+		y=(int) (mFL.playerBuyinDialog.cancelButton.getLabel().y-mFL.playerBuyinDialog.cancelButton.getLabel().radiusY);
+		batch.draw(mFL.playerBuyinDialog.cancelButton.getLabel().texture,x,y,
+				0,0,mFL.playerBuyinDialog.cancelButton.getLabel().radiusX*2,
+				mFL.playerBuyinDialog.cancelButton.getLabel().radiusY*2);
+		batch.draw(btnDialogRight,
+				mFL.playerBuyinDialog.okayButton.x-mFL.playerBuyinDialog.okayButton.radiusX,
+				mFL.playerBuyinDialog.okayButton.y-mFL.playerBuyinDialog.okayButton.radiusY,
+				mFL.playerBuyinDialog.okayButton.radiusX*2,mFL.playerBuyinDialog.okayButton.radiusY*2);
+		if (mFL.playerBuyinDialog.okayButton.getLabel().texture==null) {
+        	mFL.playerBuyinDialog.okayButton.getLabel().loadTexture();
         }
-		x=(int) (mFL.buyinDialog.okayButton.getLabel().x-mFL.buyinDialog.okayButton.getLabel().radiusX);
-		y=(int) (mFL.buyinDialog.okayButton.getLabel().y-mFL.buyinDialog.okayButton.getLabel().radiusY);
-		batch.draw(mFL.buyinDialog.okayButton.getLabel().texture,x,y,
-				0,0,mFL.buyinDialog.okayButton.getLabel().radiusX*2,
-				mFL.buyinDialog.okayButton.getLabel().radiusY*2);
+		x=(int) (mFL.playerBuyinDialog.okayButton.getLabel().x-mFL.playerBuyinDialog.okayButton.getLabel().radiusX);
+		y=(int) (mFL.playerBuyinDialog.okayButton.getLabel().y-mFL.playerBuyinDialog.okayButton.getLabel().radiusY);
+		batch.draw(mFL.playerBuyinDialog.okayButton.getLabel().texture,x,y,
+				0,0,mFL.playerBuyinDialog.okayButton.getLabel().radiusX*2,
+				mFL.playerBuyinDialog.okayButton.getLabel().radiusY*2);
 	}
 
 	private void renderPlayerDashboard() {
 		batch.draw(playerDashboardTexture,mFL.playerDashboard.x-mFL.playerDashboard.radiusX,
 				mFL.playerDashboard.y-mFL.playerDashboard.radiusY,
 				mFL.playerDashboard.radiusX*2,mFL.playerDashboard.radiusY*2,
-				0,0,1142,110,false,false);
+				0,0,1142,115,false,false);
 		
 		batch.draw(dashboardStatusTexture,mFL.playerDashboard.statusBackground.x-mFL.playerDashboard.statusBackground.radiusX,
 				mFL.playerDashboard.statusBackground.y-mFL.playerDashboard.statusBackground.radiusY,
@@ -936,6 +1380,9 @@ public class ForegroundRenderer {
 					thisPanel.y-thisPanel.radiusY,
 					thisPanel.radiusX*2,thisPanel.radiusY*2,
 					0,0,640,88,false,false);
+			alphaShader=batch.getColor();
+	        batch.setColor(alphaShader.r,alphaShader.g,
+	        		alphaShader.b,thisPanel.opacity);
 			if (thisPanel.nameLabel.texture!=null) {
 				int x=(int) (thisPanel.nameLabel.x-thisPanel.nameLabel.radiusX);
 				int y=(int) (thisPanel.nameLabel.y-thisPanel.nameLabel.radiusY);
@@ -950,6 +1397,7 @@ public class ForegroundRenderer {
 						0,0,thisPanel.amountsLabel.radiusX*2,
 						thisPanel.amountsLabel.radiusY*2);
 			}
+	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
 	}
 	
@@ -986,45 +1434,13 @@ public class ForegroundRenderer {
         		alphaShader.b,1);
 	}
 	
-	private void renderManualConnectDialog() {
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,mFL.manualConnectDialog.okButton.opacity);
-        
-        batch.draw(mFL.manualConnectDialog.titleLabel.texture,mFL.manualConnectDialog.titleLabel.x-mFL.manualConnectDialog.titleLabel.radiusX,
-				mFL.manualConnectDialog.titleLabel.y-mFL.manualConnectDialog.titleLabel.radiusY,
-				mFL.manualConnectDialog.titleLabel.radiusX*2,mFL.manualConnectDialog.titleLabel.radiusY*2,0,0,
-				mFL.manualConnectDialog.titleLabel.radiusX*2,mFL.manualConnectDialog.titleLabel.radiusY*2,false,false);
-        batch.draw(okButtonTexture,mFL.manualConnectDialog.okButton.x-mFL.manualConnectDialog.okButton.radiusX,
-				mFL.manualConnectDialog.okButton.y-mFL.manualConnectDialog.okButton.radiusY,
-				mFL.manualConnectDialog.okButton.radiusX*2,mFL.manualConnectDialog.okButton.radiusY*2,
-				0,0,214,214,false,false);
-		batch.draw(cancelButtonTexture,mFL.manualConnectDialog.cancelButton.x-mFL.manualConnectDialog.cancelButton.radiusX,
-				mFL.manualConnectDialog.cancelButton.y-mFL.manualConnectDialog.cancelButton.radiusY,
-				mFL.manualConnectDialog.cancelButton.radiusX*2,mFL.manualConnectDialog.cancelButton.radiusY*2,
-				0,0,300,300,false,false);
-		for (int i=0;i<mFL.manualConnectDialog.ipQuads.length;i++) {
-			batch.draw(mFL.manualConnectDialog.ipQuads[i].texture,
-					mFL.manualConnectDialog.ipQuads[i].x-mFL.manualConnectDialog.ipQuads[i].radiusX,
-					mFL.manualConnectDialog.ipQuads[i].y-mFL.manualConnectDialog.ipQuads[i].radiusY,
-					mFL.manualConnectDialog.ipQuads[i].radiusX*2,mFL.manualConnectDialog.ipQuads[i].radiusY*2,
-					0,0,440,251,false,false);
-			if (mFL.manualConnectDialog.ipQuads[i].label.texture!=null) {
-				batch.draw(mFL.manualConnectDialog.ipQuads[i].label.texture,
-						mFL.manualConnectDialog.ipQuads[i].label.x-mFL.manualConnectDialog.ipQuads[i].label.radiusX,
-						mFL.manualConnectDialog.ipQuads[i].label.y-mFL.manualConnectDialog.ipQuads[i].label.radiusY,
-						mFL.manualConnectDialog.ipQuads[i].label.radiusX*2,mFL.manualConnectDialog.ipQuads[i].label.radiusY*2,0,0,
-						mFL.manualConnectDialog.ipQuads[i].label.radiusX*2,mFL.manualConnectDialog.ipQuads[i].label.radiusY*2,false,false);
-			}
-		}
-		batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,1);
-	}
-	
 	private void renderBootDialog() {
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,
         		alphaShader.b,mFL.bootDialog.bootButton.getLabel().opacity);
+        if (mFL.bootDialog.bootButton.getLabel().texture==null) {
+        	mFL.bootDialog.bootButton.getLabel().loadTexture();
+        }
         batch.draw(mFL.bootDialog.bootButton.getLabel().texture,
         		mFL.bootDialog.bootButton.getLabel().x-mFL.bootDialog.bootButton.getLabel().radiusX,
 				mFL.bootDialog.bootButton.getLabel().y-mFL.bootDialog.bootButton.getLabel().radiusY,
@@ -1032,6 +1448,9 @@ public class ForegroundRenderer {
 				mFL.bootDialog.bootButton.getLabel().radiusX*2,mFL.bootDialog.bootButton.getLabel().radiusY*2,
 				1,1,mFL.bootDialog.rotation,0,0,
 				mFL.bootDialog.bootButton.getLabel().radiusX*2,mFL.bootDialog.bootButton.getLabel().radiusY*2,false,false);
+        if (mFL.bootDialog.sitOutButton.getLabel().texture==null) {
+        	mFL.bootDialog.sitOutButton.getLabel().loadTexture();
+        }
         batch.draw(mFL.bootDialog.sitOutButton.getLabel().texture,
         		mFL.bootDialog.sitOutButton.getLabel().x-mFL.bootDialog.sitOutButton.getLabel().radiusX,
 				mFL.bootDialog.sitOutButton.getLabel().y-mFL.bootDialog.sitOutButton.getLabel().radiusY,
@@ -1042,28 +1461,71 @@ public class ForegroundRenderer {
         batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 	}
 	
-	private void renderLeaveTableDialog() {
+	private void renderPlayerLeaveDialog() {
 		
-		if (mFL.leaveTableDialog.okButton.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.leaveTableDialog.okButton.opacity);
-	        
-	        batch.draw(mFL.leaveTableDialog.titleLabel.texture,mFL.leaveTableDialog.titleLabel.x-mFL.leaveTableDialog.titleLabel.radiusX,
-					mFL.leaveTableDialog.titleLabel.y-mFL.leaveTableDialog.titleLabel.radiusY,
-					mFL.leaveTableDialog.titleLabel.radiusX*2,mFL.leaveTableDialog.titleLabel.radiusY*2,0,0,
-					mFL.leaveTableDialog.titleLabel.radiusX*2,mFL.leaveTableDialog.titleLabel.radiusY*2,false,false);
-	        batch.draw(okButtonTexture,mFL.leaveTableDialog.okButton.x-mFL.leaveTableDialog.okButton.radiusX,
-					mFL.leaveTableDialog.okButton.y-mFL.leaveTableDialog.okButton.radiusY,
-					mFL.leaveTableDialog.okButton.radiusX*2,mFL.leaveTableDialog.okButton.radiusY*2,
-					0,0,214,214,false,false);
-			batch.draw(cancelButtonTexture,mFL.leaveTableDialog.cancelButton.x-mFL.leaveTableDialog.cancelButton.radiusX,
-					mFL.leaveTableDialog.cancelButton.y-mFL.leaveTableDialog.cancelButton.radiusY,
-					mFL.leaveTableDialog.cancelButton.radiusX*2,mFL.leaveTableDialog.cancelButton.radiusY*2,
-					0,0,300,300,false,false);
-			
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
+		alphaShader=batch.getColor();
+        batch.setColor(alphaShader.r,alphaShader.g,
+        		alphaShader.b,mFL.playerLeaveDialog.text1Label.opacity);
+        
+        int x = (int) (mFL.playerLeaveDialog.x);
+        int y = (int) (mFL.playerLeaveDialog.y);
+        renderRectangleRounded(blackDialogRegions,x,y,
+				mFL.playerLeaveDialog.radiusX,mFL.playerLeaveDialog.radiusY);
+        batch.draw(anonTexture,
+				mFL.playerLeaveDialog.anonSprite.x-mFL.playerLeaveDialog.anonSprite.radiusX,
+				mFL.playerLeaveDialog.anonSprite.y-mFL.playerLeaveDialog.anonSprite.radiusY,
+				mFL.playerLeaveDialog.anonSprite.radiusX*2,mFL.playerLeaveDialog.anonSprite.radiusY*2,
+				0,0,70,71,false,false);
+        
+        if (mFL.playerLeaveDialog.text1Label.texture==null) {
+        	mFL.playerLeaveDialog.text1Label.loadTexture();
+        }
+		x=(int) (mFL.playerLeaveDialog.text1Label.x-mFL.playerLeaveDialog.text1Label.radiusX);
+		y=(int) (mFL.playerLeaveDialog.text1Label.y-mFL.playerLeaveDialog.text1Label.radiusY);
+		batch.draw(mFL.playerLeaveDialog.text1Label.texture,x,y,
+				0,0,mFL.playerLeaveDialog.text1Label.radiusX*2,
+				mFL.playerLeaveDialog.text1Label.radiusY*2);
+		
+		if (mFL.playerLeaveDialog.text2Label.texture==null) {
+        	mFL.playerLeaveDialog.text2Label.loadTexture();
+        }
+		x=(int) (mFL.playerLeaveDialog.text2Label.x-mFL.playerLeaveDialog.text2Label.radiusX);
+		y=(int) (mFL.playerLeaveDialog.text2Label.y-mFL.playerLeaveDialog.text2Label.radiusY);
+		batch.draw(mFL.playerLeaveDialog.text2Label.texture,x,y,
+				0,0,mFL.playerLeaveDialog.text2Label.radiusX*2,
+				mFL.playerLeaveDialog.text2Label.radiusY*2);
+		
+		x=(int) (mFL.playerLeaveDialog.cancelButton.x-mFL.playerLeaveDialog.cancelButton.radiusX);
+		y=(int) (mFL.playerLeaveDialog.cancelButton.y-mFL.playerLeaveDialog.cancelButton.radiusY);
+		batch.draw(btnDialogLeft,x,y,
+				mFL.playerLeaveDialog.cancelButton.radiusX*2,
+				mFL.playerLeaveDialog.cancelButton.radiusY*2);
+		if (mFL.playerLeaveDialog.cancelButton.getLabel().texture==null) {
+        	mFL.playerLeaveDialog.cancelButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.playerLeaveDialog.cancelButton.getLabel().x-mFL.playerLeaveDialog.cancelButton.getLabel().radiusX);
+		y=(int) (mFL.playerLeaveDialog.cancelButton.getLabel().y-mFL.playerLeaveDialog.cancelButton.getLabel().radiusY);
+		batch.draw(mFL.playerLeaveDialog.cancelButton.getLabel().texture,x,y,
+				0,0,mFL.playerLeaveDialog.cancelButton.getLabel().radiusX*2,
+				mFL.playerLeaveDialog.cancelButton.getLabel().radiusY*2);
+		
+		
+		x=(int) (mFL.playerLeaveDialog.leaveButton.x-mFL.playerLeaveDialog.leaveButton.radiusX);
+		y=(int) (mFL.playerLeaveDialog.leaveButton.y-mFL.playerLeaveDialog.leaveButton.radiusY);
+		batch.draw(btnDialogRight,x,y,
+				mFL.playerLeaveDialog.leaveButton.radiusX*2,
+				mFL.playerLeaveDialog.leaveButton.radiusY*2);
+		if (mFL.playerLeaveDialog.leaveButton.getLabel().texture==null) {
+        	mFL.playerLeaveDialog.leaveButton.getLabel().loadTexture();
+        }
+		x=(int) (mFL.playerLeaveDialog.leaveButton.getLabel().x-mFL.playerLeaveDialog.leaveButton.getLabel().radiusX);
+		y=(int) (mFL.playerLeaveDialog.leaveButton.getLabel().y-mFL.playerLeaveDialog.leaveButton.getLabel().radiusY);
+		batch.draw(mFL.playerLeaveDialog.leaveButton.getLabel().texture,x,y,
+				0,0,mFL.playerLeaveDialog.leaveButton.getLabel().radiusX*2,
+				mFL.playerLeaveDialog.leaveButton.getLabel().radiusY*2);
+		
+		batch.setColor(alphaShader);
+	
 	}
 	
 	private void renderDestroyTableDialog() {
@@ -1086,121 +1548,6 @@ public class ForegroundRenderer {
 	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
 	}
-
-	private void renderAutosaveDialog() {
-		
-		if (mFL.autosaveDialog.okButton.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.autosaveDialog.okButton.opacity);
-	        
-	        batch.draw(mFL.autosaveDialog.titleLabel.texture,mFL.autosaveDialog.titleLabel.x-mFL.autosaveDialog.titleLabel.radiusX,
-					mFL.autosaveDialog.titleLabel.y-mFL.autosaveDialog.titleLabel.radiusY,
-					mFL.autosaveDialog.titleLabel.radiusX*2,mFL.autosaveDialog.titleLabel.radiusY*2,0,0,
-					mFL.autosaveDialog.titleLabel.radiusX*2,mFL.autosaveDialog.titleLabel.radiusY*2,false,false);
-	        
-			batch.draw(okButtonTexture,mFL.autosaveDialog.okButton.x-mFL.autosaveDialog.okButton.radiusX,
-					mFL.autosaveDialog.okButton.y-mFL.autosaveDialog.okButton.radiusY,
-					mFL.autosaveDialog.okButton.radiusX*2,mFL.autosaveDialog.okButton.radiusY*2,
-					0,0,214,214,false,false);
-			
-			for (int i=0;i<mFL.autosaveDialog.saveSlots.length;i++) {
-				DPCSprite thisSelectionHighlight=mFL.autosaveDialog.saveSlots[i].selectionHighlight;
-				if (thisSelectionHighlight.opacity!=0) {
-					alphaShader=batch.getColor();
-					batch.setColor(alphaShader.r,alphaShader.g,
-			        		alphaShader.b,thisSelectionHighlight.opacity);
-					batch.draw(saveSlotHighlightTexture,thisSelectionHighlight.x-thisSelectionHighlight.radiusX,
-							thisSelectionHighlight.y-thisSelectionHighlight.radiusY,
-							thisSelectionHighlight.radiusX*2,thisSelectionHighlight.radiusY*2,
-							0,0,312,192,false,false);
-					batch.setColor(alphaShader);
-				}
-				if (mFL.autosaveDialog.saveSlots[i].slotLabel.opacity!=0) {
-					alphaShader=batch.getColor();
-					batch.setColor(alphaShader.r,alphaShader.g,
-							alphaShader.b,mFL.autosaveDialog.saveSlots[i].slotLabel.opacity);
-					batch.draw(mFL.autosaveDialog.saveSlots[i].slotLabel.texture,
-							mFL.autosaveDialog.saveSlots[i].slotLabel.x-mFL.autosaveDialog.saveSlots[i].slotLabel.radiusX,
-							mFL.autosaveDialog.saveSlots[i].slotLabel.y-mFL.autosaveDialog.saveSlots[i].slotLabel.radiusY,
-							mFL.autosaveDialog.saveSlots[i].slotLabel.radiusX*2,mFL.autosaveDialog.saveSlots[i].slotLabel.radiusY*2,
-							0,0,mFL.autosaveDialog.saveSlots[i].slotLabel.radiusX*2,mFL.autosaveDialog.saveSlots[i].slotLabel.radiusY*2,false,false);
-					batch.setColor(alphaShader);
-				}
-				if (mFL.autosaveDialog.saveSlots[i].tableIcon.opacity!=0) {
-					alphaShader=batch.getColor();
-					batch.setColor(alphaShader.r,alphaShader.g,
-							alphaShader.b,mFL.autosaveDialog.saveSlots[i].tableIcon.opacity);
-					batch.draw(tableSlotTexture,
-							mFL.autosaveDialog.saveSlots[i].tableIcon.x-mFL.autosaveDialog.saveSlots[i].tableIcon.radiusX,
-							mFL.autosaveDialog.saveSlots[i].tableIcon.y-mFL.autosaveDialog.saveSlots[i].tableIcon.radiusY,
-							mFL.autosaveDialog.saveSlots[i].tableIcon.radiusX*2,mFL.autosaveDialog.saveSlots[i].tableIcon.radiusY*2,
-							0,0,300,150,false,false);
-					batch.setColor(alphaShader);
-				}
-			}
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
-	}
-	
-	private void renderLoadDialog() {
-		if (mFL.loadDialog.okButton.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.loadDialog.okButton.opacity);
-	        
-	        batch.draw(mFL.loadDialog.titleLabel.texture,mFL.loadDialog.titleLabel.x-mFL.loadDialog.titleLabel.radiusX,
-					mFL.loadDialog.titleLabel.y-mFL.loadDialog.titleLabel.radiusY,
-					mFL.loadDialog.titleLabel.radiusX*2,mFL.loadDialog.titleLabel.radiusY*2,0,0,
-					mFL.loadDialog.titleLabel.radiusX*2,mFL.loadDialog.titleLabel.radiusY*2,false,false);
-	        
-			batch.draw(okButtonTexture,mFL.loadDialog.okButton.x-mFL.loadDialog.okButton.radiusX,
-					mFL.loadDialog.okButton.y-mFL.loadDialog.okButton.radiusY,
-					mFL.loadDialog.okButton.radiusX*2,mFL.loadDialog.okButton.radiusY*2,
-					0,0,214,214,false,false);
-			batch.draw(cancelButtonTexture,mFL.loadDialog.cancelButton.x-mFL.loadDialog.cancelButton.radiusX,
-					mFL.loadDialog.cancelButton.y-mFL.loadDialog.cancelButton.radiusY,
-					mFL.loadDialog.cancelButton.radiusX*2,mFL.loadDialog.cancelButton.radiusY*2,
-					0,0,300,300,false,false);
-			
-			for (int i=0;i<mFL.loadDialog.loadSlots.length;i++) {
-				DPCSprite thisSelectionHighlight=mFL.loadDialog.loadSlots[i].selectionHighlight;
-				if (thisSelectionHighlight.opacity!=0) {
-					alphaShader=batch.getColor();
-					batch.setColor(alphaShader.r,alphaShader.g,
-			        		alphaShader.b,thisSelectionHighlight.opacity);
-					batch.draw(saveSlotHighlightTexture,thisSelectionHighlight.x-thisSelectionHighlight.radiusX,
-							thisSelectionHighlight.y-thisSelectionHighlight.radiusY,
-							thisSelectionHighlight.radiusX*2,thisSelectionHighlight.radiusY*2,
-							0,0,312,192,false,false);
-					batch.setColor(alphaShader);
-				}
-				if (mFL.loadDialog.loadSlots[i].slotLabel.opacity!=0) {
-					alphaShader=batch.getColor();
-					batch.setColor(alphaShader.r,alphaShader.g,
-							alphaShader.b,mFL.loadDialog.loadSlots[i].slotLabel.opacity);
-					batch.draw(mFL.loadDialog.loadSlots[i].slotLabel.texture,
-							mFL.loadDialog.loadSlots[i].slotLabel.x-mFL.loadDialog.loadSlots[i].slotLabel.radiusX,
-							mFL.loadDialog.loadSlots[i].slotLabel.y-mFL.loadDialog.loadSlots[i].slotLabel.radiusY,
-							mFL.loadDialog.loadSlots[i].slotLabel.radiusX*2,mFL.loadDialog.loadSlots[i].slotLabel.radiusY*2,
-							0,0,mFL.loadDialog.loadSlots[i].slotLabel.radiusX*2,mFL.loadDialog.loadSlots[i].slotLabel.radiusY*2,false,false);
-					batch.setColor(alphaShader);
-				}
-				if (mFL.loadDialog.loadSlots[i].tableIcon.opacity!=0) {
-					alphaShader=batch.getColor();
-					batch.setColor(alphaShader.r,alphaShader.g,
-							alphaShader.b,mFL.loadDialog.loadSlots[i].tableIcon.opacity);
-					batch.draw(tableSlotTexture,
-							mFL.loadDialog.loadSlots[i].tableIcon.x-mFL.loadDialog.loadSlots[i].tableIcon.radiusX,
-							mFL.loadDialog.loadSlots[i].tableIcon.y-mFL.loadDialog.loadSlots[i].tableIcon.radiusY,
-							mFL.loadDialog.loadSlots[i].tableIcon.radiusX*2,mFL.loadDialog.loadSlots[i].tableIcon.radiusY*2,
-							0,0,300,150,false,false);
-					batch.setColor(alphaShader);
-				}
-			}
-	        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
-	}
 	
 	private void renderDivisibilityDialog() {
 		alphaShader=batch.getColor();
@@ -1215,178 +1562,6 @@ public class ForegroundRenderer {
         
 		alphaShader=batch.getColor();
         batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-	}
-	
-	private void renderHostPrompts() {
-
-		if (mFL.selectingDealerLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.selectingDealerLabel.opacity);
-			batch.draw(mFL.selectingDealerLabel.texture,mFL.selectingDealerLabel.x-mFL.selectingDealerLabel.radiusX,
-					mFL.selectingDealerLabel.y-mFL.selectingDealerLabel.radiusY,
-					mFL.selectingDealerLabel.radiusX*2,mFL.selectingDealerLabel.radiusY*2,0,0,
-					mFL.selectingDealerLabel.radiusX*2,mFL.selectingDealerLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		
-		if (mFL.winLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.winLabel.opacity);
-			batch.draw(mFL.winLabel.texture,mFL.winLabel.x-mFL.winLabel.radiusX,
-					mFL.winLabel.y-mFL.winLabel.radiusY,
-					mFL.winLabel.radiusX*2,mFL.winLabel.radiusY*2,0,0,mFL.winLabel.radiusX*2,mFL.winLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		if (mFL.blindsInLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.blindsInLabel.opacity);
-	        if (mFL.blindsInLabel.texture==null) {
-	        	mFL.blindsInLabel.loadTexture();
-	        }
-			batch.draw(mFL.blindsInLabel.texture,mFL.blindsInLabel.x-mFL.blindsInLabel.radiusX,
-					mFL.blindsInLabel.y-mFL.blindsInLabel.radiusY,
-					mFL.blindsInLabel.radiusX*2,mFL.blindsInLabel.radiusY*2,0,0,
-					mFL.blindsInLabel.radiusX*2,mFL.blindsInLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		if (mFL.flopLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.flopLabel.opacity);
-	        if (mFL.flopLabel.texture==null) {
-	        	mFL.flopLabel.loadTexture();
-	        }
-			batch.draw(mFL.flopLabel.texture,mFL.flopLabel.x-mFL.flopLabel.radiusX,
-					mFL.flopLabel.y-mFL.flopLabel.radiusY,
-					mFL.flopLabel.radiusX*2,mFL.flopLabel.radiusY*2,0,0,
-					mFL.flopLabel.radiusX*2,mFL.flopLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		if (mFL.turnLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.turnLabel.opacity);
-	        if (mFL.turnLabel.texture==null) {
-	        	mFL.turnLabel.loadTexture();
-	        }
-			batch.draw(mFL.turnLabel.texture,mFL.turnLabel.x-mFL.turnLabel.radiusX,
-					mFL.turnLabel.y-mFL.turnLabel.radiusY,
-					mFL.turnLabel.radiusX*2,mFL.turnLabel.radiusY*2,0,0,
-					mFL.turnLabel.radiusX*2,mFL.turnLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		if (mFL.riverLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.riverLabel.opacity);
-	        if (mFL.riverLabel.texture==null) {
-	        	mFL.riverLabel.loadTexture();
-	        }
-			batch.draw(mFL.riverLabel.texture,mFL.riverLabel.x-mFL.riverLabel.radiusX,
-					mFL.riverLabel.y-mFL.riverLabel.radiusY,
-					mFL.riverLabel.radiusX*2,mFL.riverLabel.radiusY*2,0,0,
-					mFL.riverLabel.radiusX*2,mFL.riverLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		if (mFL.selectWinnerLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.selectWinnerLabel.opacity);
-	        if (mFL.selectWinnerLabel.texture==null) {
-	        	mFL.selectWinnerLabel.loadTexture();
-	        }
-			batch.draw(mFL.selectWinnerLabel.texture,mFL.selectWinnerLabel.x-mFL.selectWinnerLabel.radiusX,
-					mFL.selectWinnerLabel.y-mFL.selectWinnerLabel.radiusY,
-					mFL.selectWinnerLabel.radiusX*2,mFL.selectWinnerLabel.radiusY*2,0,0,
-					mFL.selectWinnerLabel.radiusX*2,mFL.selectWinnerLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-		if (mFL.ipAddress.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.ipAddress.opacity);
-			batch.draw(mFL.ipAddress.texture,mFL.ipAddress.x-mFL.ipAddress.radiusX,
-					mFL.ipAddress.y-mFL.ipAddress.radiusY,
-					mFL.ipAddress.radiusX*2,mFL.ipAddress.radiusY*2,0,0,
-					mFL.ipAddress.radiusX*2,mFL.ipAddress.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-	}
-	
-	private void renderTableStatusMenu() {
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,0.7f);
-		batch.draw(blackRegion,mFL.tableStatusMenu.x-mFL.tableStatusMenu.radiusX,
-				mFL.tableStatusMenu.y-mFL.tableStatusMenu.radiusY,
-				mFL.tableStatusMenu.radiusX*2,mFL.tableStatusMenu.radiusY*2);
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-        TableStatusMenu menu=mFL.tableStatusMenu;
-		for (int i=0;i<menu.playerList.size();i++) {
-			batch.draw(menu.playerList.get(i).name.texture,menu.xPlayerEntryNameLeft,menu.yPlayerEntryBottom-i*menu.yPlayerEntryPitch,
-					menu.playerList.get(i).name.radiusX*2,menu.playerList.get(i).name.radiusY*2,
-					0,0,menu.playerList.get(i).name.radiusX*2,menu.playerList.get(i).name.radiusY*2,false,false);
-			batch.draw(menu.playerList.get(i).amount.texture,menu.xPlayerEntryAmountLeft,menu.yPlayerEntryBottom-i*menu.yPlayerEntryPitch,
-					menu.playerList.get(i).amount.radiusX*2,menu.playerList.get(i).amount.radiusY*2,
-					0,0,menu.playerList.get(i).amount.radiusX*2,menu.playerList.get(i).amount.radiusY*2,false,false);
-		}
-		if (mFL.tableStatusMenu.bellButton.opacity!=0) {
-			batch.draw(buttonBellRed,menu.bellButton.x-menu.bellButton.radiusX,
-					menu.bellButton.y-menu.bellButton.radiusY,
-					menu.bellButton.radiusX*2,menu.bellButton.radiusY*2,
-					0,0,118,118,false,false);
-		}
-		batch.draw(buttonRedTexture,mFL.tableStatusMenu.leaveButton.x-mFL.tableStatusMenu.leaveButton.radiusX,
-				mFL.tableStatusMenu.leaveButton.y-mFL.tableStatusMenu.leaveButton.radiusY,
-				mFL.tableStatusMenu.leaveButton.radiusX*2,mFL.tableStatusMenu.leaveButton.radiusY*2,
-				0,0,152,37,false,false);
-		if (mFL.tableStatusMenu.leaveButton.getLabel()==null) {
-			mFL.tableStatusMenu.leaveButton.getLabel().loadTexture();
-		}
-		batch.draw(mFL.tableStatusMenu.leaveButton.getLabel().texture,mFL.tableStatusMenu.leaveButton.getLabel().x-mFL.tableStatusMenu.leaveButton.getLabel().radiusX,
-				mFL.tableStatusMenu.leaveButton.getLabel().y-mFL.tableStatusMenu.leaveButton.getLabel().radiusY,
-				mFL.tableStatusMenu.leaveButton.getLabel().radiusX*2,mFL.tableStatusMenu.leaveButton.getLabel().radiusY*2,
-				0,0,mFL.tableStatusMenu.leaveButton.getLabel().radiusX*2,mFL.tableStatusMenu.leaveButton.getLabel().radiusY*2,false,false);
-        batch.draw(tableButtonTexture,mFL.tableStatusMenu.handle.x-mFL.tableStatusMenu.handle.radiusX,
-				mFL.tableStatusMenu.handle.y-mFL.tableStatusMenu.handle.radiusY,
-				mFL.tableStatusMenu.handle.radiusX*2,mFL.tableStatusMenu.handle.radiusY*2,
-				0,0,100,400,false,false);
-        batch.draw(mFL.tableStatusMenu.tableName.texture,mFL.tableStatusMenu.tableName.x-mFL.tableStatusMenu.tableName.radiusX,
-				mFL.tableStatusMenu.tableName.y-mFL.tableStatusMenu.tableName.radiusY,
-				mFL.tableStatusMenu.tableName.radiusX*2,mFL.tableStatusMenu.tableName.radiusY*2,
-				0,0,mFL.tableStatusMenu.tableName.radiusX*2,mFL.tableStatusMenu.tableName.radiusY*2,false,false);
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-	}
-	
-	private void renderHostButtons() {
-        if (mFL.gotoGameButton.opacity!=0) {
-			alphaShader=batch.getColor();
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.gotoGameButton.opacity);
-	        batch.draw(playGameTexture,mFL.gotoGameButton.x-mFL.gotoGameButton.radiusX,
-					mFL.gotoGameButton.y-mFL.gotoGameButton.radiusY,
-					mFL.gotoGameButton.radiusX*2,mFL.gotoGameButton.radiusY*2,
-					0,0,300,150,false,false);
-			batch.draw(mFL.gotoGameButton.getLabel().texture,
-					mFL.gotoGameButton.getLabel().x-mFL.gotoGameButton.getLabel().radiusX,
-					mFL.gotoGameButton.getLabel().y-mFL.gotoGameButton.getLabel().radiusY,
-					mFL.gotoGameButton.getLabel().radiusX*2,mFL.gotoGameButton.getLabel().radiusY*2,0,0,
-					mFL.gotoGameButton.getLabel().radiusX*2,mFL.gotoGameButton.getLabel().radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
 	}
 	
 	private void renderPotArrows() {
@@ -1419,12 +1594,6 @@ public class ForegroundRenderer {
 						mFL.splitButton.y-mFL.splitButton.radiusY,
 						mFL.splitButton.radiusX*2,mFL.splitButton.radiusY*2,
 						0,0,256,128,false,false);
-			 TextLabel label=mFL.splitButton.getLabel();
-			 batch.draw(label.texture,
-					 label.x-label.radiusX,
-					 label.y-label.radiusY,
-					 label.radiusX*2,label.radiusY*2,
-						0,0,label.radiusX*2,label.radiusY*2,false,false);
 		}
 		if (mFL.splitCancelButton.opacity!=0) {
 			batch.setColor(alphaShader.r,alphaShader.g,
@@ -1443,66 +1612,8 @@ public class ForegroundRenderer {
 					mFL.splitDoneButton.radiusX*2,mFL.splitDoneButton.radiusY*2,
 					0,0,214,214,false,false);
 		}
-		if (mFL.selectWinnersSplitLabel.opacity!=0) {
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.selectWinnersSplitLabel.opacity);
-			if (mFL.selectWinnersSplitLabel.texture==null) {
-				mFL.selectWinnersSplitLabel.loadTexture();
-			}
-			batch.draw(mFL.selectWinnersSplitLabel.texture,mFL.selectWinnersSplitLabel.x-mFL.selectWinnersSplitLabel.radiusX,
-					mFL.selectWinnersSplitLabel.y-mFL.selectWinnersSplitLabel.radiusY,
-					mFL.selectWinnersSplitLabel.radiusX*2,mFL.selectWinnersSplitLabel.radiusY*2,
-					0,0,mFL.selectWinnersSplitLabel.radiusX*2,mFL.selectWinnersSplitLabel.radiusY*2,false,false);
-		}
 		 batch.setColor(alphaShader.r,alphaShader.g,
 	        		alphaShader.b,1);
-	}
-	
-	private void renderTutorialArrangement() {
-		renderHighlightDarkened(mFL.tutorialArrangement.highlight,blackCircleRegion);
-		if (mFL.tutorialArrangement.instrLabel.opacity!=0) {
-			alphaShader=batch.getColor();
-			batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,mFL.tutorialArrangement.instrLabel.opacity);
-			batch.draw(mFL.tutorialArrangement.instrLabel.texture,
-					mFL.tutorialArrangement.instrLabel.x-mFL.tutorialArrangement.instrLabel.radiusX,
-					mFL.tutorialArrangement.instrLabel.y-mFL.tutorialArrangement.instrLabel.radiusY,
-					mFL.tutorialArrangement.instrLabel.radiusX*2,mFL.tutorialArrangement.instrLabel.radiusY*2,
-					0,0,mFL.tutorialArrangement.instrLabel.radiusX*2,mFL.tutorialArrangement.instrLabel.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-		}
-	}
-	
-	private void renderHighlightDarkened(DPCSprite highlight_,TextureRegion highlightRegion_) {
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,
-        		alphaShader.b,highlight_.opacity);
-        
-        int left_=(int) (highlight_.x-highlight_.radiusX);
-        int right_=(int) (highlight_.x+highlight_.radiusX);
-        int bottom_=(int) (highlight_.y-highlight_.radiusY);
-        int top_=(int) (highlight_.y+highlight_.radiusY);
-		batch.draw(highlightRegion_,left_,bottom_,right_-left_,top_-bottom_);
-		int width_=0;
-		int height_=0;
-		width_=left_;
-		if (width_>0) {
-			batch.draw(blackRegion,0,0,width_,mFL.screenHeight);
-		}
-		width_=(int) (mFL.screenWidth-right_);
-		if (width_>0) {
-			batch.draw(blackRegion,right_,0,width_,mFL.screenHeight);
-		}
-		height_=bottom_;
-		if (height_>0) {
-			batch.draw(blackRegion,left_,0,right_-left_,height_);
-		}
-		height_=(int) (mFL.screenHeight-top_);
-		if (height_>0) {
-			batch.draw(blackRegion,left_,top_,right_-left_,height_);
-		}
-		alphaShader=batch.getColor();
-        batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 	}
 	
 	private void renderRectangleRounded(TextureRegion[] textureRegions,int x,int y,int radiusX,int radiusY) {
@@ -1528,16 +1639,25 @@ public class ForegroundRenderer {
 		batch.draw(textureRegions[7],x1,y0,x2-x1,y1-y0);
 		batch.draw(textureRegions[8],x2,y0,x3-x2,y1-y0);
 	}
-
-	private void renderGuides() {
-		for (int i=1;i<=10;i++) {
-			batch.draw(handTexture,0,screenHeight*0.1f*i,
-					4,4,213,201,1,1,false,false);
-		}
-		for (int i=1;i<=10;i++) {
-			batch.draw(handTexture,screenWidth*0.1f*i,1,
-					4,4,213,201,1,1,false,false);
-		}
+	
+	public void renderTextField(TextureRegion[] textureRegions,int x,int y,int radiusX,int radiusY) {
+		float edge1Aspect = (float)(textureRegions[0].getRegionWidth())/
+				(float)(textureRegions[0].getRegionHeight());
+		float edge2Aspect = (float)(textureRegions[2].getRegionWidth())/
+				(float)(textureRegions[2].getRegionHeight());
+		int height = radiusY*2;
+		int x0=x-radiusX;
+		int x1=(int) (x0+height*edge1Aspect);
+		int x3=x+radiusX;
+		int x2=(int) (x3-height*edge2Aspect);
+		
+		batch.draw(textureRegions[0],x0,y-radiusY,x1-x0,height);
+		batch.draw(textureRegions[1],x1,y-radiusY,x2-x1,height);
+		batch.draw(textureRegions[2],x2,y-radiusY,x3-x2,height);
+	}
+	
+	private void renderTextField(TextureRegion[] textureRegions,DPCSprite sprite) {
+		renderTextField(textureRegions, (int)sprite.x, (int)sprite.y, sprite.radiusX, sprite.radiusY);
 	}
 
 	

@@ -19,7 +19,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 import com.bidjee.digitalpokerchips.c.DPCGame;
 import com.bidjee.digitalpokerchips.c.Table;
 import com.bidjee.digitalpokerchips.c.WorldLayer;
-import com.bidjee.digitalpokerchips.m.Card;
 import com.bidjee.digitalpokerchips.m.Chip;
 import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.digitalpokerchips.m.ChipStack;
@@ -27,7 +26,6 @@ import com.bidjee.digitalpokerchips.m.ColorPool;
 import com.bidjee.digitalpokerchips.m.GameLogic;
 import com.bidjee.digitalpokerchips.m.Player;
 import com.bidjee.digitalpokerchips.m.Seat;
-import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.graphics.ChipBatch;
 
 public class WorldRenderer {
@@ -71,27 +69,12 @@ public class WorldRenderer {
 	Texture dealerButtonTexture;
 	Texture[] chipTextures;
 	Texture shadowTexture;
-	Texture handTexture;
-	Texture arrowTexture;
-	
-	Texture goldSpeechBubbleTexture;
-	
-	Texture joinTokenTexture;
-	Texture arrowWhite;
-	
-	Texture buttonGreen;
-	
-	Texture cursorTexture;
-	
-	Texture connectionBlobTexture;
-	
-	
-	Texture[] suitsTextures;
-	
-	Texture cardTexture;
 	
 	Texture[] connectingTextures;
 	Texture[] connectedTextures;
+	TextureRegion connectionArrowsRegion;
+	
+	TextureRegion envelopeRegion;
 	
 	public WorldRenderer(WorldLayer mWL_) {
 		mWL=mWL_;
@@ -100,7 +83,6 @@ public class WorldRenderer {
 		camera=new Camera(this);
 		mWL=mWL_;
 		chipTextures=new Texture[ChipCase.CHIP_TYPES*Chip.CHIP_ROTATION_N];
-		suitsTextures=new Texture[4];
 		connectingTextures=new Texture[27];
 		connectedTextures=new Texture[26];
 	}
@@ -156,63 +138,43 @@ public class WorldRenderer {
 		mWL=null;
 	}
 	
-	public void loadTextures(AssetManager manager_) {
+	public void loadTextures(AssetManager manager) {
 		Gdx.app.log("DPCLifecycle", "WorldRenderer - loadTextures()");
 		
 		if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_LOW) {
-			backgroundTexture=manager_.get("background.png",Texture.class);
+			backgroundTexture=manager.get("background.png",Texture.class);
 		} else if (mWL.game.resolutionSetting==DPCGame.RESOLUTION_MEDIUM||
 				mWL.game.resolutionSetting==DPCGame.RESOLUTION_HIGH) {
-			backgroundTexture=manager_.get("background.png",Texture.class);
+			backgroundTexture=manager.get("background.png",Texture.class);
 		}
 		
-		devHostTexture=manager_.get("dev_host.png", Texture.class);
-		devHostShineTexture=manager_.get("dev_host_shine.png", Texture.class);
-		devPlayer1Texture=manager_.get("dev_player1.png", Texture.class);
-		devPlayer1ShineTexture=manager_.get("dev_player1_shine.png", Texture.class);
-		devPlayer2Texture=manager_.get("dev_player2.png", Texture.class);
-		devPlayer3Texture=manager_.get("dev_player3.png", Texture.class);
-		tableHighlightTexture=manager_.get("table_highlight.png",Texture.class);
-		dealerButtonTexture=manager_.get("dealer_chip.png",Texture.class);
-		shadowTexture=manager_.get("shadow.png",Texture.class);
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("chip_0_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("chip_0_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("chip_0_2.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("chip_1_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("chip_1_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("chip_1_2.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager_.get("chip_2_0.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager_.get("chip_2_1.png",Texture.class);
-		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager_.get("chip_2_2.png",Texture.class);
-		
-		handTexture=manager_.get("hand.png",Texture.class);
-		
-		arrowTexture=manager_.get("arrow.png",Texture.class);
-		
-		goldSpeechBubbleTexture=manager_.get("speech_bubble_gold.png",Texture.class);
-		
-		joinTokenTexture=manager_.get("join_coin.png",Texture.class);
-		arrowWhite=manager_.get("arrow_white.png",Texture.class);
-		
-		buttonGreen=manager_.get("button_green.png",Texture.class);
-		
-		cursorTexture=manager_.get("cursor.png",Texture.class);
-		
-		connectionBlobTexture=manager_.get("connection_blob.png",Texture.class);
-		
-		suitsTextures[Card.CLUBS]=manager_.get("suit_clubs.png",Texture.class);
-		suitsTextures[Card.DIAMONDS]=manager_.get("suit_diamonds.png",Texture.class);
-		suitsTextures[Card.SPADES]=manager_.get("suit_spades.png",Texture.class);
-		suitsTextures[Card.HEARTS]=manager_.get("suit_hearts.png",Texture.class);
-		
-		cardTexture=manager_.get("card_back.png",Texture.class);
+		devHostTexture=manager.get("dev_host.png", Texture.class);
+		devHostShineTexture=manager.get("dev_host_shine.png", Texture.class);
+		devPlayer1Texture=manager.get("dev_player1.png", Texture.class);
+		devPlayer1ShineTexture=manager.get("dev_player1_shine.png", Texture.class);
+		devPlayer2Texture=manager.get("dev_player2.png", Texture.class);
+		devPlayer3Texture=manager.get("dev_player3.png", Texture.class);
+		tableHighlightTexture=manager.get("table_highlight.png",Texture.class);
+		dealerButtonTexture=manager.get("dealer_chip.png",Texture.class);
+		shadowTexture=manager.get("shadow.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_0_0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_0_1.png",Texture.class);
+		chipTextures[ChipCase.CHIP_A*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_0_2.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_1_0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_1_1.png",Texture.class);
+		chipTextures[ChipCase.CHIP_B*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_1_2.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_0]=manager.get("chip_2_0.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_135]=manager.get("chip_2_1.png",Texture.class);
+		chipTextures[ChipCase.CHIP_C*Chip.CHIP_ROTATION_N+Chip.CHIP_ROTATION_202]=manager.get("chip_2_2.png",Texture.class);
 		
 		for (int i=0;i<27;i++) {
-			connectingTextures[i]=manager_.get("connecting/connecting_"+String.format("%02d",i)+".png",Texture.class);
+			connectingTextures[i]=manager.get("connecting/connecting_"+String.format("%02d",i)+".png",Texture.class);
 		}
 		for (int i=0;i<26;i++) {
-			connectedTextures[i]=manager_.get("connected/connected_"+String.format("%02d",i)+".png",Texture.class);
+			connectedTextures[i]=manager.get("connected/connected_"+String.format("%02d",i)+".png",Texture.class);
 		}
+		connectionArrowsRegion=new TextureRegion(manager.get("connection_arrows.png",Texture.class),243,39);
+		envelopeRegion=new TextureRegion(manager.get("envelope.png",Texture.class),110,70);
 	}
 	
 	public void loadLabels() {
@@ -225,14 +187,10 @@ public class WorldRenderer {
 		}
 		for (int i=0;i<Table.NUM_SEATS;i++) {
 			if (mWL.table.seats[i].player!=null) {
-				mWL.table.seats[i].player.name.loadTexture();
 				if (mWL.table.seats[i].player.betStack.size()>0) {
 					mWL.table.seats[i].player.betStack.totalLabel.loadTexture();
 				}
 			}
-		}
-		if (mWL.table.pickedUpPlayer!=null) {
-			mWL.table.pickedUpPlayer.name.loadTexture();
 		}
 		for (int i=0;i<mWL.table.pots.size();i++) {
 			mWL.table.pots.get(i).potStack.totalLabel.loadTexture();
@@ -380,6 +338,7 @@ public class WorldRenderer {
 					0,0,400,250,false,false);
 			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
+		
 		
 	}
 
@@ -560,141 +519,72 @@ public class WorldRenderer {
 			if (thisPlayer_!=null) {
 				renderPlayerInLobby(thisPlayer_);
 				alphaShader=batch.getColor();
-				batch.setColor(alphaShader.r,alphaShader.g,
-						alphaShader.b,thisPlayer_.name.opacity);
-				batch.draw(thisPlayer_.name.texture,thisPlayer_.name.x-thisPlayer_.name.radiusX,
-						thisPlayer_.name.y-thisPlayer_.name.radiusY,
-						thisPlayer_.name.radiusX,thisPlayer_.name.radiusY,
-						thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,
-						1,1,thisPlayer_.getRotation(),
-						0,0,thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,false,false);
-				batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 			} else {
-				if (mWL.table.pickedUpPlayer==null||i!=mWL.table.closestSeatToPickedUp) {
-					renderFreeSeat(i);
-				}
+				
 			}
 		}
 		
 		thisPlayer_=mWL.table.pickedUpPlayer;
 		if (thisPlayer_!=null) {
 			renderPlayerInLobby(thisPlayer_);
-			alphaShader=batch.getColor();
-			batch.setColor(alphaShader.r,alphaShader.g,
-					alphaShader.b,thisPlayer_.name.opacity);
-			batch.draw(thisPlayer_.name.texture,thisPlayer_.name.x-thisPlayer_.name.radiusX,
-					thisPlayer_.name.y-thisPlayer_.name.radiusY,
-					thisPlayer_.name.radiusX,thisPlayer_.name.radiusY,
-					thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,
-					1,1,thisPlayer_.getRotation(),
-					0,0,thisPlayer_.name.radiusX*2,thisPlayer_.name.radiusY*2,false,false);
-			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
 		
 		for (int i=0;i<Table.NUM_SEATS;i++) {
 			thisPlayer_=mWL.table.seats[i].player;
 			if (thisPlayer_!=null) {
 				if (thisPlayer_.joinToken.opacity!=0) {
-					batch.draw(joinTokenTexture,
+					batch.draw(envelopeRegion,
 							thisPlayer_.joinToken.x-thisPlayer_.joinToken.radiusX,
 							thisPlayer_.joinToken.y-thisPlayer_.joinToken.radiusY,
 							thisPlayer_.joinToken.radiusX,thisPlayer_.joinToken.radiusY,
 							thisPlayer_.joinToken.radiusX*2,thisPlayer_.joinToken.radiusY*2,
-							1,1,thisPlayer_.getRotation(),
-							0,0,309,311,false,false);
+							1,1,thisPlayer_.getRotation());
 				}
 			}
-			Seat thisSeat=mWL.table.seats[i];
-			if (thisSeat.undoButton.opacity!=0) {
-				alphaShader=batch.getColor();
-				batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,thisSeat.undoButton.opacity);
-				batch.draw(buttonGreen,
-						thisSeat.undoButton.x-thisSeat.undoButton.radiusX,
-						thisSeat.undoButton.y-thisSeat.undoButton.radiusY,
-						thisSeat.undoButton.radiusX,thisSeat.undoButton.radiusY,
-						thisSeat.undoButton.radiusX*2,thisSeat.undoButton.radiusY*2,
-						1,1,thisSeat.undoButton.rotation,
-						0,0,152,37,false,false);
-				batch.draw(mWL.table.seats[0].undoButton.getLabel().texture,
-						thisSeat.undoButton.getLabel().x-thisSeat.undoButton.getLabel().radiusX,
-						thisSeat.undoButton.getLabel().y-thisSeat.undoButton.getLabel().radiusY,
-						thisSeat.undoButton.getLabel().radiusX,thisSeat.undoButton.getLabel().radiusY,
-						thisSeat.undoButton.getLabel().radiusX*2,thisSeat.undoButton.getLabel().radiusY*2,
-						1,1,thisSeat.undoButton.getLabel().rotation,
-						0,0,thisSeat.undoButton.getLabel().radiusX*2,thisSeat.undoButton.getLabel().radiusY*2,false,false);
-				batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,thisSeat.undoButton.opacity);
-			}
 		}
 	}
 	
-	private void renderPlayerInLobby(Player thisPlayer_) {
-
-        if (thisPlayer_.connectionBlob.opacity!=0) {
-			alphaShader=batch.getColor();
-			batch.setColor(ColorPool.colors[thisPlayer_.color].r,ColorPool.colors[thisPlayer_.color].g,
-	        		ColorPool.colors[thisPlayer_.color].b,thisPlayer_.connectionBlob.opacity);
-			batch.draw(connectionBlobTexture,
-					thisPlayer_.connectionBlob.x-thisPlayer_.connectionBlob.radiusX,
-					thisPlayer_.connectionBlob.y-thisPlayer_.connectionBlob.radiusY,
-					thisPlayer_.connectionBlob.radiusX,thisPlayer_.connectionBlob.radiusY,
-					thisPlayer_.connectionBlob.radiusX*2,thisPlayer_.connectionBlob.radiusY*2,
-					1,1,thisPlayer_.getRotation(),
-					0,0,312,192,false,false);
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-					
-		}
+	private void renderPlayerInLobby(Player thisPlayer) {
         
-        if (thisPlayer_.getCard()!=null&&thisPlayer_.getCard().opacity!=0) {
+        if (thisPlayer.connectionSprite.opacity!=0) {
 			alphaShader=batch.getColor();
-			batch.setColor(alphaShader.r,alphaShader.g,
-					alphaShader.b,thisPlayer_.getCard().opacity);
-			batch.draw(cardTexture,
-					thisPlayer_.getCard().x-Table.radiusXSuit*3f,
-					thisPlayer_.getCard().y-Table.radiusYSuit*2f,
-					Table.radiusXSuit*3f,Table.radiusYSuit*2f,
-					Table.radiusXSuit*6f,Table.radiusYSuit*4f,
-					1,1,thisPlayer_.getRotation(),
-					0,0,224,124,false,false);
-			batch.draw(suitsTextures[thisPlayer_.getCard().suit],
-					thisPlayer_.getCard().x-Table.radiusXSuit-thisPlayer_.yCoeff*Table.radiusXSuit*0.8f,
-					thisPlayer_.getCard().y-Table.radiusYSuit+thisPlayer_.xCoeff*Table.radiusXSuit*0.8f,
-					Table.radiusXSuit,Table.radiusYSuit,
-					Table.radiusXSuit*2,Table.radiusYSuit*2,
-					1,1,thisPlayer_.getRotation(),
-					0,0,190,190,false,false);
-			if (thisPlayer_.getCard().suit==Card.DIAMONDS||thisPlayer_.getCard().suit==Card.HEARTS) {
-				batch.setColor(1,0,0,thisPlayer_.getCard().opacity);
-			} else {
-				batch.setColor(0,0,0,thisPlayer_.getCard().opacity);
-			}
-			batch.draw(thisPlayer_.getCard().faceLabel.texture,
-					thisPlayer_.getCard().x-Table.radiusXSuit+thisPlayer_.yCoeff*Table.radiusXSuit*0.8f,
-					thisPlayer_.getCard().y-Table.radiusYSuit-thisPlayer_.xCoeff*Table.radiusXSuit*0.8f,
-					Table.radiusXSuit,Table.radiusYSuit,
-					Table.radiusXSuit*2,Table.radiusYSuit*2,
-					1,1,thisPlayer_.getRotation(),
-					0,0,Table.radiusXSuit*2,Table.radiusYSuit*2,false,false);
-	        batch.setColor(alphaShader.r,alphaShader.g,
-	        		alphaShader.b,1);
-		}
-	}
-	
-	private void renderFreeSeat(int seat) {
-		Seat thisSeat=mWL.table.seats[seat];
-		if (thisSeat.playerSlot.opacity!=0) {
-			alphaShader=batch.getColor();
-			batch.setColor(alphaShader.r,alphaShader.g,
-					alphaShader.b,thisSeat.playerSlot.opacity);
-			batch.draw(connectionBlobTexture,
-					thisSeat.playerSlot.x-thisSeat.playerSlot.radiusX,
-					thisSeat.playerSlot.y-thisSeat.playerSlot.radiusY,
-					thisSeat.playerSlot.radiusX,thisSeat.playerSlot.radiusY,
-					thisSeat.playerSlot.radiusX*2,thisSeat.playerSlot.radiusY*2,
-					1,1,thisSeat.rotation,
-					0,0,312,192,false,false);
+			batch.setColor(ColorPool.colors[thisPlayer.color].r,ColorPool.colors[thisPlayer.color].g,
+	        		ColorPool.colors[thisPlayer.color].b,thisPlayer.connectionSprite.opacity);
+			batch.draw(connectingTextures[thisPlayer.connectionSprite.frame],
+					thisPlayer.connectionSprite.x-thisPlayer.connectionSprite.radiusX,
+					thisPlayer.connectionSprite.y-thisPlayer.connectionSprite.radiusY,
+					thisPlayer.connectionSprite.radiusX,thisPlayer.connectionSprite.radiusY,
+					thisPlayer.connectionSprite.radiusX*2,thisPlayer.connectionSprite.radiusY*2,
+					1,1,thisPlayer.connectionSprite.rotation,
+					0,0,400,250,false,false);
 			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
 		}
+		if (thisPlayer.connectedSprite.opacity!=0) {
+			alphaShader=batch.getColor();
+			batch.setColor(ColorPool.colors[thisPlayer.color].r,ColorPool.colors[thisPlayer.color].g,
+	        		ColorPool.colors[thisPlayer.color].b,thisPlayer.connectedSprite.opacity);
+			batch.draw(connectedTextures[thisPlayer.connectedSprite.frame],
+					thisPlayer.connectedSprite.x-thisPlayer.connectedSprite.radiusX,
+					thisPlayer.connectedSprite.y-thisPlayer.connectedSprite.radiusY,
+					thisPlayer.connectedSprite.radiusX,thisPlayer.connectedSprite.radiusY,
+					thisPlayer.connectedSprite.radiusX*2,thisPlayer.connectedSprite.radiusY*2,
+					1,1,thisPlayer.connectedSprite.rotation,
+					0,0,400,250,false,false);
+			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+		if (thisPlayer.connectionArrows.opacity!=0) {
+			alphaShader=batch.getColor();
+			batch.setColor(ColorPool.colors[thisPlayer.color].r,ColorPool.colors[thisPlayer.color].g,
+	        		ColorPool.colors[thisPlayer.color].b,thisPlayer.connectionArrows.opacity);
+			batch.draw(connectionArrowsRegion,
+					thisPlayer.connectionArrows.x-thisPlayer.connectionArrows.radiusX,
+					thisPlayer.connectionArrows.y-thisPlayer.connectionArrows.radiusY,
+					thisPlayer.connectionArrows.radiusX,thisPlayer.connectionArrows.radiusY,
+					thisPlayer.connectionArrows.radiusX*2,thisPlayer.connectionArrows.radiusY*2,
+					1,1,thisPlayer.connectionArrows.rotation);
+			batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
+		}
+
 	}
 
 	private void renderShadowsToBuffer() {

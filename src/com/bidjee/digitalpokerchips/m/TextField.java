@@ -35,6 +35,7 @@ public class TextField extends DPCSprite {
 	public void setPosition(float x,float y) {
 		super.setPosition(x,y);
 		label.setPosition(x,y);
+		cursor.setPosition(label.x+label.radiusX+cursor.radiusX,y+radiusY*0.0f);
 	}
 	
 	public void scalePosition(float scaleX,float scaleY) {

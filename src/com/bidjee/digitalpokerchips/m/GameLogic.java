@@ -73,15 +73,6 @@ public class GameLogic {
 		currBetter=NO_PLAYER;
 	}
 	
-	public void setDimensions(float worldWidth,float worldHeight) {
-	}
-	
-	public void setPositions(float worldWidth,float worldHeight) {
-	}
-	
-	public void scalePositions(float scaleX,float scaleY) {
-	}
-	
 	public void start() {
 		setGameState(STATE_START_HAND);
 	}
@@ -92,10 +83,6 @@ public class GameLogic {
 	
 	public int getDealer() {
 		return dealer;
-	}
-	
-	public void collisionDetector() {
-
 	}
 	
 	private void setGameState(String state) {
@@ -214,7 +201,7 @@ public class GameLogic {
 				if (table.seats[i].player!=null&&table.seats[i].player.winStack.size()>0) {
 					Logger.log(LOG_TAG,table.seats[i].player.name.getText()+" wins "+
 							table.seats[i].player.winStack.value());
-					table.sendWinnings(i,table.seats[i].player.winStack);					
+					table.sendWinnings(i,table.seats[i].player.winStack);
 					table.seats[i].player.isAllIn=false;
 				}
 			}
@@ -267,17 +254,7 @@ public class GameLogic {
 		Logger.log(LOG_TAG,"resetTable()");
 		currBetter=NO_PLAYER;
 		setDealer(NO_PLAYER);
-		removeAllPrompts();
-	}
-	
-	public void removeAllPrompts() {
-		table.mWL.game.mFL.blindsInLabel.fadeOut();
-		table.mWL.game.mFL.flopLabel.fadeOut();
-		table.mWL.game.mFL.turnLabel.fadeOut();
-		table.mWL.game.mFL.riverLabel.fadeOut();
-		table.mWL.game.mFL.selectWinnerLabel.fadeOut();
-		table.mWL.game.mFL.selectWinnersSplitLabel.fadeOut();
-		// TODO remove split button, side pot buttons, etc
+		//removeAllPrompts();
 	}
 	
 	///////////////////////// Private Helper Methods //////////////////////////
@@ -379,18 +356,14 @@ public class GameLogic {
 		if (!smallBlindsIn) {
 			thisMovePrompt.stake=1;
 			thisMovePrompt.blinds=MovePrompt.BLINDS_SMALL;
-			table.mWL.game.mFL.blindsInLabel.startFlashing();
 		} else if (!bigBlindsIn) {
 			thisMovePrompt.stake=Math.max(currStake,1);
 			thisMovePrompt.blinds=MovePrompt.BLINDS_BIG;
 		} else if (openingBet) {
 			thisMovePrompt.blinds=MovePrompt.BLINDS_NONE;
 			if (dealStage==DEAL_FLOP) {
-				table.mWL.game.mFL.flopLabel.fadeIn();
 			} else if (dealStage==DEAL_TURN) {
-				table.mWL.game.mFL.turnLabel.fadeIn();
 			} else if (dealStage==DEAL_RIVER) {
-				table.mWL.game.mFL.riverLabel.fadeIn();
 			}
 			thisMovePrompt.stake=0;
 		} else {
@@ -620,7 +593,6 @@ public class GameLogic {
 				smallBlindsIn=true;
 			} else if (!bigBlindsIn) {
 				bigBlindsIn=true;
-				table.mWL.game.mFL.blindsInLabel.fadeOut();
 			}
 			if (openingBet) {
 				openingBet=false;
@@ -635,7 +607,6 @@ public class GameLogic {
 			smallBlindsIn=true;
 		} else if (!bigBlindsIn) {
 			bigBlindsIn=true;
-			table.mWL.game.mFL.blindsInLabel.fadeOut();
 		} else {
 			table.seats[seatIndex].player.hasBet=true;
 		}
@@ -675,9 +646,6 @@ public class GameLogic {
 				Logger.log(LOG_TAG,"moveRxd - "+table.seats[seatIndex].player.name.getText()+" - BET - "+betValue);
 			}
 		}
-		table.mWL.game.mFL.flopLabel.fadeOut();
-		table.mWL.game.mFL.turnLabel.fadeOut();
-		table.mWL.game.mFL.riverLabel.fadeOut();
 	}
 	
 	public void bettingStackArrived() {

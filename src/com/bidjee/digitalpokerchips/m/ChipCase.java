@@ -18,6 +18,8 @@ public class ChipCase {
 	
 	public static int[] values=new int[CHIP_TYPES];
 	
+	public static final int[] defaultValues = {25,50,200};
+	
 	public ChipCase(int[] values_) {
 		for (int i=0;i<values_.length;i++) {
 			values[i]=values_[i];
@@ -55,6 +57,13 @@ public class ChipCase {
 				setValue(chipIndex_,legalValues[valIndex_]);
 			}
 		}
+	}
+	
+	public static int getLegalValueIndex(int value) {
+		int valIndex=0;
+		// get the index of the current value
+		for (;legalValues[valIndex]!=value&&valIndex<legalValues.length;valIndex++);
+		return valIndex;
 	}
 
 	public static boolean checkValuesDivisibility() {

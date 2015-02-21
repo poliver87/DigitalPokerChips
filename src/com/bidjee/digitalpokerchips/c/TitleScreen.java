@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
 import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.digitalpokerchips.v.TitleRenderer;
+import com.bidjee.util.Logger;
 
 public class TitleScreen {
 	
@@ -41,7 +42,7 @@ public class TitleScreen {
 		logo=new DPCSprite();
 		loadingLabel=new TextLabel("Loading",0,false,0,false);
 		loadingLabel.setFontFace("coolvetica_rg.ttf");
-		loadingLabel.bodyColor=new Color(1f,0.94f,0.77f,1);
+		loadingLabel.bodyColor=ForegroundLayer.brightestGoldColor;
 		screenLaidOut=false;
 	}
 	

@@ -92,18 +92,19 @@ public class PlayerDashboard extends DPCSprite {
 	@Override
 	public void setPosition(float x,float y) {
 		super.setPosition(x, y);
-		backButton.setPosition(x+radiusX-backButton.radiusX-margin,y);
-		idBackground.setPosition(x-radiusX+idBackground.radiusX+margin,y);
-		statusBackground.setPosition(x,y);
+		float yCenter = y-radiusY*0.1f;
+		backButton.setPosition(x+radiusX-backButton.radiusX-margin,yCenter);
+		idBackground.setPosition(x-radiusX+idBackground.radiusX+margin,yCenter);
+		statusBackground.setPosition(x,yCenter);
 		// left aligned
-		profilePic.setPosition(idBackground.x-idBackground.radiusX+profilePic.radiusX+margin,y);
-		nameLabel.setPosition(profilePic.x+profilePic.radiusX+margin*2,y+idBackground.radiusY*0.35f);
-		amountLabel.setPosition(nameLabel.x,y-idBackground.radiusY*0.35f);
+		profilePic.setPosition(idBackground.x-idBackground.radiusX+profilePic.radiusX+margin,yCenter);
+		nameLabel.setPosition(profilePic.x+profilePic.radiusX+margin*2,yCenter+idBackground.radiusY*0.35f);
+		amountLabel.setPosition(nameLabel.x,yCenter-idBackground.radiusY*0.35f);
 		statusMessage.setPosition(statusBackground.x,statusBackground.y);
 		statusIcon.setPosition(statusBackground.x-statusMessage.maxRadiusX-statusIcon.radiusX,statusBackground.y);
-		bellButton.setPosition(statusBackground.x+statusBackground.radiusX-margin-bellButton.radiusX,y);
-		winLabelStart=new Vector2(idBackground.x,y+radiusY);
-		winLabelStop=new Vector2(idBackground.x,amountLabel.y+radiusY*15f);
+		bellButton.setPosition(statusBackground.x+statusBackground.radiusX-margin-bellButton.radiusX,yCenter);
+		winLabelStart=new Vector2(idBackground.x,yCenter+radiusY);
+		winLabelStop=new Vector2(idBackground.x,amountLabel.y+radiusY*20f);
 	}
 	
 	@Override
@@ -178,7 +179,7 @@ public class PlayerDashboard extends DPCSprite {
 		} else if (message.equals(MESSAGE_SELECT_DEALER)) {
 			statusMessage.setText(message);
 			statusMessage.loadTexture();
-			statusIconTexture="";
+			statusIconTexture="dealer_icon.png";
 			statusMessage.fadeIn();
 		} else if (message.equals(MESSAGE_BLINDS)) {
 			int blinds=argInt;
@@ -212,7 +213,7 @@ public class PlayerDashboard extends DPCSprite {
 			int dealStage = argInt;
 			statusMessage.setText(message+GameLogic.getDealStageString(dealStage));
 			statusMessage.loadTexture();
-			statusIconTexture="";
+			statusIconTexture="card_icon.png";
 			statusMessage.startFlashing();
 		} else if (message.equals(MESSAGE_DEAL_WAIT)) {
 			String dealerName = argStr;
@@ -233,7 +234,7 @@ public class PlayerDashboard extends DPCSprite {
 		} else if (message.equals(MESSAGE_SHOW_CARDS)) {
 			statusMessage.setText(message);
 			statusMessage.loadTexture();
-			statusIconTexture="";
+			statusIconTexture="card_icon.png";
 			statusMessage.fadeIn();
 		} else if (message.equals(MESSAGE_WAIT_NEXT_HAND)) {
 			statusMessage.setText(message);
@@ -248,7 +249,7 @@ public class PlayerDashboard extends DPCSprite {
 		} else if (message.equals(MESSAGE_NO_WIFI)) {
 			statusMessage.setText(message);
 			statusMessage.loadTexture();
-			statusIconTexture="";
+			statusIconTexture="searching.png";
 			statusMessage.startFlashing();
 		}
 	}
@@ -265,7 +266,7 @@ public class PlayerDashboard extends DPCSprite {
 		winLabel.opacity=1;
 		winLabel.setMoveLinear(new Vector2(0,radiusY*0.8f));
 		winLabel.setDest(winLabelStop);
-		winLabel.setFadeOutSpeed(0.6f);
+		winLabel.setFadeOutSpeed(0.4f);
 		winLabel.fadeOut();
 	}
 	

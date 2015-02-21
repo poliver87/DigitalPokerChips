@@ -2,8 +2,9 @@ package com.bidjee.digitalpokerchips.m;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Vector2;
+import com.bidjee.util.DPCView;
 
-public class DPCSprite {
+public class DPCSprite implements DPCView {
 	
 	public static final int MOVE_NONE = 0;
 	public static final int MOVE_EASE_IN = 1;
@@ -26,7 +27,9 @@ public class DPCSprite {
 	public float yDest;
 	public int radiusXDest;
 	public int radiusYDest;
+	public float rotationDest;
 	public boolean atDest;
+	public boolean rotating;
 	private float gravityAcceleration;
 	private float elasticity;
 	private float flightTime;
@@ -106,6 +109,7 @@ public class DPCSprite {
 		this.rotation=copyFrom.rotation;
 		this.xDest=copyFrom.xDest;
 		this.yDest=copyFrom.yDest;
+		this.rotationDest=copyFrom.rotationDest;
 		this.atDest=copyFrom.atDest;
 		this.fadeState=copyFrom.fadeState;
 		this.flashing=copyFrom.flashing;
@@ -141,6 +145,11 @@ public class DPCSprite {
 		x=pos_.x;
 		y=pos_.y;
 	}
+	
+	@Override
+	public int getRadiusY() {return radiusY;}
+	@Override
+	public void setYTop(float yTop) {this.y=yTop-radiusY;}
 	
 	public void scalePosition(float scaleX,float scaleY) {
 		x*=scaleX;
@@ -206,6 +215,11 @@ public class DPCSprite {
 		if (resetToStart) {
 			frame = 0;
 		}
+	}
+	
+	public void setRotationDest(float rotationDest) {
+		this.rotationDest=rotationDest;
+		rotating=true;
 	}
 	
 	public boolean getIsTouched() { return isTouched;}
@@ -399,6 +413,13 @@ public class DPCSprite {
 				moveHoldoffTimer+=delta*1000;
 			}
 		}
+		if (rotating) {
+			if (Math.abs(rotation-rotationDest)<=0.5f) {
+				rotating=false;
+			} else {
+				rotation=(float)(rotation-delta*19*(rotation-rotationDest));
+			}
+		}
 	}
 	
 	public void clear() {
@@ -419,7 +440,5 @@ public class DPCSprite {
 	public float getFadeOutSpeed() {
 		return fadeOutSpeed;
 	}
-	
-	public void init() {}
 	
 }

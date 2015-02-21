@@ -32,6 +32,8 @@ public class PlayerMenuPanel extends DPCSprite implements Comparable<PlayerMenuP
 		if (folded) {
 			betStr="Fold";
 			opacity = 0.3f;
+		} else {
+			opacity = 1;
 		}
 		String totalStr=Integer.toString(totalAmount);
 		if (totalAmount==0) {

@@ -75,5 +75,7 @@ public class TextLabel extends DPCSprite {
 	public void dispose() {
 		DPCGame.textFactory.dispose(this);
 	}
-
+	
+	@Override
+	public int getRadiusY() {return maxRadiusY;}
 }

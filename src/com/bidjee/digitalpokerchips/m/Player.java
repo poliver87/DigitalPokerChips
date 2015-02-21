@@ -1,6 +1,7 @@
 package com.bidjee.digitalpokerchips.m;
 
 import com.badlogic.gdx.math.Vector2;
+import com.bidjee.digitalpokerchips.c.ForegroundLayer;
 import com.bidjee.digitalpokerchips.c.WorldLayer;
 
 public class Player extends DPCSprite {
@@ -16,6 +17,11 @@ public class Player extends DPCSprite {
 	public static final int ARROW_NONE = 0;
 	public static final int ARROW_WAITING = 1;
 	public static final int ARROW_SENDING = 2;
+	
+	public static final int CONN_ANIM_NONE = 0;	
+	public static final int CONN_ANIM_FORMING = 1;
+	public static final int CONN_ANIM_STATIC = 2;
+	public static final int CONN_ANIM_ACTIVE = 3;
 	// state variables //
 	public TextLabel name;
 	public int color;
@@ -34,10 +40,14 @@ public class Player extends DPCSprite {
 	public boolean isLoadedPlayer;
 	public int[] buyinBuild;
 	public int azimuth;
-	public boolean connectionShowing;
+	public int connectionAnimationState;
+	public boolean active;
+	public boolean arrowsShowing;
 	// Objects //
 	public DPCSprite joinToken=new DPCSprite();
-	public DPCSprite connectionBlob;
+	public DPCSprite connectionSprite;
+	public DPCSprite connectedSprite;
+	public DPCSprite connectionArrows;
 	public ChipStack bettingStack;
 	public ChipStack betStack;
 	public ChipStack winStack;
@@ -46,17 +56,17 @@ public class Player extends DPCSprite {
 	public float yCoeff;
 	
 	private float nameOffset;
-	
 	private float connectionBlobOffset;
+	private float arrowsOffset;
 	
 	public DPCSprite selectionHighlight;
 	
-	private Card card;
-	
 	private Vector2 posJoinTokenStart=new Vector2();
 	
-	public Player(String name_,DPCSprite connectionBlob) {
+	public Player(String name_) {
 		name=new TextLabel(name_,0,false,0,false);
+		name.bodyColor = ForegroundLayer.whiteColor;
+		name.fontFace = "coolvetica_rg.ttf";
 		name.maxOpacity=0.5f;
 		isTouched=false;
 		rotation=0;
@@ -73,13 +83,18 @@ public class Player extends DPCSprite {
 		isConnected=false;
 		hasBoughtIn=false;
 		joinToken.opacity=0;
-		if (connectionBlob!=null) {
-			copyConnectionBlobFrom(connectionBlob);
-		}
+		connectionSprite = new DPCSprite();
+		connectionSprite.setFrameAnimation(27,50,false,0);
+		connectedSprite = new DPCSprite();
+		connectedSprite.setFrameAnimation(26,40,true,0);
+		setConnectionAnimationState(CONN_ANIM_NONE);
+		connectionArrows = new DPCSprite();
+		connectionArrows.opacity=0;
 		selectionHighlight=new DPCSprite();
 		selectionHighlight.opacity=0;
 		selectionHighlight.setFadeInSpeed(10f);
 		selectionHighlight.setFadeOutSpeed(10f);
+		
 	}
 	
 	public void reset() {
@@ -123,19 +138,23 @@ public class Player extends DPCSprite {
 		radiusX=radiusX_;
 		radiusY=radiusY_;
 		betStack.scaleLabel();
-		name.setMaxDimensions((int)(radiusX_*0.6f),(int)(radiusY_*0.3f));
+		name.setMaxDimensions((int)(radiusX_*1.0f),(int)(radiusY_*0.6f));
 		name.setTextSizeToMax(WorldLayer.NAME_MEASURE);
-		joinToken.setDimensions((int)(radiusY*0.80f),(int)(radiusY*0.80f));
+		joinToken.setDimensions((int)(radiusY*0.50f*1.57f),(int)(radiusY*0.50f));
 		selectionHighlight.setDimensions((int)(radiusY*0.80f),(int)(radiusY*0.80f));
+		connectionSprite.setDimensions((int)(radiusY*1.0f*1.6f),(int)(radiusY*1.0f));
+		connectedSprite.setDimensions((int)(radiusY*1.0f*1.6f),(int)(radiusY*1.0f));
+		connectionArrows.setDimensions((int)(radiusY*0.25f*6.2f),(int)(radiusY*0.25f));
 	}
 	
 	public void setPosition(float x_,float y_,float rotation_) {
 		nameOffset=radiusY*0.2f;
+		arrowsOffset=radiusY*-0.80f;
 		setRotation(rotation_);
 		posJoinTokenStart.set((int)(x_+Math.sin(Math.toRadians(rotation_))*(Seat.radiusY+joinToken.radiusY+2)),
 				(int)(y_-Math.cos(Math.toRadians(rotation_))*(Seat.radiusY+joinToken.radiusY+2)));
 		joinToken.rotation=rotation_;
-		connectionBlobOffset=Seat.radiusY;
+		connectionBlobOffset=-1*(Seat.radiusY-connectionSprite.radiusY*0.7f);
 		setX(x_);
 		setY(y_);
 	}
@@ -153,7 +172,6 @@ public class Player extends DPCSprite {
 			winStack.scalePosition(scaleX_,scaleY_);
 		}
 		joinToken.scalePosition(scaleX_,scaleY_);
-		connectionBlob.scalePosition(scaleX_,scaleY_);
 	}
 	
 	@Override
@@ -165,9 +183,94 @@ public class Player extends DPCSprite {
 		super.animate(delta);
 		if (!isTouched) {
 			name.animate(delta);
-			connectionBlob.animate(delta);
+			
 		}
+		connectionSprite.animate(delta);
+		if (connectionAnimationState==CONN_ANIM_FORMING) {
+			if (!connectionSprite.frameAnimationRunning) {
+				if (active) {
+					setConnectionAnimationState(CONN_ANIM_ACTIVE);
+				} else {
+					setConnectionAnimationState(CONN_ANIM_STATIC);
+				}
+				if (arrowsShowing) {
+					connectionArrows.fadeIn();
+				} else {
+					connectionArrows.fadeOut();
+				}
+			}
+		}
+		connectedSprite.animate(delta);
+		connectionArrows.animate(delta);
 		selectionHighlight.animate(delta);
+	}
+	
+	private void setConnectionAnimationState(int state) {
+		this.connectionAnimationState=state;
+		if (state==CONN_ANIM_NONE) {
+			connectionSprite.opacity = 0;
+			connectionSprite.stopFrameAnimation(true);
+			connectedSprite.opacity = 0;
+			connectedSprite.stopFlashing();
+			connectedSprite.stopFrameAnimation(true);
+		} else if (state==CONN_ANIM_FORMING) {
+			connectedSprite.opacity = 0;
+			connectedSprite.stopFlashing();
+			connectedSprite.stopFrameAnimation(true);
+			connectionSprite.opacity = 1;
+			connectionSprite.startFrameAnimation();			
+		} else if (state==CONN_ANIM_ACTIVE) {
+			connectionSprite.opacity = 0;
+			connectionSprite.stopFrameAnimation(true);
+			connectedSprite.opacity = 1;
+			connectedSprite.stopFlashing();
+			connectedSprite.startFrameAnimation();
+		} else if (state==CONN_ANIM_STATIC) {
+			connectionSprite.opacity = 0;
+			connectionSprite.stopFrameAnimation(true);
+			connectedSprite.opacity = 1;
+			connectedSprite.stopFlashing();
+			connectedSprite.stopFrameAnimation(true);
+			connectionArrows.fadeOut();
+		}
+	}
+	
+	public void startAnimateConnection() {
+		setConnectionAnimationState(CONN_ANIM_FORMING);
+	}
+	
+	public void setActive(boolean active) {
+		this.active=active;
+		if (connectionAnimationState==CONN_ANIM_STATIC||
+				connectionAnimationState==CONN_ANIM_NONE||
+				connectionAnimationState==CONN_ANIM_ACTIVE) {
+			if (active) {
+				setConnectionAnimationState(CONN_ANIM_ACTIVE);
+			} else {
+				setConnectionAnimationState(CONN_ANIM_STATIC);
+			}
+		}
+	}
+	
+	public void setArrowsShowing(boolean showing) {
+		this.arrowsShowing=showing;
+		if (connectionAnimationState==CONN_ANIM_STATIC||
+				connectionAnimationState==CONN_ANIM_NONE||
+				connectionAnimationState==CONN_ANIM_ACTIVE) {
+			if (showing) {
+				connectionArrows.fadeIn();
+			} else {
+				connectionArrows.fadeOut();
+			}
+		}
+	}
+	
+	public void disconnectedFromGame() {
+		setConnectionAnimationState(CONN_ANIM_NONE);
+		name.fadeOut();
+		if (selected) {
+			setSelected(false);
+		}
 	}
 	
 	public void fadeOut(float delta) {
@@ -194,13 +297,17 @@ public class Player extends DPCSprite {
 	public void setX(float x) {
 		this.x=x;
 		name.x=x+xCoeff*nameOffset;
-		connectionBlob.x=x+xCoeff*connectionBlobOffset;
+		connectionSprite.x=x+xCoeff*connectionBlobOffset;
+		connectedSprite.x=x+xCoeff*connectionBlobOffset;
+		connectionArrows.x=x+xCoeff*arrowsOffset;
 		selectionHighlight.x=x;
 	}
 	public void setY(float y) {
 		this.y=y;
 		name.y=y+yCoeff*nameOffset;
-		connectionBlob.y=y+yCoeff*connectionBlobOffset;
+		connectionSprite.y=y+yCoeff*connectionBlobOffset;
+		connectedSprite.y=y+yCoeff*connectionBlobOffset;
+		connectionArrows.y=y+yCoeff*arrowsOffset;
 		selectionHighlight.y=y;
 	}
 	
@@ -257,9 +364,11 @@ public class Player extends DPCSprite {
 		betStack.setRotation(rotation_);
 		winStack.setRotation(rotation_);
 		joinToken.rotation=rotation_;
-		
-		xCoeff=Math.round(Math.sin(Math.toRadians(rotation_)));
-		yCoeff=Math.round(-1*Math.cos(Math.toRadians(rotation_)));
+		connectedSprite.rotation=rotation_+180;
+		connectionSprite.rotation=rotation_+180;
+		connectionArrows.rotation=rotation_;
+		xCoeff=Math.round(-1*Math.sin(Math.toRadians(rotation_)));
+		yCoeff=Math.round(Math.cos(Math.toRadians(rotation_)));
 		setX(x);
 		setY(y);
 	}
@@ -293,12 +402,6 @@ public class Player extends DPCSprite {
 		isSeated=true;
 	}
 	
-	public void copyConnectionBlobFrom(DPCSprite connectionBlob) {
-		this.connectionBlob=new DPCSprite(connectionBlob);
-		this.connectionBlob.fadeOut();
-		this.connectionBlob.opacity=0;
-	}
-	
 	public void doRxJoinCoin() {
 		state=STATE_RXING_JOIN_COIN;
 		joinToken.opacity=1;
@@ -329,30 +432,12 @@ public class Player extends DPCSprite {
 		buyinBuild=build;
 	}
 	
-	public void giveCard(Card card) {
-		card.setPosition(x-xCoeff*Seat.radiusY*0.5f,y-yCoeff*Seat.radiusY*0.25f);
-		this.card=card;
-	}
-	
-	public Card getCard() {
-		return card;
-	}
-	
 	public void setSelected(boolean selected) {
 		this.selected=selected;
 		if (selected) {
 			selectionHighlight.fadeIn();
 		} else {
 			selectionHighlight.fadeOut();
-		}
-	}
-
-	public void setConnectionShowing(boolean showing) {
-		connectionShowing=showing;
-		if (showing) {
-			connectionBlob.fadeIn();
-		} else {
-			connectionBlob.fadeOut();
 		}
 	}
 	

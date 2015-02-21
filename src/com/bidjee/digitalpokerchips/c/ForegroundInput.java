@@ -4,8 +4,6 @@ import java.util.Stack;
 
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
-import com.bidjee.digitalpokerchips.m.BuyinDialog;
-import com.bidjee.digitalpokerchips.m.ChipCase;
 import com.bidjee.util.Logger;
 
 public class ForegroundInput implements InputProcessor {
@@ -14,25 +12,25 @@ public class ForegroundInput implements InputProcessor {
 	
 	public static final String TOUCH_NOTHING = "TOUCH_NOTHING";
 	public static final String TOUCH_HOME = "TOUCH_HOME";
-	public static final String TOUCH_TABLES_NAME = "TOUCH_TABLES_NAME";
-	public static final String TOUCH_CHIP_VALUES = "TOUCH_CHIP_VALUES";
 	public static final String TOUCH_BUYIN = "TOUCH_BUYIN";
 	public static final String TOUCH_MANUAL_CONNECT = "TOUCH_MANUAL_CONNECT";
 	public static final String TOUCH_LEAVE_TABLE = "TOUCH_LEAVE_TABLE";
 	public static final String TOUCH_HELP_DIALOG = "TOUCH_HELP_DIALOG";
 	public static final String TOUCH_PLAYER_LOGIN = "TOUCH_PLAYER_LOGIN";
+	public static final String TOUCH_HOST_CREATE = "TOUCH_HOST_CREATE";
+	public static final String TOUCH_HOST_CHIPCASE = "TOUCH_HOST_CHIPCASE";
+	public static final String TOUCH_HOST_CHIP_SETUP = "TOUCH_HOST_CHIP_SETUP";
+	public static final String TOUCH_HOST_LOBBY = "TOUCH_HOST_LOBBY";
+	public static final String TOUCH_HOST_REARRANGE = "TOUCH_HOST_REARRANGE";
 	public static final String TOUCH_DESTROY_TABLE = "TOUCH_DESTROY_TABLE";
 	public static final String TOUCH_BOOT_DIALOG = "TOUCH_BOOT_DIALOG";
 	public static final String TOUCH_LOAD_DIALOG = "TOUCH_LOAD_DIALOG";
 	public static final String TOUCH_TUTORIAL_TABLE_NAME = "TOUCH_TUTORIAL_TABLE_NAME";
 	public static final String TOUCH_PLAYER = "TOUCH_PLAYER";
-	public static final String TOUCH_TABLE_STATUS = "TOUCH_TABLE_STATUS";
-	public static final String TOUCH_TUTORIAL_ARRANGEMENT = "TOUCH_TUTORIAL_ARRANGEMENT";
-	public static final String TOUCH_LOBBY = "TOUCH_LOBBY";
+	public static final String TOUCH_HOST = "TOUCH_HOST";
 	public static final String TOUCH_LOBBY_LOADED = "TOUCH_LOBBY_LOADED";
 	public static final String TOUCH_NO_WIFI = "TOUCH_NO_WIFI";
 	public static final String TOUCH_TABLE_GAMEPLAY = "TOUCH_TABLE_GAMEPLAY";
-	public static final String TOUCH_AUTOSAVE_DIALOG = "TOUCH_AUTOSAVE_DIALOG";
 	
 	public static final String TYPING_NONE = "TYPING_NONE";
 	public static final String TYPING_MANUAL_CONNECT = "TYPING_MANUAL_CONNECT";
@@ -71,6 +69,15 @@ public class ForegroundInput implements InputProcessor {
 			} else if ((int)(character)!=0) {
 				mFL.playerLoginDialog.keyTyped(""+character);
 			}
+		} else if (getLastTouchFocus().equals(TOUCH_HOST_CREATE)) {
+			handled=true;
+			if (character=='\b') {
+				mFL.hostNameDialog.backspace();
+			} else if (character=='\n') {
+				mFL.hostNameDialog.enterTyped();
+			} else if ((int)(character)!=0) {
+				mFL.hostNameDialog.keyTyped(""+character);
+			}
 		}
 		return handled;
 	}
@@ -95,19 +102,23 @@ public class ForegroundInput implements InputProcessor {
 			} else if (getLastTouchFocus().equals(TOUCH_HELP_DIALOG)) {
 				mFL.game.mWL.helpDone();
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
-				mFL.game.mWL.thisPlayer.playerLoginDone(false);
+				mFL.game.mWL.thisPlayer.playerLoginCancel();
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_CREATE)) {
+				mFL.game.mWL.table.hostCreateCancel();
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_CHIPCASE)) {
+				mFL.game.mWL.table.hostChipCaseBack();
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_CHIP_SETUP)) {
+				mFL.game.mWL.table.hostChipSetupBack();
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_LOBBY)) {
+				mFL.game.mWL.table.hostLobbyBack();
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_REARRANGE)) {
+				mFL.game.mWL.table.hostRearrangeDone();
 			} else if (getLastTouchFocus().equals(TOUCH_LEAVE_TABLE)) {
 				mFL.game.mWL.thisPlayer.leaveDialogDone(false);
 			} else if (getLastTouchFocus().equals(TOUCH_DESTROY_TABLE)) {
 				mFL.game.mWL.table.destroyDialogDone(false);
-			} else if (getLastTouchFocus().equals(TOUCH_AUTOSAVE_DIALOG)) {
-				mFL.game.mWL.table.autosaveDialogDone();
-			} else if (getLastTouchFocus().equals(TOUCH_TABLE_STATUS)) {
-				mFL.tableStatusMenu.close();
 			} else if (getLastTouchFocus().equals(TOUCH_LOAD_DIALOG)) {
 				mFL.closeLoadDialog();
-			} else if (getLastTouchFocus().equals(TOUCH_TUTORIAL_ARRANGEMENT)) {
-				mFL.stopTutorialArrangement();
 			} else if (getLastTouchFocus().equals(TOUCH_BOOT_DIALOG)) {
 				mFL.game.mWL.table.closeBootDialog();
 			} else {
@@ -155,12 +166,6 @@ public class ForegroundInput implements InputProcessor {
 					handled_=true;
 					mFL.homeUIAnimation.joinButton.setIsTouched(true);
 				}
-			} else if (getLastTouchFocus().equals(TOUCH_TABLES_NAME)) {
-				if (mFL.enterTableNameDoneButton.getTouchable()&&
-						mFL.enterTableNameDoneButton.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.enterTableNameDoneButton.setIsTouched(true);
-				}
 			} else if (getLastTouchFocus().equals(TOUCH_LOAD_DIALOG)) {
 				handled_=true;
 				if (mFL.dialogWindow.pointContained(touchX,touchY)) {
@@ -182,63 +187,108 @@ public class ForegroundInput implements InputProcessor {
 				} else {
 					mFL.loadDialogDone(false);
 				}
-			}  else if (getLastTouchFocus().equals(TOUCH_CHIP_VALUES)) {
-
-				if (mFL.divisibilityDialog.opacity!=0) {
-					handled_=true;
-					mFL.divisibilityDialog.hide();
-				}
-				if (mFL.valueDownArrows!=null) {
-					for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-						if (mFL.valueDownArrows[i].getTouchable()&&mFL.valueDownArrows[i].pointContained(touchX, touchY)) {
-							handled_=true;
-							mFL.valueDownArrows[i].setIsTouched(true);
-						}
-					}
-				}
-				if (mFL.valueUpArrows!=null) {
-					for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-						if (mFL.valueUpArrows[i].getTouchable()&&mFL.valueUpArrows[i].pointContained(touchX, touchY)) {
-							handled_=true;
-							mFL.valueUpArrows[i].setIsTouched(true);
-						}
-					}
-				}
-				if (mFL.setValuesOkButton.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.setValuesOkButton.setIsTouched(true);
-				}
 			} else if (getLastTouchFocus().equals(TOUCH_BUYIN)) {
 				handled_=true;
-				if (mFL.buyinDialog.closeButton.getTouchable()&&
-						mFL.buyinDialog.closeButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.closeButton.setIsTouched(true);
-				} else if (mFL.buyinDialog.minusButton.getTouchable()&&
-						mFL.buyinDialog.minusButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.minusButton.setIsTouched(true);
-				} else if (mFL.buyinDialog.plusButton.getTouchable()&&
-						mFL.buyinDialog.plusButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.plusButton.setIsTouched(true);
-				} else if (mFL.buyinDialog.cancelButton.getTouchable()&&
-						mFL.buyinDialog.cancelButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.cancelButton.setIsTouched(true);
-				} else if (mFL.buyinDialog.okayButton.getTouchable()&&
-						mFL.buyinDialog.okayButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.okayButton.setIsTouched(true);
+				if (mFL.playerBuyinDialog.minusButton.getTouchable()&&
+						mFL.playerBuyinDialog.minusButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.minusButton.setIsTouched(true);
+				} else if (mFL.playerBuyinDialog.plusButton.getTouchable()&&
+						mFL.playerBuyinDialog.plusButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.plusButton.setIsTouched(true);
+				} else if (mFL.playerBuyinDialog.cancelButton.getTouchable()&&
+						mFL.playerBuyinDialog.cancelButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.cancelButton.setIsTouched(true);
+				} else if (mFL.playerBuyinDialog.okayButton.getTouchable()&&
+						mFL.playerBuyinDialog.okayButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.okayButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER_LOGIN)) {
 				handled_=true;
-				if (mFL.playerLoginDialog.closeButton.getTouchable()&&
-						mFL.playerLoginDialog.closeButton.pointContained(touchX, touchY)) {
-					mFL.playerLoginDialog.closeButton.setIsTouched(true);
-				} else if (mFL.playerLoginDialog.nameField.pointContained(touchX, touchY)) {
+				if (mFL.playerLoginDialog.nameField.pointContained(touchX, touchY)) {
 					mFL.playerLoginDialog.setFieldFocus(mFL.playerLoginDialog.nameField);
-				} else if (mFL.playerLoginDialog.guestOKButton.getTouchable()&&
-						mFL.playerLoginDialog.guestOKButton.pointContained(touchX, touchY)) {
-					mFL.playerLoginDialog.guestOKButton.setIsTouched(true);
 				} else if (mFL.playerLoginDialog.facebookButton.getTouchable()&&
 						mFL.playerLoginDialog.facebookButton.pointContained(touchX, touchY)) {
 					mFL.playerLoginDialog.facebookButton.setIsTouched(true);
+				} else if (mFL.playerLoginDialog.backButton.getTouchable()&&
+						mFL.playerLoginDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.backButton.setIsTouched(true);
+				} else if (mFL.playerLoginDialog.okButton.getTouchable()&&
+						mFL.playerLoginDialog.okButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.okButton.setIsTouched(true);
+				}
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_CREATE)) {
+				handled_=true;
+				if (mFL.hostNameDialog.nameField.pointContained(touchX, touchY)) {
+					mFL.hostNameDialog.setFieldFocus(mFL.hostNameDialog.nameField);
+				} else if (mFL.hostNameDialog.backButton.getTouchable()&&
+						mFL.hostNameDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostNameDialog.backButton.setIsTouched(true);
+				} else if (mFL.hostNameDialog.okButton.getTouchable()&&
+						mFL.hostNameDialog.okButton.pointContained(touchX, touchY)) {
+					mFL.hostNameDialog.okButton.setIsTouched(true);
+				}
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_CHIPCASE)) {
+				handled_=true;
+				if (mFL.hostChipCaseDialog.standardBackground.getTouchable()&&
+						mFL.hostChipCaseDialog.standardBackground.pointContained(touchX, touchY)) {
+					mFL.hostChipCaseDialog.standardBackground.setIsTouched(true);
+				} else if (mFL.hostChipCaseDialog.customBackground.getTouchable()&&
+						mFL.hostChipCaseDialog.customBackground.pointContained(touchX, touchY)) {
+					mFL.hostChipCaseDialog.customBackground.setIsTouched(true);
+				} else if (mFL.hostChipCaseDialog.backButton.getTouchable()&&
+						mFL.hostChipCaseDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostChipCaseDialog.backButton.setIsTouched(true);
+				}
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_CHIP_SETUP)) {
+				handled_=true;
+				if (mFL.hostChipSetupDialog.backButton.getTouchable()&&
+						mFL.hostChipSetupDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.backButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.okayButton.getTouchable()&&
+						mFL.hostChipSetupDialog.okayButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.okayButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.minusAButton.getTouchable()&&
+						mFL.hostChipSetupDialog.minusAButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusAButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.plusAButton.getTouchable()&&
+						mFL.hostChipSetupDialog.plusAButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusAButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.minusBButton.getTouchable()&&
+						mFL.hostChipSetupDialog.minusBButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusBButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.plusBButton.getTouchable()&&
+						mFL.hostChipSetupDialog.plusBButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusBButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.minusCButton.getTouchable()&&
+						mFL.hostChipSetupDialog.minusCButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusCButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.plusCButton.getTouchable()&&
+						mFL.hostChipSetupDialog.plusCButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusCButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.minusBuyinButton.getTouchable()&&
+						mFL.hostChipSetupDialog.minusBuyinButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusBuyinButton.setIsTouched(true);
+				} else if (mFL.hostChipSetupDialog.plusBuyinButton.getTouchable()&&
+						mFL.hostChipSetupDialog.plusBuyinButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusBuyinButton.setIsTouched(true);
+				}
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_LOBBY)) {
+				
+				if (mFL.hostLobbyDialog.backButton.getTouchable()&&
+						mFL.hostLobbyDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostLobbyDialog.backButton.setIsTouched(true);
+					handled_=true;
+				} else if (mFL.hostLobbyDialog.startButton.getTouchable()&&
+						mFL.hostLobbyDialog.startButton.pointContained(touchX, touchY)) {
+					mFL.hostLobbyDialog.startButton.setIsTouched(true);
+					handled_=true;
+				}
+			} else if (getLastTouchFocus().equals(TOUCH_HOST_REARRANGE)) {
+				
+				if (mFL.hostRearrangeDialog.doneButton.getTouchable()&&
+						mFL.hostRearrangeDialog.doneButton.pointContained(touchX, touchY)) {
+					mFL.hostRearrangeDialog.doneButton.setIsTouched(true);
+					handled_=true;
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_MANUAL_CONNECT)) {
 				handled_=true;
@@ -257,12 +307,12 @@ public class ForegroundInput implements InputProcessor {
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_LEAVE_TABLE)) {
 				handled_=true;
-				if (mFL.leaveTableDialog.okButton.getTouchable()&&
-						mFL.leaveTableDialog.okButton.pointContained(touchX, touchY)) {
-					mFL.leaveTableDialog.okButton.setIsTouched(true);
-				} else if (mFL.leaveTableDialog.cancelButton.getTouchable()&&
-						mFL.leaveTableDialog.cancelButton.pointContained(touchX, touchY)) {
-					mFL.leaveTableDialog.cancelButton.setIsTouched(true);
+				if (mFL.playerLeaveDialog.cancelButton.getTouchable()&&
+						mFL.playerLeaveDialog.cancelButton.pointContained(touchX, touchY)) {
+					mFL.playerLeaveDialog.cancelButton.setIsTouched(true);
+				} else if (mFL.playerLeaveDialog.leaveButton.getTouchable()&&
+						mFL.playerLeaveDialog.leaveButton.pointContained(touchX, touchY)) {
+					mFL.playerLeaveDialog.leaveButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_DESTROY_TABLE)) {
 				handled_=true;
@@ -273,26 +323,8 @@ public class ForegroundInput implements InputProcessor {
 						mFL.destroyTableDialog.cancelButton.pointContained(touchX, touchY)) {
 					mFL.destroyTableDialog.cancelButton.setIsTouched(true);
 				}
-			} else if (getLastTouchFocus().equals(TOUCH_AUTOSAVE_DIALOG)) {
-				handled_=true;
-				if (mFL.autosaveDialog.okButton.getTouchable()&&
-						mFL.autosaveDialog.okButton.pointContained(touchX, touchY)) {
-					mFL.autosaveDialog.okButton.setIsTouched(true);
-				} else {
-					for (int i=0;i<mFL.autosaveDialog.saveSlots.length;i++) {
-						if (mFL.autosaveDialog.saveSlots[i].getTouchable()&&
-								mFL.autosaveDialog.saveSlots[i].pointContained(touchX, touchY)) {
-							mFL.game.mWL.table.saveSlotSelected(i+1);
-							break;
-						}
-					}
-				}
 			} else if (getLastTouchFocus().equals(TOUCH_PLAYER)) {
-				if (mFL.tableStatusMenu.handle.getTouchable()&&
-						mFL.tableStatusMenu.handle.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.tableStatusMenu.handle.setIsTouched(true);
-				} else if (mFL.foldButton.getTouchable()&&
+				if (mFL.foldButton.getTouchable()&&
 						mFL.foldButton.pointContained(touchX, touchY)) {
 						handled_=true;
 						mFL.foldButton.setIsTouched(true);
@@ -304,35 +336,6 @@ public class ForegroundInput implements InputProcessor {
 						mFL.playerDashboard.bellButton.pointContained(touchX, touchY)) {
 					mFL.playerDashboard.bellButton.setIsTouched(true);
 					handled_=true;
-				}
-			} else if (getLastTouchFocus().equals(TOUCH_TABLE_STATUS)) {
-				if (mFL.tableStatusMenu.pointContained(touchX,touchY)||mFL.tableStatusMenu.handle.pointContained(touchX,touchY)) {
-					handled_=true;
-					if (mFL.tableStatusMenu.handle.getTouchable()&&
-							mFL.tableStatusMenu.handle.pointContained(touchX, touchY)) {
-						mFL.tableStatusMenu.handle.setIsTouched(true);
-					} else if (mFL.tableStatusMenu.leaveButton.getTouchable()&&
-							mFL.tableStatusMenu.leaveButton.pointContained(touchX,touchY)) {
-						mFL.tableStatusMenu.leaveButton.setIsTouched(true);
-					}
-					if (mFL.tableStatusMenu.bellButton.getTouchable()&&
-							mFL.tableStatusMenu.bellButton.pointContained(touchX,touchY)) {
-						mFL.tableStatusMenu.bellButton.setIsTouched(true);
-					}
-				} else {
-					handled_=true;
-					mFL.tableStatusMenu.close();
-				}
-			} else if (getLastTouchFocus().equals(TOUCH_TUTORIAL_ARRANGEMENT)) {
-				if (mFL.tutorialArrangement.isReadyToStop()) {
-					mFL.stopTutorialArrangement();
-				} else {
-					handled_=true;
-				}
-			} else if (getLastTouchFocus().equals(TOUCH_LOBBY)) {
-				if (mFL.gotoGameButton.pointContained(touchX, touchY)) {
-					handled_=true;
-					mFL.gotoGameButton.setIsTouched(true);
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_NO_WIFI)) {
 				if (mFL.wifiButton.getTouchable()&&mFL.wifiButton.pointContained(touchX, touchY)) {
@@ -355,6 +358,18 @@ public class ForegroundInput implements InputProcessor {
 					mFL.game.mWL.table.closeBootDialog();
 				}
 			} else if (getLastTouchFocus().equals(TOUCH_TABLE_GAMEPLAY)) {
+				if (mFL.hostHelpButton.getTouchable()&&mFL.hostHelpButton.pointContained(touchX, touchY)) {
+					handled_=true;
+					mFL.hostHelpButton.setIsTouched(true);
+				}
+				if (mFL.hostUndoButton.getTouchable()&&mFL.hostUndoButton.pointContained(touchX, touchY)) {
+					handled_=true;
+					mFL.hostUndoButton.setIsTouched(true);
+				}
+				if (mFL.hostExitButton.getTouchable()&&mFL.hostExitButton.pointContained(touchX, touchY)) {
+					handled_=true;
+					mFL.hostExitButton.setIsTouched(true);
+				}
 				if (mFL.potArrowLeft.getTouchable()&&mFL.potArrowLeft.pointContained(touchX, touchY)) {
 					handled_=true;
 					mFL.potArrowLeft.setIsTouched(true);
@@ -395,7 +410,7 @@ public class ForegroundInput implements InputProcessor {
 				mFL.homeUIAnimation.logoTapped();
 			}
 			if (mFL.homeUIAnimation.hostButton.getIsTouched()) {
-				handled_=true;
+				handled_=false;
 				mFL.homeUIAnimation.hostButton.setIsTouched(false);
 				mFL.game.mWL.hostSelected();
 			}
@@ -404,44 +419,129 @@ public class ForegroundInput implements InputProcessor {
 				mFL.homeUIAnimation.joinButton.setIsTouched(false);
 				mFL.game.mWL.joinSelected();
 			}
-			if (mFL.playerLoginDialog.guestOKButton.getIsTouched()) {
-				handled_=true;
-				mFL.playerLoginDialog.guestOKButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.playerLoginDone(mFL.playerLoginDialog.nameField.getText(),null);
-			}
 			if (mFL.playerLoginDialog.facebookButton.getIsTouched()) {
 				handled_=true;
 				mFL.playerLoginDialog.facebookButton.setIsTouched(false);
 				mFL.game.performFacebookClick();
 			}
-			if (mFL.playerLoginDialog.closeButton.getIsTouched()) {
+			if (mFL.playerLoginDialog.backButton.getIsTouched()) {
 				handled_=true;
-				mFL.playerLoginDialog.closeButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.playerLoginDone(false);
+				mFL.playerLoginDialog.backButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.playerLoginCancel();
 			}
-			if (mFL.buyinDialog.closeButton.getIsTouched()) {
+			if (mFL.playerLoginDialog.okButton.getIsTouched()) {
 				handled_=true;
-				mFL.buyinDialog.closeButton.setIsTouched(false);
+				mFL.playerLoginDialog.okButton.setIsTouched(false);
+				mFL.game.mWL.thisPlayer.playerLoginComplete(mFL.playerLoginDialog.nameField.getText(), null);
+			}
+			if (mFL.hostNameDialog.okButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostNameDialog.okButton.setIsTouched(false);
+				mFL.game.mWL.table.hostCreateComplete(mFL.hostNameDialog.nameField.getText());
+			}
+			if (mFL.hostNameDialog.backButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostNameDialog.backButton.setIsTouched(false);
+				mFL.game.mWL.table.hostCreateCancel();
+			}
+			if (mFL.hostChipCaseDialog.standardBackground.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipCaseDialog.standardBackground.setIsTouched(false);
+				mFL.game.mWL.table.standardChipCaseSelected();
+			}
+			if (mFL.hostChipCaseDialog.customBackground.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipCaseDialog.customBackground.setIsTouched(false);
+				mFL.game.mWL.table.customChipCaseSelected();
+			}
+			if (mFL.hostChipCaseDialog.backButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipCaseDialog.backButton.setIsTouched(false);
+				mFL.game.mWL.table.hostChipCaseBack();
+			}
+			if (mFL.hostChipSetupDialog.backButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.backButton.setIsTouched(false);
+				mFL.game.mWL.table.hostChipSetupBack();
+			}
+			if (mFL.hostChipSetupDialog.okayButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.okayButton.setIsTouched(false);
+				mFL.game.mWL.table.hostChipSetupDone();
+			}
+			if (mFL.hostChipSetupDialog.minusAButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.minusAButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.minusA();
+			}
+			if (mFL.hostChipSetupDialog.plusAButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.plusAButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.plusA();
+			}
+			if (mFL.hostChipSetupDialog.minusBButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.minusBButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.minusB();
+			}
+			if (mFL.hostChipSetupDialog.plusBButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.plusBButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.plusB();
+			}
+			if (mFL.hostChipSetupDialog.minusCButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.minusCButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.minusC();
+			}
+			if (mFL.hostChipSetupDialog.plusCButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.plusCButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.plusC();
+			}
+			if (mFL.hostChipSetupDialog.minusBuyinButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.minusBuyinButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.minusBuyin();
+			}
+			if (mFL.hostChipSetupDialog.plusBuyinButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostChipSetupDialog.plusBuyinButton.setIsTouched(false);
+				mFL.hostChipSetupDialog.plusBuyin();
+			}
+			if (mFL.hostLobbyDialog.backButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostLobbyDialog.backButton.setIsTouched(false);
+				mFL.game.mWL.table.hostLobbyBack();
+			}
+			if (mFL.hostLobbyDialog.startButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostLobbyDialog.startButton.setIsTouched(false);
+				mFL.game.mWL.table.hostLobbyStart();
+			}
+			if (mFL.hostRearrangeDialog.doneButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostRearrangeDialog.doneButton.setIsTouched(false);
+				mFL.game.mWL.table.hostRearrangeDone();
+			}
+			if (mFL.playerBuyinDialog.minusButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerBuyinDialog.minusButton.setIsTouched(false);
+				mFL.playerBuyinDialog.decreaseAmount();
+			}
+			if (mFL.playerBuyinDialog.plusButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerBuyinDialog.plusButton.setIsTouched(false);
+				mFL.playerBuyinDialog.increaseAmount();
+			}
+			if (mFL.playerBuyinDialog.cancelButton.getIsTouched()) {
+				handled_=true;
+				mFL.playerBuyinDialog.cancelButton.setIsTouched(false);
 				mFL.game.mWL.thisPlayer.buyinDialogDone(false);
 			}
-			if (mFL.buyinDialog.minusButton.getIsTouched()) {
+			if (mFL.playerBuyinDialog.okayButton.getIsTouched()) {
 				handled_=true;
-				mFL.buyinDialog.minusButton.setIsTouched(false);
-				mFL.buyinDialog.decreaseAmount();
-			}
-			if (mFL.buyinDialog.plusButton.getIsTouched()) {
-				handled_=true;
-				mFL.buyinDialog.plusButton.setIsTouched(false);
-				mFL.buyinDialog.increaseAmount();
-			}
-			if (mFL.buyinDialog.cancelButton.getIsTouched()) {
-				handled_=true;
-				mFL.buyinDialog.cancelButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.buyinDialogDone(false);
-			}
-			if (mFL.buyinDialog.okayButton.getIsTouched()) {
-				handled_=true;
-				mFL.buyinDialog.okayButton.setIsTouched(false);
+				mFL.playerBuyinDialog.okayButton.setIsTouched(false);
 				mFL.game.mWL.thisPlayer.buyinDialogDone(true);
 			}
 			if (mFL.playerDashboard.backButton.getIsTouched()) {
@@ -459,34 +559,6 @@ public class ForegroundInput implements InputProcessor {
 				mFL.wifiButton.setIsTouched(false);
 				mFL.game.launchSettings();
 			}
-			if (mFL.enterTableNameDoneButton.getIsTouched()) {
-				handled_=true;
-				mFL.enterTableNameDoneButton.setIsTouched(false);
-				mFL.game.mWL.table.tableNameDone();
-			}			
-			if (mFL.setValuesOkButton.getIsTouched()) {
-				handled_=true;
-				mFL.setValuesOkButton.setIsTouched(false);
-				mFL.game.mWL.table.setValuesDone();
-			}
-			if (mFL.valueDownArrows!=null) {
-				for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-					if (mFL.valueDownArrows[i].getIsTouched()) {
-						handled_=true;
-						mFL.valueDownArrows[i].setIsTouched(false);
-						mFL.game.mWL.chipCase.valueDown(i);
-					}
-				}
-			}
-			if (mFL.valueUpArrows!=null) {
-				for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-					if (mFL.valueUpArrows[i].getIsTouched()) {
-						handled_=true;
-						mFL.valueUpArrows[i].setIsTouched(false);
-						mFL.game.mWL.chipCase.valueUp(i);
-					}
-				}
-			}
 			if (mFL.manualConnectDialog.okButton.getIsTouched()) {
 				handled_=true;
 				mFL.manualConnectDialog.okButton.setIsTouched(false);
@@ -497,14 +569,14 @@ public class ForegroundInput implements InputProcessor {
 				mFL.manualConnectDialog.cancelButton.setIsTouched(false);
 				mFL.game.mWL.thisPlayer.manualConnectDialogDone(false);
 			}
-			if (mFL.leaveTableDialog.okButton.getIsTouched()) {
+			if (mFL.playerLeaveDialog.leaveButton.getIsTouched()) {
 				handled_=true;
-				mFL.leaveTableDialog.okButton.setIsTouched(false);
+				mFL.playerLeaveDialog.leaveButton.setIsTouched(false);
 				mFL.game.mWL.thisPlayer.leaveDialogDone(true);
 			}
-			if (mFL.leaveTableDialog.cancelButton.getIsTouched()) {
+			if (mFL.playerLeaveDialog.cancelButton.getIsTouched()) {
 				handled_=true;
-				mFL.leaveTableDialog.cancelButton.setIsTouched(false);
+				mFL.playerLeaveDialog.cancelButton.setIsTouched(false);
 				mFL.game.mWL.thisPlayer.leaveDialogDone(false);
 			}
 			if (mFL.destroyTableDialog.okButton.getIsTouched()) {
@@ -527,11 +599,6 @@ public class ForegroundInput implements InputProcessor {
 				mFL.bootDialog.sitOutButton.setIsTouched(false);
 				mFL.game.mWL.table.sitOutButtonClicked();
 			}
-			if (mFL.autosaveDialog.okButton.getIsTouched()) {
-				handled_=true;
-				mFL.autosaveDialog.okButton.setIsTouched(false);
-				mFL.game.mWL.table.autosaveDialogDone();
-			}
 			if (mFL.loadDialog.okButton.getIsTouched()) {
 				handled_=true;
 				mFL.loadDialog.okButton.setIsTouched(false);
@@ -542,30 +609,25 @@ public class ForegroundInput implements InputProcessor {
 				mFL.loadDialog.cancelButton.setIsTouched(false);
 				mFL.loadDialogDone(false);
 			}
-			if (mFL.tableStatusMenu.handle.getIsTouched()) {
-				handled_=true;
-				mFL.tableStatusMenu.handle.setIsTouched(false);
-				mFL.tableStatusMenu.handleDropped();
-			}
-			if (mFL.tableStatusMenu.leaveButton.getIsTouched()) {
-				handled_=true;
-				mFL.tableStatusMenu.leaveButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.leaveButtonPressed();
-			}
-			if (mFL.tableStatusMenu.bellButton.getIsTouched()) {
-				handled_=true;
-				mFL.tableStatusMenu.bellButton.setIsTouched(false);
-				mFL.game.mWL.thisPlayer.bellButtonPressed();
-			}
 			if (mFL.foldButton.getIsTouched()) {
 				handled_=true;
 				mFL.foldButton.setIsTouched(false);
 				mFL.game.mWL.thisPlayer.doFold();
 			}
-			if (mFL.gotoGameButton.getIsTouched()) {
+			if (mFL.hostHelpButton.getIsTouched()) {
 				handled_=true;
-				mFL.gotoGameButton.setIsTouched(false);
-				mFL.game.mWL.table.playButtonClicked();
+				mFL.hostHelpButton.setIsTouched(false);
+				//mFL.game.mWL.table.doHelp();
+			}
+			if (mFL.hostUndoButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostUndoButton.setIsTouched(false);
+				//mFL.game.mWL.table.doUndo();
+			}
+			if (mFL.hostExitButton.getIsTouched()) {
+				handled_=true;
+				mFL.hostExitButton.setIsTouched(false);
+				mFL.game.mWL.table.doDestroyDialog();
 			}
 			if (mFL.potArrowLeft.getIsTouched()) {
 				handled_=true;
@@ -632,52 +694,154 @@ public class ForegroundInput implements InputProcessor {
 					mFL.homeUIAnimation.joinButton.setIsTouched(false);
 				}
 			}
-			if (mFL.playerLoginDialog.guestOKButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.playerLoginDialog.guestOKButton.pointContained(touchX, touchY)) {
-					mFL.playerLoginDialog.guestOKButton.setIsTouched(false);
-				}
-			}
 			if (mFL.playerLoginDialog.facebookButton.getIsTouched()) {
 				handled_=true;
 				if (!mFL.playerLoginDialog.facebookButton.pointContained(touchX, touchY)) {
 					mFL.playerLoginDialog.facebookButton.setIsTouched(false);
 				}
 			}
-			if (mFL.playerLoginDialog.closeButton.getIsTouched()) {
+			if (mFL.playerLoginDialog.backButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.playerLoginDialog.closeButton.pointContained(touchX, touchY)) {
-					mFL.playerLoginDialog.closeButton.setIsTouched(false);
+				if (!mFL.playerLoginDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.backButton.setIsTouched(false);
 				}
 			}
-			if (mFL.buyinDialog.closeButton.getIsTouched()) {
+			if (mFL.playerLoginDialog.okButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.buyinDialog.closeButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.closeButton.setIsTouched(false);
+				if (!mFL.playerLoginDialog.okButton.pointContained(touchX, touchY)) {
+					mFL.playerLoginDialog.okButton.setIsTouched(false);
 				}
 			}
-			if (mFL.buyinDialog.minusButton.getIsTouched()) {
+			if (mFL.hostNameDialog.backButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.buyinDialog.minusButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.minusButton.setIsTouched(false);
+				if (!mFL.hostNameDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostNameDialog.backButton.setIsTouched(false);
 				}
 			}
-			if (mFL.buyinDialog.plusButton.getIsTouched()) {
+			if (mFL.hostNameDialog.okButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.buyinDialog.plusButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.plusButton.setIsTouched(false);
+				if (!mFL.hostNameDialog.okButton.pointContained(touchX, touchY)) {
+					mFL.hostNameDialog.okButton.setIsTouched(false);
 				}
 			}
-			if (mFL.buyinDialog.cancelButton.getIsTouched()) {
+			if (mFL.hostChipCaseDialog.standardBackground.getIsTouched()) {
 				handled_=true;
-				if (!mFL.buyinDialog.cancelButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.cancelButton.setIsTouched(false);
+				if (!mFL.hostChipCaseDialog.standardBackground.pointContained(touchX, touchY)) {
+					mFL.hostChipCaseDialog.standardBackground.setIsTouched(false);
 				}
 			}
-			if (mFL.buyinDialog.okayButton.getIsTouched()) {
+			if (mFL.hostChipCaseDialog.customBackground.getIsTouched()) {
 				handled_=true;
-				if (!mFL.buyinDialog.okayButton.pointContained(touchX, touchY)) {
-					mFL.buyinDialog.okayButton.setIsTouched(false);
+				if (!mFL.hostChipCaseDialog.customBackground.pointContained(touchX, touchY)) {
+					mFL.hostChipCaseDialog.customBackground.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipCaseDialog.backButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipCaseDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostChipCaseDialog.backButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.okayButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.okayButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.okayButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.backButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.backButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.minusAButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.minusAButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusAButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.plusAButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.plusAButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusAButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.minusBButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.minusBButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusBButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.plusBButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.plusBButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusBButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.minusCButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.minusCButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusCButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.plusCButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.plusCButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusCButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.minusBuyinButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.minusBuyinButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.minusBuyinButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostChipSetupDialog.plusBuyinButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostChipSetupDialog.plusBuyinButton.pointContained(touchX, touchY)) {
+					mFL.hostChipSetupDialog.plusBuyinButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostLobbyDialog.backButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostLobbyDialog.backButton.pointContained(touchX, touchY)) {
+					mFL.hostLobbyDialog.backButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostLobbyDialog.startButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostLobbyDialog.startButton.pointContained(touchX, touchY)) {
+					mFL.hostLobbyDialog.startButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostRearrangeDialog.doneButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostRearrangeDialog.doneButton.pointContained(touchX, touchY)) {
+					mFL.hostRearrangeDialog.doneButton.setIsTouched(false);
+				}
+			}
+			if (mFL.playerBuyinDialog.minusButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.playerBuyinDialog.minusButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.minusButton.setIsTouched(false);
+				}
+			}
+			if (mFL.playerBuyinDialog.plusButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.playerBuyinDialog.plusButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.plusButton.setIsTouched(false);
+				}
+			}
+			if (mFL.playerBuyinDialog.cancelButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.playerBuyinDialog.cancelButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.cancelButton.setIsTouched(false);
+				}
+			}
+			if (mFL.playerBuyinDialog.okayButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.playerBuyinDialog.okayButton.pointContained(touchX, touchY)) {
+					mFL.playerBuyinDialog.okayButton.setIsTouched(false);
 				}
 			}
 			if (mFL.playerDashboard.backButton.getIsTouched()) {
@@ -692,44 +856,6 @@ public class ForegroundInput implements InputProcessor {
 					mFL.playerDashboard.bellButton.setIsTouched(false);
 				}
 			}
-			if (mFL.enterNameDoneButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.enterNameDoneButton.pointContained(touchX, touchY)) {
-					mFL.enterNameDoneButton.setIsTouched(false);
-				}
-			}
-			if (mFL.enterTableNameDoneButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.enterTableNameDoneButton.pointContained(touchX, touchY)) {
-					mFL.enterTableNameDoneButton.setIsTouched(false);
-				}
-			}
-			if (mFL.setValuesOkButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.setValuesOkButton.pointContained(touchX, touchY)) {
-					mFL.setValuesOkButton.setIsTouched(false);
-				}
-			}
-			if (mFL.valueDownArrows!=null) {
-				for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-					if (mFL.valueDownArrows[i].getIsTouched()) {
-						handled_=true;
-						if (!mFL.valueDownArrows[i].pointContained(touchX, touchY)) {
-							mFL.valueDownArrows[i].setIsTouched(false);
-						}
-					}
-				}
-			}
-			if (mFL.valueUpArrows!=null) {
-				for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-					if (mFL.valueUpArrows[i].getIsTouched()) {
-						handled_=true;
-						if (!mFL.valueUpArrows[i].pointContained(touchX, touchY)) {
-							mFL.valueUpArrows[i].setIsTouched(false);
-						}
-					}
-				}
-			}
 			if (mFL.manualConnectDialog.okButton.getIsTouched()) {
 				handled_=true;
 				if (!mFL.manualConnectDialog.okButton.pointContained(touchX, touchY)) {
@@ -742,16 +868,16 @@ public class ForegroundInput implements InputProcessor {
 					mFL.manualConnectDialog.cancelButton.setIsTouched(false);
 				}
 			}
-			if (mFL.leaveTableDialog.okButton.getIsTouched()) {
+			if (mFL.playerLeaveDialog.leaveButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.leaveTableDialog.okButton.pointContained(touchX, touchY)) {
-					mFL.leaveTableDialog.okButton.setIsTouched(false);
+				if (!mFL.playerLeaveDialog.leaveButton.pointContained(touchX, touchY)) {
+					mFL.playerLeaveDialog.leaveButton.setIsTouched(false);
 				}
 			}
-			if (mFL.leaveTableDialog.cancelButton.getIsTouched()) {
+			if (mFL.playerLeaveDialog.cancelButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.leaveTableDialog.cancelButton.pointContained(touchX, touchY)) {
-					mFL.leaveTableDialog.cancelButton.setIsTouched(false);
+				if (!mFL.playerLeaveDialog.cancelButton.pointContained(touchX, touchY)) {
+					mFL.playerLeaveDialog.cancelButton.setIsTouched(false);
 				}
 			}
 			if (mFL.destroyTableDialog.okButton.getIsTouched()) {
@@ -778,12 +904,6 @@ public class ForegroundInput implements InputProcessor {
 					mFL.destroyTableDialog.cancelButton.setIsTouched(false);
 				}
 			}
-			if (mFL.autosaveDialog.okButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.autosaveDialog.okButton.pointContained(touchX, touchY)) {
-					mFL.autosaveDialog.okButton.setIsTouched(false);
-				}
-			}
 			if (mFL.loadDialog.okButton.getIsTouched()) {
 				handled_=true;
 				if (!mFL.loadDialog.okButton.pointContained(touchX, touchY)) {
@@ -796,37 +916,28 @@ public class ForegroundInput implements InputProcessor {
 					mFL.loadDialog.cancelButton.setIsTouched(false);
 				}
 			}
-			if (mFL.tableStatusMenu.handle.getIsTouched()) {
-				handled_=true;
-				mFL.tableStatusMenu.translateX(touchX-mFL.tableStatusMenu.handle.x);
-				
-				if (!mFL.tableStatusMenu.handle.pointContained(touchX, touchY)) {
-					mFL.tableStatusMenu.handle.setIsTouched(false);
-					mFL.tableStatusMenu.handleDropped();
-				}
-			}
-			if (mFL.tableStatusMenu.leaveButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.tableStatusMenu.leaveButton.pointContained(touchX, touchY)) {
-					mFL.tableStatusMenu.leaveButton.setIsTouched(false);
-				}
-			}
-			if (mFL.tableStatusMenu.bellButton.getIsTouched()) {
-				handled_=true;
-				if (!mFL.tableStatusMenu.bellButton.pointContained(touchX, touchY)) {
-					mFL.tableStatusMenu.bellButton.setIsTouched(false);
-				}
-			}
 			if (mFL.foldButton.getIsTouched()) {
 				handled_=true;
 				if (!mFL.foldButton.pointContained(touchX, touchY)) {
 					mFL.foldButton.setIsTouched(false);
 				}
 			}
-			if (mFL.gotoGameButton.getIsTouched()) {
+			if (mFL.hostHelpButton.getIsTouched()) {
 				handled_=true;
-				if (!mFL.gotoGameButton.pointContained(touchX, touchY)) {
-					mFL.gotoGameButton.setIsTouched(false);
+				if (!mFL.hostHelpButton.pointContained(touchX, touchY)) {
+					mFL.hostHelpButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostUndoButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostUndoButton.pointContained(touchX, touchY)) {
+					mFL.hostUndoButton.setIsTouched(false);
+				}
+			}
+			if (mFL.hostExitButton.getIsTouched()) {
+				handled_=true;
+				if (!mFL.hostExitButton.pointContained(touchX, touchY)) {
+					mFL.hostExitButton.setIsTouched(false);
 				}
 			}
 			if (mFL.potArrowLeft.getIsTouched()) {

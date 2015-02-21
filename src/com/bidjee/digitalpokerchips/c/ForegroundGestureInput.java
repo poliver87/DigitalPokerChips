@@ -11,17 +11,7 @@ public class ForegroundGestureInput implements GestureListener {
 	public boolean fling(float velocityX, float velocityY, int button) {
 		velocityY*=-1;
 		boolean consumed=false;
-		if (mFL.tableStatusMenu.handle.getIsTouched()) {
-			if (velocityX<-1*mFL.limFlingVelocity) {
-				mFL.tableStatusMenu.open();
-				mFL.tableStatusMenu.handle.setIsTouched(false);
-				consumed=true;
-			} else if (velocityX>mFL.limFlingVelocity) {
-				mFL.tableStatusMenu.close();
-				mFL.tableStatusMenu.handle.setIsTouched(false);
-				consumed=true;
-			}
-		}
+		
 		return consumed;
 	}
 	

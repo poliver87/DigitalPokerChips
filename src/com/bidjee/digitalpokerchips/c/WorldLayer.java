@@ -1,7 +1,5 @@
 package com.bidjee.digitalpokerchips.c;
 
-import android.net.MailTo;
-
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.input.GestureDetector;
 import com.bidjee.digitalpokerchips.i.IHostNetwork;
@@ -51,7 +49,7 @@ public class WorldLayer implements Screen {
 	public HomeDeviceAnimation homeDeviceAnimation;
 	
 	//////////////////// Renderers ////////////////////
-	WorldRenderer worldRenderer;
+	public WorldRenderer worldRenderer;
 	
 	//////////////////// References ////////////////////
 	public DPCGame game;
@@ -88,19 +86,21 @@ public class WorldLayer implements Screen {
 		Chip.radiusX=(int) (Chip.radiusY*1.02f);
 		limChipFlingVel=(int) (worldHeight*0.15f);
 		
-		table.setDimensions(worldWidth,worldHeight);
+		camPosHome.set(worldWidth*0.5f,worldHeight*0.5f,0.25f);
+		camPosPlayer.set(worldWidth*0.5f,worldHeight*0.42f,2.7f);
+		camPosTable.set(worldWidth*0.5f,worldHeight*0.62f,1.4f);
 		
+		table.setDimensions((int)(worldWidth/(WORLD_TO_SCREEN_RATIO*camPosTable.getZoomFactor()*2)),
+				(int)(worldHeight/(WORLD_TO_SCREEN_RATIO*camPosTable.getZoomFactor()*2)));
 		thisPlayer.setDimensions(homeDeviceAnimation.p1Sprite.radiusX,homeDeviceAnimation.p1Sprite.radiusY);
 	}
 	
 	public void setPositions(int worldWidth,int worldHeight) {
 		backgroundSprite.setPosition(worldWidth*0.5f,worldHeight*0.5f);
-		camPosHome.set(worldWidth*0.5f,worldHeight*0.5f,0.25f);
-		camPosPlayer.set(worldWidth*0.5f,worldHeight*0.42f,2.7f);
-		camPosTable.set(worldWidth*0.5f,worldHeight*0.62f,1.4f);
+		
 		homeDeviceAnimation.setPositions(worldWidth, worldHeight,camPosTable.getY(),camPosPlayer.getY());
 		thisPlayer.setPositions(homeDeviceAnimation.posP1Stop.x,homeDeviceAnimation.posP1Stop.y);
-		table.setPositions(worldWidth,worldHeight);
+		table.setPositions(camPosTable.getX(),camPosTable.getY());
 		
 	}
 	

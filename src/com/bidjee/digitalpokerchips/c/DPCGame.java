@@ -29,6 +29,8 @@ public class DPCGame extends Game {
 	
 	public static final String LOG_TAG = "DPCGame";
 	
+	public static final String LOG_TAG_LOAD_PROFILER = "DPCLoadProfiler";
+	
 	/********** State Variables **********
 	 * renderNumber: Allows two frames to be drawn before anything is done to
 	 * 				avoid issue where app opening animation doesn't transition
@@ -55,7 +57,6 @@ public class DPCGame extends Game {
 	public boolean wifiEnabled;
 	String ipAddress;
 	public int resolutionSetting;
-	public boolean runTutorialArrangement=true;
 	// Objects Contained //
 	public WorldLayer mWL;
 	public ForegroundLayer mFL;
@@ -69,6 +70,8 @@ public class DPCGame extends Game {
 	private FPSLogger fps;
 	public static boolean debugMode=false;
 	public static boolean runAllTutorials=true;
+	long loadTimer=0;
+	long elapsed=0;
 	
 	public DPCGame(IActivity activity_) {
 		renderNumber=0;
@@ -88,6 +91,7 @@ public class DPCGame extends Game {
 	@Override
 	public void create() {
 		Texture.setEnforcePotImages(false);
+		
 	}
 	
 	public void initGame() {
@@ -176,7 +180,10 @@ public class DPCGame extends Game {
 			Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 		} else if (renderNumber==2) {
 			renderNumber++;
+			loadTimer = System.currentTimeMillis();
 			initGame();
+			elapsed = System.currentTimeMillis() - loadTimer;
+			Logger.log(LOG_TAG_LOAD_PROFILER,"initGame() - "+elapsed);
 		}
 		// TODO manage the separate cases of eglContext lost or not
 		if (screenState==ScreenState.LOADING) {
@@ -190,6 +197,8 @@ public class DPCGame extends Game {
 					mWL.resume();
 					mFL.resume();
 					screenState=ScreenState.GAMEPLAY;
+					elapsed = System.currentTimeMillis() - loadTimer;
+					Logger.log(LOG_TAG_LOAD_PROFILER,"async loading - "+elapsed);
 					mTS.fadeOut();
 				} else {
 					mTS.render(delta);
@@ -226,6 +235,8 @@ public class DPCGame extends Game {
 	
 	public void loadSynchronous() {
 		Logger.log(LOG_TAG, "loadSynchronous()");
+		loadTimer = System.currentTimeMillis();
+		
 		if (mWL==null&&mFL==null) {
 			mWL=new WorldLayer(this,activity.getIPlayerNetwork(),activity.getIHostNetwork(),activity.getITableStore());
 			mFL=new ForegroundLayer(this,activity.getHelpWebView());
@@ -245,6 +256,9 @@ public class DPCGame extends Game {
 		//textFactory.dispose();
 		//mFL.foregroundRenderer.loadLabels();
 		//mWL.worldRenderer.loadLabels();
+		elapsed = System.currentTimeMillis() - loadTimer;
+		Logger.log(LOG_TAG_LOAD_PROFILER,"loadSynchronous() - "+elapsed);
+		loadTimer=System.currentTimeMillis();
 	}
 	
 	private void checkTransitionQueue() {
@@ -273,65 +287,30 @@ public class DPCGame extends Game {
 		tParam.magFilter=TextureFilter.Linear;
 		tParam.format=Format.RGBA8888;
 		
+
+		manager.load("anon_circle.png",Texture.class,tParam);
+		manager.load("anon.jpeg",Texture.class,tParam);
+		
+		manager.load("arrange.png",Texture.class,tParam);
+		manager.load("arrow_pot.png",Texture.class,tParam);
+		
 		if (resolutionSetting==RESOLUTION_LOW) {
 			manager.load("background.png",Texture.class,tParam);
 		} else if (resolutionSetting==RESOLUTION_MEDIUM||
 				resolutionSetting==RESOLUTION_HIGH) {
 			manager.load("background.png",Texture.class,tParam);
 		}
-		
-		
-		manager.load("black_hole.png",Texture.class,tParam);
-		manager.load("rectangle_rounded.png",Texture.class,tParam);
-		manager.load("black_circle.png",Texture.class,tParam);
-		manager.load("hand.png",Texture.class,tParam);
-		manager.load("table_button.png",Texture.class,tParam);
-		manager.load("base_login_popup.png",Texture.class,tParam);
-		manager.load("btn_close.png",Texture.class,tParam);
-		manager.load("btn_okay.png",Texture.class,tParam);
-		manager.load("btn_login_facebook.png",Texture.class,tParam);
-		
-		manager.load("envelope.png",Texture.class,tParam);
-		manager.load("buyin_box.png",Texture.class,tParam);
-		manager.load("btn_plus.png",Texture.class,tParam);
-		manager.load("btn_minus.png",Texture.class,tParam);
-		manager.load("btn_okay_buyin.png",Texture.class,tParam);
-		manager.load("btn_cancel.png",Texture.class,tParam);
-		
-		manager.load("plant.png",Texture.class,tParam);
-		manager.load("lamp.png",Texture.class,tParam);
-		
-		manager.load("dev_host.png",Texture.class,tParam);
-		manager.load("dev_host_shine.png",Texture.class,tParam);
-		manager.load("dev_player1.png",Texture.class,tParam);
-		manager.load("dev_player1_shine.png",Texture.class,tParam);
-		manager.load("dev_player2.png",Texture.class,tParam);
-		manager.load("dev_player3.png",Texture.class,tParam);
-		manager.load("home_settings.png",Texture.class,tParam);
-		manager.load("home_help.png",Texture.class,tParam);
-		manager.load("home_shop.png",Texture.class,tParam);
-		manager.load("selection_orange.png",Texture.class,tParam);
-		manager.load("host_button.png",Texture.class,tParam);
-		manager.load("join_button.png",Texture.class,tParam);
-		
-		manager.load("ok_button.png",Texture.class,tParam);
-		manager.load("anon.jpeg",Texture.class,tParam);
-		
-		manager.load("dashboard.png",Texture.class,tParam);
-		manager.load("dashboard_id.png",Texture.class,tParam);
-		manager.load("dashboard_status.png",Texture.class,tParam);
 		manager.load("btn_back.png",Texture.class,tParam);
-		manager.load("searching.png",Texture.class,tParam);
-		manager.load("arrange.png",Texture.class,tParam);
-		manager.load("dealer_icon.png",Texture.class,tParam);
 		manager.load("btn_bell.png",Texture.class,tParam);
-		manager.load("game_panel.png",Texture.class,tParam);
-		
+		manager.load("btn_close.png",Texture.class,tParam);
+		manager.load("btn_dialog.png",Texture.class,tParam);
+		manager.load("btn_fb.png",Texture.class,tParam);
+		manager.load("btn_minus.png",Texture.class,tParam);
+		manager.load("btn_plus.png",Texture.class,tParam);
 		manager.load("cancel_button.png",Texture.class,tParam);
-		manager.load("table_highlight.png",Texture.class,tParam);
-		manager.load("fold_button.png",Texture.class,tParam);
-		manager.load("dealer_chip.png",Texture.class,tParam);
-		manager.load("shadow.png",Texture.class,tParam);
+		manager.load("card_icon.png",Texture.class,tParam);
+		manager.load("case1back.png",Texture.class,tParam);
+		manager.load("case2back.png",Texture.class,tParam);
 		manager.load("chip_0_0.png",Texture.class,tParam);
 		manager.load("chip_0_1.png",Texture.class,tParam);
 		manager.load("chip_0_2.png",Texture.class,tParam);
@@ -341,25 +320,40 @@ public class DPCGame extends Game {
 		manager.load("chip_2_0.png",Texture.class,tParam);
 		manager.load("chip_2_1.png",Texture.class,tParam);
 		manager.load("chip_2_2.png",Texture.class,tParam);
+		manager.load("chips2.png",Texture.class,tParam);
+		
+		for (int i=0;i<27;i++) {
+			manager.load("connecting/connecting_"+String.format("%02d",i)+".png",Texture.class,tParam);
+		}
+		for (int i=0;i<26;i++) {
+			manager.load("connected/connected_"+String.format("%02d",i)+".png",Texture.class,tParam);
+		}
+		manager.load("connection_arrows.png",Texture.class,tParam);
 		manager.load("cursor.png",Texture.class,tParam);
-		manager.load("arrow.png",Texture.class,tParam);
-		manager.load("arrow_pot.png",Texture.class,tParam);
-		manager.load("wifi_red.png",Texture.class,tParam);
-		manager.load("text_field.png",Texture.class,tParam);
-		manager.load("split_button.png",Texture.class,tParam);
-		manager.load("speech_bubble_gold.png",Texture.class,tParam);
-		manager.load("join_coin.png",Texture.class,tParam);
-		manager.load("arrow_white.png",Texture.class,tParam);
-		manager.load("button_red.png",Texture.class,tParam);
-		manager.load("button_green.png",Texture.class,tParam);
-		manager.load("close_button.png",Texture.class,tParam);
-		manager.load("galaxy_frame.png",Texture.class,tParam);
-		manager.load("next_button.png",Texture.class,tParam);
-		manager.load("dialog_black_fill.png",Texture.class,tParam);
-		manager.load("dialog_black_corner.png",Texture.class,tParam);
-		manager.load("cursor.png",Texture.class,tParam);
-		manager.load("ping.png",Texture.class,tParam);
-		manager.load("ping_hub.png",Texture.class,tParam);
+		manager.load("dashboard_id.png",Texture.class,tParam);
+		manager.load("dashboard_status.png",Texture.class,tParam);
+		manager.load("dashboard.png",Texture.class,tParam);
+		
+		manager.load("dealer_chip.png",Texture.class,tParam);
+		manager.load("dealer_icon.png",Texture.class,tParam);
+		
+		manager.load("dev_host.png",Texture.class,tParam);
+		manager.load("dev_host_shine.png",Texture.class,tParam);
+		manager.load("dev_player1.png",Texture.class,tParam);
+		manager.load("dev_player1_shine.png",Texture.class,tParam);
+		manager.load("dev_player2.png",Texture.class,tParam);
+		manager.load("dev_player3.png",Texture.class,tParam);
+		
+		manager.load("dialog_tl.png",Texture.class,tParam);
+		manager.load("dialog_t.png",Texture.class,tParam);
+		manager.load("dialog_tr.png",Texture.class,tParam);
+		manager.load("dialog_l.png",Texture.class,tParam);
+		manager.load("dialog_m.png",Texture.class,tParam);
+		manager.load("dialog_r.png",Texture.class,tParam);
+		manager.load("dialog_bl.png",Texture.class,tParam);
+		manager.load("dialog_b.png",Texture.class,tParam);
+		manager.load("dialog_br.png",Texture.class,tParam);
+		manager.load("dialog_w_arrow.png",Texture.class,tParam);
 		manager.load("dpc_logo.png",Texture.class,tParam);
 		manager.load("dpc_logo_01.png",Texture.class,tParam);
 		manager.load("dpc_logo_02.png",Texture.class,tParam);
@@ -371,25 +365,26 @@ public class DPCGame extends Game {
 		manager.load("dpc_logo_08.png",Texture.class,tParam);
 		manager.load("dpc_logo_09.png",Texture.class,tParam);
 		manager.load("dpc_logo_10.png",Texture.class,tParam);
-		for (int i=0;i<27;i++) {
-			manager.load("connecting/connecting_"+String.format("%02d",i)+".png",Texture.class,tParam);
-		}
-		for (int i=0;i<26;i++) {
-			manager.load("connected/connected_"+String.format("%02d",i)+".png",Texture.class,tParam);
-		}
-		manager.load("button_blue.png",Texture.class,tParam);
-		manager.load("back.png",Texture.class,tParam);
-		manager.load("connection_blob.png",Texture.class,tParam);
-		manager.load("suit_hearts.png",Texture.class,tParam);
-		manager.load("suit_diamonds.png",Texture.class,tParam);
-		manager.load("suit_clubs.png",Texture.class,tParam);
-		manager.load("suit_spades.png",Texture.class,tParam);
-		manager.load("card_back.png",Texture.class,tParam);
-		manager.load("arrow_handdrawn.png",Texture.class,tParam);
-		manager.load("button_bell_red.png",Texture.class,tParam);
+		manager.load("envelope.png",Texture.class,tParam);
+		manager.load("fold_button.png",Texture.class,tParam);
+		manager.load("game_panel.png",Texture.class,tParam);
+		manager.load("gold_line.png",Texture.class,tParam);
+		manager.load("home_settings.png",Texture.class,tParam);
+		manager.load("home_help.png",Texture.class,tParam);
+		manager.load("home_shop.png",Texture.class,tParam);
+		manager.load("host_button.png",Texture.class,tParam);
+		manager.load("host_exit.png",Texture.class,tParam);
+		manager.load("host_undo.png",Texture.class,tParam);
+		manager.load("join_button.png",Texture.class,tParam);
+		manager.load("lamp.png",Texture.class,tParam);
+		manager.load("ok_button.png",Texture.class,tParam);
+		manager.load("plant.png",Texture.class,tParam);
+		manager.load("searching.png",Texture.class,tParam);
+		manager.load("shadow.png",Texture.class,tParam);
 		manager.load("split_button.png",Texture.class,tParam);
-		manager.load("table_slot.png",Texture.class,tParam);
-		manager.load("dialog_w_arrow.png",Texture.class,tParam);
+		manager.load("table_highlight.png",Texture.class,tParam);
+		manager.load("text_field.png",Texture.class,tParam);
+
 		// sounds
 		manager.load("sound/change.wav",Sound.class);
 		manager.load("sound/check.wav",Sound.class);

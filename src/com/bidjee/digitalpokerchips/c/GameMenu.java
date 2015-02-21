@@ -34,7 +34,7 @@ public class GameMenu {
 	}
 	
 	public void setDimensions(int radiusX,int radiusY) {
-		margin=(int) Math.max(radiusY*0.005f, 1);
+		margin=(int) Math.max(radiusY*0.01f, 1);
 		int unitRadiusY = (int) (0.5f*(radiusY*2f - margin*10f)/10f);
 		gamePanel.setDimensions(radiusX, unitRadiusY*2);
 		PlayerMenuPanel.setStaticDimensions((int)(radiusX*0.66f),unitRadiusY);
@@ -83,7 +83,7 @@ public class GameMenu {
 			for (int j=0;j<playerPanels.size();j++) {
 				if (playerPanels.get(j).nameLabel.getText().equals(thisPlayer.name)) {
 					newPlayer=false;
-					playerPanels.get(j).setAmounts(thisPlayer.betTotal, false, thisPlayer.chipTotal);
+					playerPanels.get(j).setAmounts(thisPlayer.betTotal, thisPlayer.folded, thisPlayer.chipTotal);
 					playerPanels.get(j).markedForDeletion=false;
 					break;
 				}
@@ -116,6 +116,9 @@ public class GameMenu {
 	public void hide() {
 		show=false;
 		gamePanel.setDest(gamePanelOffscreen);
+		for (int i=0;i<playerPanels.size();i++) {
+			playerPanels.get(i).setDest(gamePanelOffscreen);
+		}
 	}
 	
 	

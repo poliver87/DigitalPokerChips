@@ -127,7 +127,6 @@ public class ThisPlayer {
 		dealerButton.opacity=0;
 		checkButton=new Button(true,0,"");
 		tableName="";
-		
 	}
 	
 	//////////////////// Scale & Layout ////////////////////
@@ -145,9 +144,15 @@ public class ThisPlayer {
 		betStack.scaleLabel();
 		connectionSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
 		connectedSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
-		dealerButton.setDimensions((int)(radiusY*0.15f),(int)(radiusY*0.15f));
+		dealerButton.setDimensions((int)(radiusY*0.13f),(int)(radiusY*0.13f));
 		checkButton.setDimensions((int)(radiusY*0.3f*2f),(int)(radiusY*0.3f));
+
 	} // setDimensions(float width_,float height_)
+	
+	public void setChipDimensions() {
+		Chip.radiusY=(int) (radiusY*0.23f);
+		Chip.radiusX=(int) (Chip.radiusY*1.02f);
+	}
 	
 	public void setPositions(float x,float y) {
 		float yStacks = y-radiusY*0.2f;
@@ -170,7 +175,7 @@ public class ThisPlayer {
 		connectionSprite.setPosition(x,y+radiusY*0.63f);
 		connectedSprite.setPosition(x,y+radiusY*0.63f);
 		yDealerButtonOffscreen=y+radiusY*1.5f;  
-		yDealerButtonOnscreen=y-radiusY*0.3f;
+		yDealerButtonOnscreen=y-radiusY*0.35f;
 		dealerButton.setPosition(x-radiusX*0.52f,yDealerButtonOffscreen);
 		checkButton.setPosition(x,y+radiusY*0.4f);
 	} // setPositions(float width_,float height_)
@@ -340,7 +345,7 @@ public class ThisPlayer {
 			if (mWL.game.mFL.checkBuyinOffscreen()) {
 				buyinPending=false;
 				connectivityStatus=CONN_CONNECTING;
-				int[] chipNumbers=calculateSimpleBuyin(mWL.game.mFL.buyinDialog.getAmount());
+				int[] chipNumbers=calculateSimpleBuyin(mWL.game.mFL.playerBuyinDialog.getAmount());
 				networkInterface.requestConnect(connectingTable,mWL.game.calculateAzimuth(),chipNumbers);
 			}
 		}
@@ -509,18 +514,16 @@ public class ThisPlayer {
 		cancelMoveState();
 		setDealer(false);
 		waitingOnHost=false;
+		
+		mWL.game.mFL.gameMenu.hide();
+		mWL.game.mFL.stopWaitNextHand();
+		
 		for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
 			mWL.game.mFL.mainStackValueLabels[i].setText("");
 			mWL.game.mFL.mainStackValueLabels[i].loadTexture();
 			
 		}
-		mWL.game.mFL.reconnect1Label.fadeOut();
-		mWL.game.mFL.reconnect1Label.opacity=0;
-		mWL.game.mFL.reconnect2Label.fadeOut();
-		mWL.game.mFL.reconnect2Label.opacity=0;
-		// TODO if table status menu open will hold touch focus!
-		mWL.game.mFL.tableStatusMenu.remove();
-		mWL.game.mFL.stopWaitNextHand();
+		
 		setConnectionAnimationState(CONN_ANIM_NONE);
 	}
 	
@@ -530,7 +533,6 @@ public class ThisPlayer {
 		disableBet();
 		disableCheck();
 		disableFold();
-		mWL.game.mFL.hideTextMessage();
 	}
 	
 	private void clearAllStacks() {
@@ -558,7 +560,12 @@ public class ThisPlayer {
 		mWL.game.mFL.playerDashboard.setAmount(amount);
 	}
 	
-	public void playerLoginDone(String playerName,Texture tex) {
+	public void playerLoginCancel() {
+		mWL.game.mFL.stopPlayerLoginDialog();
+		mWL.sendCameraTo(mWL.camPosHome);
+	}
+	
+	public void playerLoginComplete(String playerName,Texture tex) {
 		if (connectivityStatus==CONN_LOGIN) {
 			mWL.game.mFL.stopPlayerLoginDialog();
 			setPlayerName(playerName);
@@ -593,10 +600,7 @@ public class ThisPlayer {
 		}
 	}
 	
-	public void playerLoginDone(boolean actionCompleted) {
-		mWL.game.mFL.stopPlayerLoginDialog();
-		mWL.sendCameraTo(mWL.camPosHome);
-	}
+
 	
 	public void leaveButtonPressed() {
 		doLeaveDialog();
@@ -686,6 +690,7 @@ public class ThisPlayer {
 	//////////////////// World to Player Messages ////////////////////
 	public void notifyAtPlayerPosition() {
 		mWL.game.mFL.notifyAtPlayerPosition();
+		setChipDimensions();
 		if (playerName.equals("")) {
 			connectivityStatus=CONN_LOGIN;
 			mWL.game.mFL.startPlayerLoginDialog();
@@ -843,7 +848,6 @@ public class ThisPlayer {
 		betStack.setPosition(betStackOrigin.x,betStackOrigin.y,0);
 		mWL.game.mFL.betTotalDialog.hide();
 		
-		mWL.game.mFL.hideTextMessage();
 		// TODO change connection sprite
 	}
 	
@@ -854,7 +858,6 @@ public class ThisPlayer {
 			sendMove(new Move(GameLogic.MOVE_CHECK,""));
 
 			// TODO change connection sprite
-			mWL.game.mFL.hideTextMessage();
 		}
 	}
 	
@@ -863,9 +866,6 @@ public class ThisPlayer {
 		if (!waitingOnHost) {
 			mWL.soundFX.foldSound.play();
 			sendMove(new Move(GameLogic.MOVE_FOLD,""));
-
-			// TODO change connection blob
-			mWL.game.mFL.hideTextMessage();
 		}
 	}
 	
@@ -880,11 +880,11 @@ public class ThisPlayer {
 	}
 	
 	public void doLeaveDialog() {
-		mWL.game.mFL.startLeaveTableDialog(tableName);
+		mWL.game.mFL.startPlayerLeaveDialog(tableName);
 	}
 	
 	public void leaveDialogDone(boolean actionCompleted) {
-		mWL.game.mFL.stopLeaveTableDialog();
+		mWL.game.mFL.stopPlayerLeaveDialog();
 		if (actionCompleted) {
 			leaveTable();
 		}
@@ -929,8 +929,9 @@ public class ThisPlayer {
 			waitingOnHost=false;
 			mWL.game.mFL.playerDashboard.setGameName(tableName);
 			mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_CONNECTED);
+
 			for (int i=0;i<ChipCase.CHIP_TYPES;i++) {
-				mWL.game.mFL.mainStackValueLabels[i].setText(Integer.toString(ChipCase.values[i]));
+				mWL.game.mFL.mainStackValueLabels[i].setText("$"+Integer.toString(ChipCase.values[i]));
 				mWL.game.mFL.mainStackValueLabels[i].loadTexture();
 				float xScreen = mWL.worldRenderer.xWorldToScreen(mainStacks[i].getX());
 				float yScreen = mWL.game.mFL.playerDashboard.posOnscreen.y+
@@ -938,6 +939,7 @@ public class ThisPlayer {
 						mWL.game.mFL.mainStackValueLabels[i].maxRadiusY;
 				mWL.game.mFL.mainStackValueLabels[i].setPosition(xScreen, yScreen);
 			}
+			
 		} else {
 			if (connectivityStatus==CONN_CONNECTING) {
 				cancelBuyin();
