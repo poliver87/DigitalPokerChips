@@ -92,7 +92,7 @@ public class GameLogic {
 	
 	public void updateLogic() {
 		if (state.equals(STATE_START_HAND)) {
-			resetGame();
+			startHand();
 			table.sendDealerButton(dealer);
 			setGameState(STATE_NEXT_BET);
 			table.syncAllTableStatusMenu();
@@ -161,6 +161,7 @@ public class GameLogic {
 				waitingDealPrompt=true;
 				setGameState(STATE_WAIT_DEAL_PROMPT);
 			}
+			table.setStateText(getDealStageString(dealStage));
 			table.syncAllTableStatusMenu();
 		} else if (state.equals(STATE_WAIT_DEAL_PROMPT)) {
 			if (!waitingDealPrompt) {
@@ -234,6 +235,7 @@ public class GameLogic {
 				setGameState(STATE_WAIT_SAVE);
 			} else {
 				setGameState(STATE_FINISHED);
+				table.gameFinished();
 			}
 		} else if (state.equals(STATE_WAIT_SAVE)) {
 			if (!waitingSave) {
@@ -250,7 +252,7 @@ public class GameLogic {
 		}
 	}
 	
-	public void resetTable() {
+	public void resetGame() {
 		Logger.log(LOG_TAG,"resetTable()");
 		currBetter=NO_PLAYER;
 		setDealer(NO_PLAYER);
@@ -258,8 +260,9 @@ public class GameLogic {
 	}
 	
 	///////////////////////// Private Helper Methods //////////////////////////
-	private void resetGame() {
+	private void startHand() {
 		Logger.log(LOG_TAG,"resetGame()");
+		table.startHand();
 		currBetter=dealer;
 		currStake=0;
 		dealStage=DEAL_PRE_FLOP;
@@ -273,6 +276,7 @@ public class GameLogic {
 		}
 		table.clearPots();
 		makeNewPot();
+		table.setStateText(getDealStageString(dealStage));
 		//game.application.saveGame(buildGameStateString());
 	}
 	
@@ -459,7 +463,8 @@ public class GameLogic {
 					Pot.makeChange(table.seats[seat_].player.betStack,minBetAmount_,1);
     				// take minBetAmount out of bet stack and put into pool stack, this function alters the bet stack internally
 					buildPoolStack(table.seats[seat_].player,minBetAmount_);
-					table.seats[seat_].player.betStack.updateTotalLabel();
+					//table.seats[seat_].player.betStack.updateTotalLabel();
+					// TODO ????
 					table.seats[seat_].player.betStack.totalLabel.loadTexture();
 				} else if (table.seats[seat_].player.betStack.value()>0) {
 					for (int chip_=0;chip_<table.seats[seat_].player.betStack.size();chip_++) {
@@ -540,11 +545,6 @@ public class GameLogic {
     		int endIndex=gameStateStr.indexOf("<DEALER/>");
     		table.setDealer(Integer.parseInt(gameStateStr.substring(startIndex,endIndex)));
     	}
-	}
-	
-	public void destroyTable() {
-		Logger.log(LOG_TAG,"destroyTable()");
-		resetTable();
 	}
 	
 	public void notifyPlayerLeft(int seat) {

@@ -344,6 +344,7 @@ public class DPCGame extends Game {
 		manager.load("dev_player2.png",Texture.class,tParam);
 		manager.load("dev_player3.png",Texture.class,tParam);
 		
+		manager.load("dialog.png",Texture.class,tParam);
 		manager.load("dialog_tl.png",Texture.class,tParam);
 		manager.load("dialog_t.png",Texture.class,tParam);
 		manager.load("dialog_tr.png",Texture.class,tParam);
@@ -368,6 +369,7 @@ public class DPCGame extends Game {
 		manager.load("envelope.png",Texture.class,tParam);
 		manager.load("fold_button.png",Texture.class,tParam);
 		manager.load("game_panel.png",Texture.class,tParam);
+		manager.load("game_panel_line.png",Texture.class,tParam);
 		manager.load("gold_line.png",Texture.class,tParam);
 		manager.load("home_settings.png",Texture.class,tParam);
 		manager.load("home_help.png",Texture.class,tParam);

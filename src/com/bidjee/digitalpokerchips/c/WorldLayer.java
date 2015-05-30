@@ -8,7 +8,9 @@ import com.bidjee.digitalpokerchips.i.ITableStore;
 import com.bidjee.digitalpokerchips.m.CameraPosition;
 import com.bidjee.digitalpokerchips.m.Chip;
 import com.bidjee.digitalpokerchips.m.ChipCase;
+import com.bidjee.digitalpokerchips.m.ChipStack;
 import com.bidjee.digitalpokerchips.m.DPCSprite;
+import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.digitalpokerchips.s.SoundFX;
 import com.bidjee.digitalpokerchips.v.WorldRenderer;
 import com.bidjee.util.Logger;
@@ -84,6 +86,8 @@ public class WorldLayer implements Screen {
 		homeDeviceAnimation.setDimensions(worldWidth, worldHeight);
 		Chip.radiusY=(int) (homeDeviceAnimation.p1Sprite.radiusY*0.23f);
 		Chip.radiusX=(int) (Chip.radiusY*1.02f);
+		
+		
 		limChipFlingVel=(int) (worldHeight*0.15f);
 		
 		camPosHome.set(worldWidth*0.5f,worldHeight*0.5f,0.25f);

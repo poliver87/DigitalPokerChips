@@ -2,8 +2,8 @@ package com.bidjee.digitalpokerchips.m;
 
 import java.util.ArrayList;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
+import com.bidjee.digitalpokerchips.c.ForegroundLayer;
 import com.bidjee.digitalpokerchips.c.Table;
 
 public class ChipStack {
@@ -11,6 +11,8 @@ public class ChipStack {
 	private static final int FADE_NONE = 0;
 	private static final int FADE_FADE_IN = 1;
 	private static final int FADE_FADE_OUT = 2;
+	
+	public static int totalTextSize;
 	
 	public ArrayList<Chip> stack;
 	
@@ -49,21 +51,15 @@ public class ChipStack {
 		rotation=0;
 		opacity=1;
 		totalLabel=new TextLabel("",0,true,1,false);
-	}
-	
-	public void scaleLabel() {
-		totalLabel.setMaxDimensions(Chip.radiusX,Chip.radiusY);
-		String tmp_=totalLabel.getText();
-		totalLabel.setText("9999999");
-		totalLabel.setTextSizeToMax();
-		totalLabel.setText(tmp_);
+		totalLabel.setFontFace("coolvetica_rg.ttf");
+		totalLabel.bodyColor=ForegroundLayer.whiteColor;
 	}
 	
 	public void updateTotalLabel() {
-		totalLabel.setText(Integer.toString(value()));
+		totalLabel.setTextSize(totalTextSize);
+		totalLabel.setText("$"+Integer.toString(value()));
 		totalLabel.loadTexture();
-		totalLabel.x=getTopX();
-		totalLabel.y=getTopY();
+		totalLabel.setPosition(getTopX(),getTopY());
 	}
 	
 	public void setVelocityY(float velocityY_) {velocityY=velocityY_;}
@@ -121,6 +117,7 @@ public class ChipStack {
 	
 	public void remove(int i) {
 		stack.remove(i);
+		updateTotalLabel();
 	}
 	
 	public boolean removeChipType(int chipType_,int number_) {
@@ -174,15 +171,18 @@ public class ChipStack {
 		return topY_;
 	}
 	
-	public float getTopY(int radiusY_) {
-		float topY_=y;
-		int numTop_=renderSize();
-		if (rotation==0||rotation==360) {
-			topY_+=Chip.getProjectedDelta(numTop_,radiusY_);
-		} else if (rotation==180||rotation==-180) {
-			topY_-=Chip.getProjectedDelta(numTop_,radiusY_);
-		}
-		return topY_;
+	public int getTopRadiusY() {
+		int topRadiusY;
+		int numTop=renderSize();
+		topRadiusY=Chip.getProjectedRadiusY(numTop);
+		return topRadiusY;
+	}
+	
+	public int getTopRadiusX() {
+		int topRadiusX;
+		int numTop=renderSize();
+		topRadiusX=Chip.getProjectedRadiusX(numTop);
+		return topRadiusX;
 	}
 	
 	public void setX(float x_) {
@@ -191,7 +191,7 @@ public class ChipStack {
 			get(i).x=x;
 			//get(i).destX=x;
 		}
-		totalLabel.x=getTopX();
+		totalLabel.setPosition(getTopX(),getTopY());
 	}
 	
 	public void setY(float y_) {
@@ -200,7 +200,7 @@ public class ChipStack {
 			get(i).y=y;
 			//get(i).destY=y;
 		}
-		totalLabel.y=getTopY();
+		totalLabel.setPosition(getTopX(),getTopY());
 	}
 	
 	public void setZ(float z_) {
@@ -209,7 +209,7 @@ public class ChipStack {
 			get(i).z=z+i;
 			//get(i).destZ=z+i;
 		}
-		totalLabel.y=getTopY();
+		totalLabel.setPosition(getTopX(),getTopY());
 	}
 	
 	public void setPosition(float x_,float y_,float z_) {
@@ -351,6 +351,7 @@ public class ChipStack {
 	}
 	
 	public void animate(float delta) {
+		totalLabel.animate(delta);
 		switch (fadeState) {
 		case FADE_FADE_IN:
 			opacity+=delta*2f;

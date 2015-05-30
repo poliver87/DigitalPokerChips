@@ -6,23 +6,28 @@ import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
 import com.bidjee.digitalpokerchips.i.IDPCSprite;
 import com.bidjee.digitalpokerchips.m.BetTotalDialog;
-import com.bidjee.digitalpokerchips.m.BootDialog;
 import com.bidjee.digitalpokerchips.m.Button;
 import com.bidjee.digitalpokerchips.m.ChipCase;
+import com.bidjee.digitalpokerchips.m.ChipStack;
 import com.bidjee.digitalpokerchips.m.ClosedDialog;
-import com.bidjee.digitalpokerchips.m.DestroyTableDialog;
 import com.bidjee.digitalpokerchips.m.DialogWindow;
 import com.bidjee.digitalpokerchips.m.HelpDialog;
 import com.bidjee.digitalpokerchips.m.HostChipCaseDialog;
 import com.bidjee.digitalpokerchips.m.HostChipSetupDialog;
+import com.bidjee.digitalpokerchips.m.HostDestroyDialog;
+import com.bidjee.digitalpokerchips.m.HostGameNameDialog;
 import com.bidjee.digitalpokerchips.m.HostLobbyDialog;
 import com.bidjee.digitalpokerchips.m.HostNameDialog;
+import com.bidjee.digitalpokerchips.m.HostPlayerDialog;
+import com.bidjee.digitalpokerchips.m.HostPotDialog;
 import com.bidjee.digitalpokerchips.m.HostRearrangeDialog;
 import com.bidjee.digitalpokerchips.m.ManualConnectDialog;
+import com.bidjee.digitalpokerchips.m.Player;
 import com.bidjee.digitalpokerchips.m.PlayerBuyinDialog;
 import com.bidjee.digitalpokerchips.m.PlayerDashboard;
 import com.bidjee.digitalpokerchips.m.PlayerLeaveDialog;
 import com.bidjee.digitalpokerchips.m.PlayerLoginDialog;
+import com.bidjee.digitalpokerchips.m.Seat;
 import com.bidjee.digitalpokerchips.m.TextLabel;
 import com.bidjee.digitalpokerchips.v.ForegroundRenderer;
 import com.bidjee.util.Logger;
@@ -60,8 +65,6 @@ public class ForegroundLayer {
 	float oldScreenWidth;
 	float oldScreenHeight;
 	float limFlingVelocity;
-	Vector2 posHostHelpOffscreen=new Vector2();
-	Vector2 posHostHelpOnscreen=new Vector2();
 	Vector2 posHostUndoOffscreen=new Vector2();
 	Vector2 posHostUndoOnscreen=new Vector2();
 	Vector2 posHostExitOffscreen=new Vector2();
@@ -85,16 +88,17 @@ public class ForegroundLayer {
 	public HostChipCaseDialog hostChipCaseDialog;
 	public HostChipSetupDialog hostChipSetupDialog;
 	public HostLobbyDialog hostLobbyDialog;
+	public HostDestroyDialog hostDestroyDialog;
 	public HostRearrangeDialog hostRearrangeDialog;
+	public HostGameNameDialog hostGameNameDialog;
 	public PlayerBuyinDialog playerBuyinDialog;
 	public PlayerDashboard playerDashboard;
 	public BetTotalDialog betTotalDialog;
 	
 	public ClosedDialog loadDialogSmall;
 	public ClosedDialog destroyTableDialogSmall;
-	public ClosedDialog bootDialogSmall;
-	public DestroyTableDialog destroyTableDialog;
-	public BootDialog bootDialog;
+	public HostPlayerDialog[] hostPlayerDialogs;
+	public HostPotDialog hostPotDialog;
 	public DivisibilityDialog divisibilityDialog;
 	public LoadDialog loadDialog;
 	public ManualConnectDialog manualConnectDialog;
@@ -102,14 +106,10 @@ public class ForegroundLayer {
 	//////////////////// Sprites ////////////////////
 	public Button wifiButton;
 	public Button foldButton;
-	public Button hostHelpButton;
 	public Button hostUndoButton;
 	public Button hostExitButton;
 	public Button potArrowRight;
 	public Button potArrowLeft;
-	public Button splitButton;
-	public Button splitCancelButton;
-	public Button splitDoneButton;
 	
 	//////////////////// Text Labels ////////////////////
 	public TextLabel[] mainStackValueLabels;
@@ -148,21 +148,17 @@ public class ForegroundLayer {
 		dialogWArrowWindow.opacity=0;
 		manualConnectDialog=new ManualConnectDialog();
 		manualConnectDialog.opacity=0;
-		destroyTableDialog=new DestroyTableDialog();
-		destroyTableDialog.opacity=0;
 		destroyTableDialogSmall=new ClosedDialog(dialogWindow);
 		destroyTableDialogSmall.opacity=0;
-		bootDialog=new BootDialog();
-		bootDialog.opacity=0;
-		bootDialogSmall=new ClosedDialog(dialogWArrowWindow);
-		bootDialogSmall.opacity=0;
+		hostPlayerDialogs = new HostPlayerDialog[Table.NUM_SEATS];
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			hostPlayerDialogs[i] = new HostPlayerDialog();
+			hostPlayerDialogs[i].opacity = 0;
+		}
+		hostPotDialog = new HostPotDialog();
 		
 		potArrowLeft=new Button(true,0,"");
 		potArrowRight=new Button(true,0,"");
-		
-		splitButton=new Button(true,0,"Split");
-		splitCancelButton=new Button(true,0,"Cancel");
-		splitDoneButton=new Button(true,0,"Done");
 		
 		helpDialogSmall=new ClosedDialog(dialogWindow);
 		helpDialog=new HelpDialog(helpWebView);
@@ -172,7 +168,9 @@ public class ForegroundLayer {
 		hostChipCaseDialog=new HostChipCaseDialog();
 		hostChipSetupDialog=new HostChipSetupDialog();
 		hostLobbyDialog=new HostLobbyDialog();
+		hostDestroyDialog=new HostDestroyDialog();
 		hostRearrangeDialog=new HostRearrangeDialog();
+		hostGameNameDialog= new HostGameNameDialog();
 		playerBuyinDialog=new PlayerBuyinDialog();
 		
 		playerDashboard=new PlayerDashboard();
@@ -186,7 +184,6 @@ public class ForegroundLayer {
 		loadDialogSmall.opacity=0;
 		foldButton=new Button(true,0,"");
 		
-		hostHelpButton=new Button(true,1,"");
 		hostUndoButton=new Button(true,1,"");
 		hostExitButton=new Button(true,1,"");
 		
@@ -229,12 +226,16 @@ public class ForegroundLayer {
 	//////////////////// Scale & Layout ////////////////////
 	private void setDimensions(int screenWidth,int screenHeight) {
 		limFlingVelocity=screenHeight*0.2f;
+		
+		TextLabel dummyStackTotal = new TextLabel("$999999", 0, true, 1, false);
+		dummyStackTotal.setMaxDimensions((int)(screenWidth*0.15f),(int)(screenHeight*0.03f));
+		ChipStack.totalTextSize = DPCGame.textFactory.getMaxTextSize(dummyStackTotal);
+		
 		homeUIAnimation.setDimensions(screenWidth,screenHeight);
 		homeForegroundAnimation.setDimensions(screenWidth,screenHeight);
 		wifiButton.setDimensions((int)(screenHeight*0.08f),(int)(screenHeight*0.08f));
 		foldButton.setDimensions((int)(screenHeight*0.15f),(int)(screenHeight*0.15f));
 		
-		hostHelpButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
 		hostUndoButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
 		hostExitButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
 		
@@ -248,7 +249,9 @@ public class ForegroundLayer {
 		hostChipCaseDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.36f));
 		hostChipSetupDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.36f));
 		hostLobbyDialog.setDimensions((int)(screenHeight*0.45f),(int)(screenHeight*0.2f));
+		hostDestroyDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.30f));
 		hostRearrangeDialog.setDimensions((int)(screenHeight*0.45f),(int)(screenHeight*0.2f));
+		hostGameNameDialog.setDimensions((int)(screenHeight*0.16f),(int)(screenHeight*0.07f));
 		
 		
 		playerDashboard.setDimensions((int)(screenWidth*0.5f),(int)(screenHeight*0.09f));
@@ -266,18 +269,14 @@ public class ForegroundLayer {
 		
 		divisibilityDialog.setDimensions((int)(screenWidth*0.3f),(int)(screenHeight*0.06f));
 		manualConnectDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
-		destroyTableDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
 		destroyTableDialogSmall.setDimensions(1,1);
-		bootDialog.setDimensions((int)(screenWidth*0.15f),(int)(screenHeight*0.08f));
-		bootDialogSmall.setDimensions(1,1);
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			hostPlayerDialogs[i].setDimensions((int)(screenWidth*0.12f),(int)(screenHeight*0.07f));
+		}
+		hostPotDialog.setDimensions((int)(screenWidth*0.12f),(int)(screenHeight*0.13f));
 		loadDialog.setDimensions((int)(screenHeight*0.6f),(int)(screenHeight*0.45f));
 		potArrowLeft.setDimensions((int)(screenHeight*0.08f),(int)(screenHeight*0.08f));
 		potArrowRight.setDimensions((int)(screenHeight*0.08f),(int)(screenHeight*0.08f));
-		splitButton.setDimensions((int)(screenHeight*0.14f),(int)(screenHeight*0.07f));
-		splitButton.yLabelOffset=1.4f;
-		splitButton.setLabelDims(0.6f,0.6f);
-		splitCancelButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
-		splitDoneButton.setDimensions((int)(screenHeight*0.07f),(int)(screenHeight*0.07f));
 		azimuthLabel.setMaxDimensions((int)(screenHeight*0.1f),(int)(screenHeight*0.05f));
 		azimuthLabel.setTextSizeToMax();
 	}
@@ -289,16 +288,15 @@ public class ForegroundLayer {
 		wifiButton.setPosition(screenWidth*0.5f,screenHeight*0.85f);
 		foldButton.setPosition(screenWidth*0.1f,screenHeight*0.76f);
 		
-		posHostHelpOffscreen.set(0+screenHeight*0.1f,screenHeight*1.2f);
-		posHostHelpOnscreen.set(0+screenHeight*0.1f,screenHeight*0.9f);
 		posHostUndoOffscreen.set(screenWidth-screenHeight*0.1f,screenHeight*1.2f);
 		posHostUndoOnscreen.set(screenWidth-screenHeight*0.1f,screenHeight*0.9f);
-		posHostExitOffscreen.set(0+screenHeight*0.1f,-screenHeight*0.2f);
-		posHostExitOnscreen.set(0+screenHeight*0.1f,screenHeight*0.1f);
+		posHostExitOffscreen.set(0+screenHeight*0.1f,screenHeight*1.2f);
+		posHostExitOnscreen.set(0+screenHeight*0.1f,screenHeight*0.75f);
 		
-		hostHelpButton.setPosition(posHostHelpOffscreen);
 		hostUndoButton.setPosition(posHostUndoOffscreen);
 		hostExitButton.setPosition(posHostExitOffscreen);
+		hostGameNameDialog.setPositions(0+hostGameNameDialog.radiusX+screenHeight*0.02f,screenHeight*1.3f,
+				0+hostGameNameDialog.radiusX+screenHeight*0.02f,screenHeight-hostGameNameDialog.radiusY-screenHeight*0.03f);
 		
 		helpDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		
@@ -319,6 +317,10 @@ public class ForegroundLayer {
 				-screenWidth*0.5f,screenHeight*0.5f);
 		hostRearrangeDialog.setPositions(screenWidth*0.5f,screenHeight*1.5f,
 				screenWidth*0.5f,screenHeight*0.5f);
+		hostPotDialog.setPositions(screenWidth*0.73f,screenHeight*1.5f,
+				screenWidth*0.73f,screenHeight*0.5f);
+		
+		hostDestroyDialog.setPositions(screenWidth*0.5f,screenHeight*1.5f,screenWidth*0.5f,screenHeight*0.5f);
 		
 		playerDashboard.setPositions(screenWidth*0.5f,-playerDashboard.radiusY*2,screenWidth*0.5f,playerDashboard.radiusY);
 		int margin = (int) (screenHeight*0.01f);
@@ -329,16 +331,10 @@ public class ForegroundLayer {
 		
 		divisibilityDialog.setPosition(screenWidth*0.5f,screenHeight*0.08f);
 		manualConnectDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
-		destroyTableDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
 		destroyTableDialogSmall.setPosition(screenWidth*0.5f,screenHeight*0.95f);
 		loadDialog.setPosition(screenWidth*0.5f,screenHeight*0.5f);
-		float xHostPrompts=screenWidth*0.5f;
-		float yHostPrompts=screenHeight*0.65f;
 		potArrowLeft.setPosition(screenWidth*0.35f,screenHeight*0.5f);
 		potArrowRight.setPosition(screenWidth*0.65f,screenHeight*0.5f);
-		splitButton.setPosition(screenWidth*0.75f,screenHeight*0.5f);
-		splitDoneButton.setPosition(screenWidth*0.75f,screenHeight*0.5f);
-		splitCancelButton.setPosition(screenWidth*0.25f,screenHeight*0.5f);
 		azimuthLabel.setPosition(azimuthLabel.maxRadiusX,azimuthLabel.maxRadiusY);
 	}
 	
@@ -349,8 +345,6 @@ public class ForegroundLayer {
 		dialogWindow.scalePosition(scaleX,scaleY);
 		dialogWArrowWindow.scalePosition(scaleX,scaleY);
 		manualConnectDialog.scalePosition(scaleX,scaleY);
-		destroyTableDialog.scalePosition(scaleX,scaleY);
-		bootDialog.scalePosition(scaleX,scaleY);
 	}
 	
 	public void start() {
@@ -394,25 +388,24 @@ public class ForegroundLayer {
 		hostChipSetupDialog.animate(delta);
 		hostLobbyDialog.animate(delta);
 		hostRearrangeDialog.animate(delta);
+		hostGameNameDialog.animate(delta);
+		hostDestroyDialog.animate(delta);
 		playerBuyinDialog.animate(delta);
 		playerDashboard.animate(delta);
 		betTotalDialog.animate(delta);
 		gameMenu.animate(delta);
 		manualConnectDialog.animate(delta);
-		destroyTableDialog.animate(delta);
-		bootDialog.animate(delta);
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			hostPlayerDialogs[i].animate(delta);
+		}
+		hostPotDialog.animate(delta);
 		loadDialog.animate(delta);
 		divisibilityDialog.animate(delta);
 		potArrowLeft.animate(delta);
 		potArrowRight.animate(delta);
 		
-		splitButton.animate(delta);
-		splitCancelButton.animate(delta);
-		splitDoneButton.animate(delta);
-		
 		foldButton.animate(delta);
 		
-		hostHelpButton.animate(delta);
 		hostUndoButton.animate(delta);
 		hostExitButton.animate(delta);
 		
@@ -738,20 +731,15 @@ public class ForegroundLayer {
 	
 	public void startDestroyTableDialog(String tableName) {
 		Logger.log(LOG_TAG,"startDestroyTableDialog("+tableName+")");
-		dialogWindow.setOpacity(1);
-		dialogWindow.setPosition(destroyTableDialogSmall.x,destroyTableDialogSmall.y);
-		dialogWindow.setDimensions(destroyTableDialogSmall.radiusX,destroyTableDialogSmall.radiusY);
-		dialogWindow.sendTo(destroyTableDialog);
-		destroyTableDialog.disappear();
-		destroyTableDialog.setTableName(tableName);
-		input.pushTouchFocus(ForegroundInput.TOUCH_DESTROY_TABLE);
+		hostDestroyDialog.setTableName(tableName);
+		hostDestroyDialog.show();
+		input.pushTouchFocus(ForegroundInput.TOUCH_HOST_DESTROY);
 	}
 	
 	public void stopDestroyTableDialog() {
 		Logger.log(LOG_TAG,"stopDestroyTableDialog()");
-		dialogWindow.remove();
-		destroyTableDialog.stop();
-		input.popTouchFocus(ForegroundInput.TOUCH_DESTROY_TABLE);
+		hostDestroyDialog.hide();
+		input.popTouchFocus(ForegroundInput.TOUCH_HOST_DESTROY);
 	}
 	
 	public void notifyAtPlayerPosition() {
@@ -799,25 +787,25 @@ public class ForegroundLayer {
 		input.pushTouchFocus(ForegroundInput.TOUCH_LOBBY_LOADED);
 	}
 	
-	public void notifyGameStarting() {
+	public void notifyGameStarting(String gameName) {
 		Logger.log(LOG_TAG,"notifyGameStarting()");
-		hostHelpButton.setDest(posHostHelpOnscreen);
-		hostHelpButton.setTouchable(true);
-		hostUndoButton.setDest(posHostUndoOnscreen);
-		hostUndoButton.setTouchable(true);
+		//hostUndoButton.setDest(posHostUndoOnscreen);
+		//hostUndoButton.setTouchable(true);
 		hostExitButton.setDest(posHostExitOnscreen);
 		hostExitButton.setTouchable(true);
+		hostGameNameDialog.setGameName(gameName);
+		hostGameNameDialog.setStateText("Game Starting");
+		hostGameNameDialog.show();
 		input.pushTouchFocus(ForegroundInput.TOUCH_TABLE_GAMEPLAY);
 	}
 	
 	public void stopGame() {
 		Logger.log(LOG_TAG,"stopGame()");
-		hostHelpButton.setDest(posHostHelpOffscreen);
-		hostHelpButton.setTouchable(false);
 		hostUndoButton.setDest(posHostUndoOffscreen);
 		hostUndoButton.setTouchable(false);
 		hostExitButton.setDest(posHostExitOffscreen);
 		hostExitButton.setTouchable(false);
+		hostGameNameDialog.hide();
 		input.popTouchFocus(ForegroundInput.TOUCH_TABLE_GAMEPLAY);
 	}
 	
@@ -833,49 +821,44 @@ public class ForegroundLayer {
 
 	public void startSelectWinner() {
 		Logger.log(LOG_TAG,"startSelectWinner()");
-		splitButton.fadeIn();
-		splitButton.setTouchable(true);
+		hostPotDialog.setStateSingleWinner();
+		hostPotDialog.setTitle("Main Pot");
+		hostPotDialog.setSplitEnabled(false);
+		hostPotDialog.show();
 	}
 	
 	public void stopSelectWinner() {
 		Logger.log(LOG_TAG,"stopSelectWinner()");
-		splitButton.fadeOut();
-		splitButton.setTouchable(false);
+		hostPotDialog.hide();
 	}
 	
-	public void startSelectWinnersSplit() {
-		Logger.log(LOG_TAG,"startSelectWinnersSplit()");
-		splitCancelButton.fadeIn();
-		splitCancelButton.setTouchable(true);
+	public void startPlayerDialog(Player currBetter,int seatIndex) {
+		Logger.log(LOG_TAG,"startPlayerDialog()");
+		hostPlayerDialogs[seatIndex].setRotation(currBetter.rotation);
+		float xOffscreen = (float) (currBetter.x+Math.sin(Math.toRadians(currBetter.rotation))*Seat.radiusY*2);
+		float yOffscreen = (float) (currBetter.y-Math.cos(Math.toRadians(currBetter.rotation))*Seat.radiusY*2);
+		float xOnscreen = currBetter.x;
+		float yOnscreen = currBetter.y;
+		if (currBetter.betStack.size()>0) {
+			Vector2 topPixel = currBetter.betStack.getTopPixel();
+			xOnscreen = topPixel.x;
+			yOnscreen = topPixel.y;
+		}
+		xOffscreen = game.mWL.worldRenderer.xWorldToScreen(xOffscreen);
+		yOffscreen = game.mWL.worldRenderer.yWorldToScreen(yOffscreen);
+		xOnscreen = (float) (game.mWL.worldRenderer.xWorldToScreen(xOnscreen)-
+				Math.sin(Math.toRadians(currBetter.rotation))*hostPlayerDialogs[seatIndex].radiusY*1.2);
+		yOnscreen = (float) (game.mWL.worldRenderer.yWorldToScreen(yOnscreen)+
+				Math.cos(Math.toRadians(currBetter.rotation))*hostPlayerDialogs[seatIndex].radiusY*1.2);
+		hostPlayerDialogs[seatIndex].setPositions(xOffscreen,yOffscreen,xOnscreen,yOnscreen);
+		hostPlayerDialogs[seatIndex].setPlayerName(currBetter.name.getText());
+		hostPlayerDialogs[seatIndex].show();
 	}
 	
-	public void stopSelectWinnersSplit() {
-		Logger.log(LOG_TAG,"stopSelectWinnersSplit()");
-		splitCancelButton.fadeOut();
-		splitCancelButton.setTouchable(false);
-		splitDoneButton.fadeOut();
-		splitDoneButton.setTouchable(false);
-	} 
+	public void stopPlayerDialog(int seatIndex) {
+		Logger.log(LOG_TAG,"stopPlayerDialog()");
+		hostPlayerDialogs[seatIndex].hide();
+	}
 
-	public void startBootDialog(float xSeat,float ySeat,float rotation) {
-		Logger.log(LOG_TAG,"startBootDialog()");
-		dialogWArrowWindow.setOpacity(1);
-		bootDialogSmall.setPosition(xSeat,ySeat);
-		dialogWArrowWindow.setPosition(bootDialogSmall.x,bootDialogSmall.y);
-		dialogWArrowWindow.setDimensions(bootDialogSmall.radiusX,bootDialogSmall.radiusY);
-		dialogWArrowWindow.rotation=rotation;
-		bootDialog.setPosition((float)(xSeat-Math.sin(Math.toRadians(rotation))*bootDialog.radiusY*1),
-				(float)(ySeat+Math.cos(Math.toRadians(rotation))*bootDialog.radiusY*1),rotation);
-		dialogWArrowWindow.sendTo(bootDialog);
-		bootDialog.disappear();
-		input.pushTouchFocus(ForegroundInput.TOUCH_BOOT_DIALOG);
-	}
-	
-	public void stopBootDialog() {
-		Logger.log(LOG_TAG,"stopBootDialog()");
-		dialogWArrowWindow.remove();
-		bootDialog.stop();
-		input.popTouchFocus(ForegroundInput.TOUCH_BOOT_DIALOG);
-	}
 	
 }

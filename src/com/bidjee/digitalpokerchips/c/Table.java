@@ -69,7 +69,6 @@ public class Table {
 	int gameState;
 	public int animationState;
 	public int closestSeatToPickedUp;
-	boolean inSetupFlow;
 	boolean loadedGame=false;
 	public int displayedPotIndex;
 	public int winner;
@@ -138,13 +137,14 @@ public class Table {
 			pickedUpPlayer.setDimensions(Seat.radiusX,Seat.radiusY);
 		}
 		dealerButtonOffset=Seat.radiusY*0.5f;
-		sendOffscreenVel=radiusY*0.9f;
+		sendOffscreenVel=radiusY*1.5f;
 	}
 	
 	public void setChipDimensions() {
 		Chip.radiusY=(int) (radiusY*0.28f);
 		Chip.radiusX=(int) (Chip.radiusY*1.02f);
 		maxStackHeight=2*Chip.radiusY*(1+MAX_STACK_RENDER_NUM*Chip.Z_Y_OFFSET_RATIO);
+		
 	}
 	
 	public void setPositions(float x,float y) {
@@ -570,6 +570,7 @@ public class Table {
 				if (seats[i].player!=null) {
 					seats[i].player.setActive(true);
 					seats[i].player.setArrowsShowing(true);
+					seats[i].player.name.fadeIn();
 					networkInterface.notifyArrange(seats[i].player.name.getText());
 				}
 			}
@@ -606,16 +607,20 @@ public class Table {
 			Vector2 posOffscreen = seats[gameLogic.getDealer()].getPositionOffsetVertically(-1*(Seat.radiusY+dealerButton.radiusY*2));
 			dealerButton.setDest(posOffscreen);
 		} else if (gameState==STATE_GAME) {
-			inSetupFlow=false;
 			gameLogic.start();
-			mWL.game.mFL.notifyGameStarting();
-			
+			mWL.game.mFL.notifyGameStarting(gameName);
+			for (int i=0;i<NUM_SEATS;i++) {
+				if (seats[i].player!=null) {
+					seats[i].player.name.fadeOut();
+				}
+			}
 		} else if (gameState==STATE_GAME_REARRANGE) {
 			dealerName = seats[gameLogic.getDealer()].player.name.getText();
 			for (int i=0;i<NUM_SEATS;i++) {
 				if (seats[i].player!=null) {
 					seats[i].player.setActive(true);
 					seats[i].player.setArrowsShowing(true);
+					seats[i].player.name.fadeIn();
 					networkInterface.notifyArrange(seats[i].player.name.getText());
 				}
 			}
@@ -652,6 +657,7 @@ public class Table {
 			for (int i=0;i<NUM_SEATS;i++) {
 				if (seats[i].player!=null) {
 					seats[i].player.setActive(false);
+					seats[i].player.setArrowsShowing(false);
 					if (seats[i].player.name.getText().equals(dealerName)) {
 						gameLogic.setDealer(i);
 					}
@@ -684,7 +690,6 @@ public class Table {
 	
 	public void startTableSetup() {
 		Logger.log(LOG_TAG,"startTableSetup()");
-		inSetupFlow=true;
 		//mWL.sendCameraTo(mWL.camPosTableName);
 		mWL.sendCameraTo(mWL.camPosTable);
 	}
@@ -702,11 +707,12 @@ public class Table {
 		//	setGameState(STATE_LOBBY_LOADED);
 		//}
 		//createTable();
+		
 	}
 	
 	public void startLobby() {
 		
-		gameLogic.resetTable();
+		gameLogic.resetGame();
 		setGameState(STATE_LOBBY);
 		createTable();
 	}
@@ -787,9 +793,44 @@ public class Table {
 			seats[i].removePlayer();
 		}
 		removeAllPlayers();
-		pots.clear();
-		gameLogic.destroyTable();
+		clearTable();
+		gameLogic.resetGame();
 		setGameState(STATE_NONE);
+	}
+	
+	private void quitTable() {
+		// cancel betting players
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			if (seats[i].player!=null) {
+				networkInterface.cancelMove(seats[i].player.name.getText());
+			}
+		}
+		// reset game logic
+		gameLogic.resetGame();
+		// reset table
+		clearTable();
+		// show lobby dialog
+		mWL.game.mFL.startHostLobbyDialog();
+		setGameState(STATE_LOBBY);
+	}
+	
+	private void clearTable() {
+		clearPots();
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			if (seats[i].player!=null) {
+				seats[i].player.bettingStack.clear();
+				seats[i].player.betStack.clear();
+				seats[i].player.winStack.clear();
+				mWL.game.mFL.stopPlayerDialog(i);
+			}
+		}
+		Player unseatedPlayer = getAnyUnseatedPlayer();
+		while (unseatedPlayer!=null) {
+			networkInterface.removePlayer(unseatedPlayer.name.getText());
+			players.remove(getAnyUnseatedPlayer());
+			unseatedPlayer = getAnyUnseatedPlayer();
+		}
+		mWL.game.mFL.stopSelectWinner();
 	}
 	
 	public void saveTable() {
@@ -808,6 +849,11 @@ public class Table {
 		
 		loadedGame=true;
 		mWL.sendCameraTo(mWL.camPosTable);
+	}
+	
+	public void gameFinished() {
+		// TODO if player wins or all leave, clear any UI stuff
+		quitTable();
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
@@ -862,7 +908,6 @@ public class Table {
 		gameLogic.notifyPlayerReconnected(seatIndex);
 		reconnectedPlayer.setTouchable(true);
 		syncAllTableStatusMenu();
-		// TODO set connection showing during loaded lobby
 	}
 	
 	public void disconnectPlayer(String playerName) {
@@ -884,6 +929,7 @@ public class Table {
 			} else if (gameState==STATE_GAME) {
 				gameLogic.notifyPlayerLeft(seat);
 				seats[seat].player.disconnectedFromGame();
+				mWL.game.mFL.stopPlayerDialog(seat);
 				updateSplitButtons();
 			}
 		} else if (pickedUpPlayer!=null&&pickedUpPlayer.name.getText().equals(playerName)) {
@@ -991,11 +1037,20 @@ public class Table {
 		syncAllTableStatusMenu();
 	}
 	
+	public void startHand() {
+		for (int i=0;i<Table.NUM_SEATS;i++) {
+			if (seats[i].player!=null) {
+				seats[i].player.setFolded(false);
+			}
+		}
+	}
+	
 	public void promptMove(int currBetter,MovePrompt movePrompt) {
 		Logger.log(LOG_TAG,"promptMove("+currBetter+","+movePrompt.stake+","+movePrompt.blinds+")");
 		networkInterface.promptMove(seats[currBetter].player.name.getText(),movePrompt,seats[currBetter].player.chipAmount);
-		seats[currBetter].player.name.fadeIn();
+		//seats[currBetter].player.name.fadeIn();
 		seats[currBetter].player.setActive(true);
+		mWL.game.mFL.startPlayerDialog(seats[currBetter].player,currBetter);
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null&&i!=currBetter) {
 				networkInterface.notifyPlayerWaitBet(seats[i].player.name.getText(),seats[currBetter].player.name.getText());
@@ -1043,33 +1098,38 @@ public class Table {
 		networkInterface.syncPlayersChips(seats[seat].player.name.getText(),seats[seat].player.chipAmount);
 	}
 	
-		public void syncAllTableStatusMenu() {
-	 		Logger.log(LOG_TAG,"syncAllTableStatusMenu()");
-			ArrayList<PlayerMenuItem> players=new ArrayList<PlayerMenuItem>();
-	 		for (int i=0;i<NUM_SEATS;i++) {
-	 			if (seats[i].player!=null) {
-					PlayerMenuItem thisPlayer = new PlayerMenuItem(seats[i].player.name.getText(),
-							seats[i].player.betStack.value()+seats[i].player.bettingStack.value(),
-							seats[i].player.chipAmount,
-							seats[i].player.isFolded);
-					players.add(thisPlayer);
-	 			}
-	 		}
-			gameMenuData.reset();
-			gameMenuData.set(gameName,gameLogic.dealStage,getPotTotal(),players);
-			networkInterface.syncAllGameData(gameMenuData);
-		}
+	public void syncAllTableStatusMenu() {
+ 		Logger.log(LOG_TAG,"syncAllTableStatusMenu()");
+		ArrayList<PlayerMenuItem> players=new ArrayList<PlayerMenuItem>();
+ 		for (int i=0;i<NUM_SEATS;i++) {
+ 			if (seats[i].player!=null) {
+				PlayerMenuItem thisPlayer = new PlayerMenuItem(seats[i].player.name.getText(),
+						seats[i].player.betStack.value()+seats[i].player.bettingStack.value(),
+						seats[i].player.chipAmount,
+						seats[i].player.isFolded);
+				players.add(thisPlayer);
+ 			}
+ 		}
+		gameMenuData.reset();
+		gameMenuData.set(gameName,gameLogic.dealStage,getPotTotal(),players);
+		networkInterface.syncAllGameData(gameMenuData);
+	}
+	
+	public void setStateText(String stateText) {
+		mWL.game.mFL.hostGameNameDialog.setStateText(stateText);
+	}
+		
+		
 	
 	//////////////////////////////////////////////////////////////////////////////
 	////////////////////////// Player to Table Messages //////////////////////////
 	//////////////////////////////////////////////////////////////////////////////	
 	
 	public void moveRxd(String playerName,int move,String chipString) {
-		// TODO maybe revoke belling for this player now
 		int moveRxdPlayer=getSeatFromPlayerName(playerName);
-		seats[moveRxdPlayer].player.name.fadeOut();
+		//seats[moveRxdPlayer].player.name.fadeOut();
 		seats[moveRxdPlayer].player.setActive(false);
-		closeBootDialog();
+		closePlayerDialog(moveRxdPlayer);
 		if (!chipString.equals("")) {
 			seats[moveRxdPlayer].player.setBettingStack(ChipStack.parseStack(chipString));
 			Vector2 offset = seats[moveRxdPlayer].getPositionOffsetVertically(-1*(Seat.radiusY+maxStackHeight));
@@ -1079,6 +1139,9 @@ public class Table {
 			animationState=ANIM_BETTING;
 		}
 		gameLogic.moveRxd(moveRxdPlayer,move);
+		if (move==GameLogic.MOVE_FOLD) {
+			seats[moveRxdPlayer].player.setFolded(true);
+		}
 		syncAllTableStatusMenu();
 		Logger.log(LOG_TAG,"moveRxd("+playerName+","+move+","+chipString+")"+seats[moveRxdPlayer].player.name.getText());
 	}
@@ -1120,11 +1183,12 @@ public class Table {
 	
 	public void makeNewPot(ArrayList<Integer> playersEntitled) {
 		Logger.log(LOG_TAG,"makeNewPot()");
-		pots.add(new Pot());
-		pots.get(pots.size()-1).playersEntitled=playersEntitled;
-		pots.get(pots.size()-1).potStack.setX(Pot.originX);
-		pots.get(pots.size()-1).potStack.setY(Pot.originY);
-		pots.get(pots.size()-1).potStack.scaleLabel();
+		Pot newPot = new Pot();
+
+		newPot.playersEntitled=playersEntitled;
+		newPot.potStack.setX(Pot.originX);
+		newPot.potStack.setY(Pot.originY);
+		pots.add(newPot);
 	}
 	
 	public void fadeInNextPot() {
@@ -1235,8 +1299,6 @@ public class Table {
 			setDealer(getRandomPlayer());
 			setGameState(STATE_DEALER_TO_PLAYER);
 		}
-		
-		// TODO change game state
 	}
 	
 	public void hostRearrangeDone() {
@@ -1344,28 +1406,30 @@ public class Table {
 	}
 	
 	public void doDestroyDialog() {
-		mWL.game.mFL.startDestroyTableDialog("table name");
+		mWL.game.mFL.startDestroyTableDialog(gameName);
 	}
 	
 	public void destroyDialogDone(boolean actionCompleted) {
 		mWL.game.mFL.stopDestroyTableDialog();
 		if (actionCompleted) {
-			destroyTable();
-			mWL.sendCameraTo(mWL.camPosHome);
+			quitTable();
 		}
 	}
 	
-	public void sitOutButtonClicked() {
-		cancelMove(bootDialogPlayer);
-		gameLogic.sitPlayerOut(bootDialogPlayer);
-		seats[bootDialogPlayer].player.name.fadeOut();
-		seats[bootDialogPlayer].player.setActive(false);
-		closeBootDialog();
+	public void doUndo() {
+		// TODO implement undo feature
 	}
 	
-	public void bootButtonClicked() {
-		removeFromTable(seats[bootDialogPlayer].player.name.getText());
-		closeBootDialog();
+	public void foldButtonClicked(int seat) {
+		cancelMove(seat);
+		gameLogic.sitPlayerOut(seat);
+		seats[seat].player.setActive(false);
+		closePlayerDialog(seat);
+	}
+	
+	public void bootButtonClicked(int seat) {
+		removeFromTable(seats[seat].player.name.getText());
+		closePlayerDialog(seat);
 	}
 	
 	public void doPotRightArrow() {
@@ -1396,17 +1460,22 @@ public class Table {
 	
 	public void startSplit() {
 		// TODO deal with case where pots on its way to winner and this happens
-		mWL.game.mFL.stopSelectWinner();
-		mWL.game.mFL.startSelectWinnersSplit();
+		mWL.game.mFL.hostPotDialog.setStateSplit();
+		updateSplitButtons();
 		animationState=ANIM_SELECT_WINNERS_SPLIT;
+		for (int i=0;i<NUM_SEATS;i++) {
+			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
+				seats[i].player.setSelected(false);
+			}
+		}
 	}
 	
 	public void cancelSplit() {
-		mWL.game.mFL.stopSelectWinnersSplit();
-		mWL.game.mFL.startSelectWinner();
+		mWL.game.mFL.hostPotDialog.setStateSingleWinner();
 		for (int i=0;i<NUM_SEATS;i++) {
-			if (seats[i].player!=null) {
+			if (seats[i].player!=null&&pots.get(displayedPotIndex).playersEntitled.contains(i)) {
 				seats[i].player.setSelected(false);
+				seats[i].player.setActive(true);
 			}
 		}
 		animationState=ANIM_SELECT_WINNER;
@@ -1442,7 +1511,7 @@ public class Table {
 		// initiate animation
 		animationState=ANIM_SPLITTING_POTS;
 		// clear everything
-		mWL.game.mFL.stopSelectWinnersSplit();
+		mWL.game.mFL.stopSelectWinner();
 		for (int i=0;i<NUM_SEATS;i++) {
 			if (seats[i].player!=null) {
 				seats[i].player.setSelected(false);
@@ -1467,7 +1536,6 @@ public class Table {
 				float xSeat=mWL.worldRenderer.xWorldToScreen(seats[seat].x);
 				float ySeat=mWL.worldRenderer.yWorldToScreen(seats[seat].y);
 				bootDialogPlayer=seat;
-				mWL.game.mFL.startBootDialog(xSeat,ySeat,seats[seat].rotation);
 			}
 		}
 	}
@@ -1483,17 +1551,15 @@ public class Table {
 				playersSelected++;
 			}
 		}
-		if (playersSelected==1) {
-			mWL.game.mFL.splitDoneButton.fadeOut();
-			mWL.game.mFL.splitDoneButton.setTouchable(false);
-		} else if (playersSelected==2) {
-			mWL.game.mFL.splitDoneButton.fadeIn();
-			mWL.game.mFL.splitDoneButton.setTouchable(true);
+		if (playersSelected<2) {
+			mWL.game.mFL.hostPotDialog.setSplitEnabled(false);
+		} else {
+			mWL.game.mFL.hostPotDialog.setSplitEnabled(true);
 		}
 	}
 	
-	public void closeBootDialog() {
-		mWL.game.mFL.stopBootDialog();
+	public void closePlayerDialog(int seatIndex) {
+		mWL.game.mFL.stopPlayerDialog(seatIndex);
 		bootDialogPlayer=-1;
 	}
 	

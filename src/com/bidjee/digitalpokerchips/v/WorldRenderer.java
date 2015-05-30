@@ -213,8 +213,6 @@ public class WorldRenderer {
 	
 		renderShadows();
 		
-		renderSelectionHighlights();
-		
 		renderDealerButton();
 		
 		renderConnectionStuff();
@@ -762,25 +760,6 @@ public class WorldRenderer {
         		alphaShader.b,1);
 	}
 	
-	private void renderSelectionHighlights() {
-		alphaShader=batch.getColor();
-		for (int i=0;i<Table.NUM_SEATS;i++) {
-			Player thisPlayer=mWL.table.seats[i].player;
-			if (thisPlayer!=null&&thisPlayer.selectionHighlight.opacity!=0) {
-				batch.setColor(alphaShader.r,alphaShader.g,
-		        		alphaShader.b,thisPlayer.selectionHighlight.opacity);
-				batch.draw(tableHighlightTexture,
-						thisPlayer.selectionHighlight.x-thisPlayer.selectionHighlight.radiusX,
-						thisPlayer.selectionHighlight.y-thisPlayer.selectionHighlight.radiusY,
-						thisPlayer.selectionHighlight.radiusX,thisPlayer.selectionHighlight.radiusY,
-						thisPlayer.selectionHighlight.radiusX*2,thisPlayer.selectionHighlight.radiusY*2,
-						1,1,thisPlayer.rotation,
-						0,0,200,200,false,false);
-			}
-		}
-		batch.setColor(alphaShader.r,alphaShader.g,alphaShader.b,1);
-	}
-	
 	private void renderDealerButton() {
 		alphaShader=batch.getColor();
 		if (mWL.table.dealerButton.opacity!=0) {
@@ -966,15 +945,6 @@ public class WorldRenderer {
 							0,0,256,chip_img_height,false,false);
 					if (chip_.pooling)
 						numPooling++;
-					if (chipIndex_==topChip_) {
-						batch.draw(stack_.totalLabel.texture,
-								stack_.getTopX()-stack_.totalLabel.radiusX,
-								stack_.getTopY()-stack_.totalLabel.radiusY,
-								stack_.totalLabel.radiusX,stack_.totalLabel.radiusY,
-								stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,
-								1,1,rotation_,
-								0,0,stack_.totalLabel.radiusX*2,stack_.totalLabel.radiusY*2,false,false);
-					}
 				}
 				// make sure max render num of chips in the pool stack are drawn
 				if (mWL.table.gameLogic.state==GameLogic.STATE_WAIT_POOL_STACKS) {

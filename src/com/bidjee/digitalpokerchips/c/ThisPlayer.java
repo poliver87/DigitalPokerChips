@@ -134,14 +134,11 @@ public class ThisPlayer {
 		this.radiusX=radiusX;
 		this.radiusY=radiusY;
 		mainStacks[ChipCase.CHIP_A].setMaxRenderNum(20);
-		mainStacks[ChipCase.CHIP_A].scaleLabel();
 		mainStacks[ChipCase.CHIP_B].setMaxRenderNum(20);
-		mainStacks[ChipCase.CHIP_B].scaleLabel();
 		mainStacks[ChipCase.CHIP_C].setMaxRenderNum(20);
-		mainStacks[ChipCase.CHIP_C].scaleLabel();
 		
 		betStack.setMaxRenderNum(20);
-		betStack.scaleLabel();
+		
 		connectionSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
 		connectedSprite.setDimensions((int)(radiusY*0.22f*1.6f),(int)(radiusY*0.22f));
 		dealerButton.setDimensions((int)(radiusY*0.13f),(int)(radiusY*0.13f));
@@ -281,11 +278,15 @@ public class ThisPlayer {
 			if (bettingStack.get(i).animateToDest(delta)) {
 				if (i==0) {
 					betStack.add(bettingStack.get(i));bettingStack.remove(i);
+					betStack.updateTotalLabel();
 					i--;
-					mWL.game.mFL.betTotalDialog.setAmount(betStack.value());
-					if (betStack.size()==1) {
-						mWL.game.mFL.betTotalDialog.show();
+					if (betEnabled&&foldEnabled) {
+						mWL.game.mFL.betTotalDialog.setAmountMoreToCall(stake-betStack.value());
+						if (betStack.size()==1) {
+							mWL.game.mFL.betTotalDialog.show();
+						}
 					}
+					
 				}
 			}
 			
@@ -422,7 +423,7 @@ public class ThisPlayer {
 	//////////////////// Internal Methods ////////////////////
 	private void updateStackTotals() {
 		for (int chip_=ChipCase.CHIP_A;chip_<ChipCase.CHIP_TYPES;chip_++) {
-			mainStacks[chip_].updateTotalLabel();
+			//mainStacks[chip_].updateTotalLabel();
 		}
 	}
 	
@@ -454,7 +455,6 @@ public class ThisPlayer {
 		}
 		betStack.clear();
 		betStack.setPosition(betStackOrigin.x,betStackOrigin.y,0);
-		mWL.game.mFL.betTotalDialog.hide();
 		if (foldEnabled) {
 			mWL.game.mFL.foldButton.fadeIn();
 			mWL.game.mFL.foldButton.setTouchable(true);
@@ -463,6 +463,7 @@ public class ThisPlayer {
 			checkButton.fadeIn();
 			checkButton.setTouchable(true);
 		}
+		mWL.game.mFL.betTotalDialog.hide();
 	}
 	
 	private void removeLastFromMainStack(int chip_) {
@@ -480,11 +481,14 @@ public class ThisPlayer {
 		mWL.game.mFL.foldButton.setTouchable(false);
 	}
 	
-	private void enableBet() {
+	private void enableBet(int stake) {
 		betEnabled=true;
+		this.stake = stake;
+		
 	}
 	private void disableBet() {
 		betEnabled=false;
+		mWL.game.mFL.betTotalDialog.hide();
 	}
 	private void enableCheck() {
 		checkEnabled=true;
@@ -529,7 +533,7 @@ public class ThisPlayer {
 	
 	private void cancelMoveState() {
 		Logger.log(LOG_TAG,"cancelMoveState()");
-		// TODO change connection sprite
+		setConnectionAnimationState(CONN_ANIM_STATIC);
 		disableBet();
 		disableCheck();
 		disableFold();
@@ -1036,8 +1040,8 @@ public class ThisPlayer {
 				checkButton.fadeOut();
 			}
 		}
-		enableBet();
-		stake=movePrompt.stake;
+		enableBet(movePrompt.stake);
+		
 		mWL.soundFX.bellSound.play();
 		setConnectionAnimationState(CONN_ANIM_ACTIVE);
 		if (movePrompt.blinds!=MovePrompt.BLINDS_NONE) {
@@ -1046,6 +1050,10 @@ public class ThisPlayer {
 			mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_BET_OR_CHECK);
 		} else {
 			mWL.game.mFL.playerDashboard.setStatusMessage(PlayerDashboard.MESSAGE_CALL,movePrompt.stake);
+			mWL.game.mFL.betTotalDialog.setAmountMoreToCall(stake-betStack.value());
+			if (betStack.size()>0) {
+				mWL.game.mFL.betTotalDialog.show();
+			}
 		}
 		
 		
